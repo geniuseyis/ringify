@@ -1,0 +1,39 @@
+# Dependencies, build products and generated projects
+node_modules/
+dist/
+.build/
+.swiftpm/
+.vite/
+coverage/
+artifacts/
+*.tsbuildinfo
+/preview/vite.config.js
+/preview/vite.config.d.ts
+/ios/*.xcodeproj/
+
+# Local browser profiles can contain cookies, history and credentials
+.chrome-qa*/
+.edge-qa*/
+/preview/qa-*.png
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
+
+# Per-user IDE/OS data and temporary logs
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
