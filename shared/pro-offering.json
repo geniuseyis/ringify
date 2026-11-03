@@ -1,0 +1,27 @@
+{
+  "market": "TR",
+  "currency": "TRY",
+  "pricingStatus": "proposed",
+  "reviewedOn": "2026-11-01",
+  "freeProjectLimit": 1,
+  "proProjectLimit": 3,
+  "projectSlotOffering": {
+    "priceMinor": 4999,
+    "slotsPerPurchase": 1,
+    "payment": "oneTime",
+    "requiresActivePro": true,
+    "reusableAfterDeletion": true,
+    "purchaseStatus": "notAvailableInPreview",
+    "nativeStatus": "IMPLEMENTED_NOT_TESTED",
+    "productType": "nonConsumablePerSlot",
+    "maximumExtraSlots": 20,
+    "productIDPrefix": "com.ringify.app.project-slot."
+  },
+  "subscriptionGroup": "com.ringify.app.pro",
+  "plans": [
+    { "id": "weekly", "productID": "com.ringify.app.pro.weekly", "priceMinor": 12499, "type": "subscription", "period": "P1W" },
+    { "id": "monthly", "productID": "com.ringify.app.pro.monthly", "priceMinor": 34999, "type": "subscription", "period": "P1M" },
+    { "id": "yearly", "productID": "com.ringify.app.pro.yearly", "priceMinor": 249999, "type": "subscription", "period": "P1Y" },
+    { "id": "lifetime", "productID": "com.ringify.app.pro.lifetime", "priceMinor": 449999, "type": "nonConsumable", "period": null }
+  ]
+}
