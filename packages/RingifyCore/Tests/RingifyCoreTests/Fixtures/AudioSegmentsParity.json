@@ -1,0 +1,157 @@
+{
+  "scope": "Real existing web algorithm output. Native XCTest NOT_TESTED.",
+  "cases": [
+    {
+      "name": "Energy ranking",
+      "rate": 8000,
+      "length": 480000,
+      "seconds": 15,
+      "channels": [
+        [
+          {
+            "start": 0,
+            "end": 120000,
+            "value": 0.2
+          },
+          {
+            "start": 160000,
+            "end": 280000,
+            "value": 0.9
+          },
+          {
+            "start": 320000,
+            "end": 440000,
+            "value": 0.5
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "start": 20,
+          "end": 35,
+          "rmsDbFS": -0.9151500413110191
+        },
+        {
+          "start": 40,
+          "end": 55,
+          "rmsDbFS": -6.020599913279624
+        },
+        {
+          "start": 0,
+          "end": 15,
+          "rmsDbFS": -13.979399957290541
+        }
+      ]
+    },
+    {
+      "name": "Opposite stereo phase",
+      "rate": 8000,
+      "length": 248000,
+      "seconds": 15,
+      "channels": [
+        [
+          {
+            "start": 0,
+            "end": 248000,
+            "value": 0.5
+          }
+        ],
+        [
+          {
+            "start": 0,
+            "end": 248000,
+            "value": -0.5
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "start": 0,
+          "end": 15,
+          "rmsDbFS": -6.020599913279624
+        },
+        {
+          "start": 15,
+          "end": 30,
+          "rmsDbFS": -6.020599913279624
+        }
+      ]
+    },
+    {
+      "name": "Exact source end",
+      "rate": 8000,
+      "length": 160240,
+      "seconds": 15,
+      "channels": [
+        [
+          {
+            "start": 40240,
+            "end": 160240,
+            "value": 0.8
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "start": 5.03,
+          "end": 20.03,
+          "rmsDbFS": -1.9382001307312944
+        }
+      ]
+    },
+    {
+      "name": "Noninteger grid rate",
+      "rate": 11025,
+      "length": 386068,
+      "seconds": 29,
+      "channels": [
+        [
+          {
+            "start": 66343,
+            "end": 386068,
+            "value": 0.7
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "start": 6.01750566893424,
+          "end": 35.01750566893424,
+          "rmsDbFS": -3.0980393476346664
+        }
+      ]
+    },
+    {
+      "name": "Short source",
+      "rate": 8000,
+      "length": 8240,
+      "seconds": 29,
+      "channels": [
+        [
+          {
+            "start": 0,
+            "end": 8240,
+            "value": 0.2
+          }
+        ]
+      ],
+      "expected": [
+        {
+          "start": 0,
+          "end": 1.03,
+          "rmsDbFS": -13.979399957290553
+        }
+      ]
+    },
+    {
+      "name": "Silence",
+      "rate": 8000,
+      "length": 160000,
+      "seconds": 20,
+      "channels": [
+        []
+      ],
+      "expected": []
+    }
+  ]
+}
