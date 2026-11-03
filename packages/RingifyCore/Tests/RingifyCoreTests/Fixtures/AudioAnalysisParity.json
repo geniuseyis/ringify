@@ -1,0 +1,182 @@
+[
+  {
+    "name": "antiphase-stereo",
+    "sampleRate": 8000,
+    "channels": [
+      [
+        {
+          "frames": 24000,
+          "value": 0.25
+        }
+      ],
+      [
+        {
+          "frames": 24000,
+          "value": -0.25
+        }
+      ]
+    ],
+    "expected": {
+      "peakDbFS": -12.041199826559248,
+      "rmsDbFS": -12.041199826559248,
+      "silentRegions": [],
+      "duration": 3,
+      "suggestion": null
+    }
+  },
+  {
+    "name": "edge-silence",
+    "sampleRate": 8000,
+    "channels": [
+      [
+        {
+          "frames": 3200,
+          "value": 0
+        },
+        {
+          "frames": 16800,
+          "value": 0.5
+        },
+        {
+          "frames": 4000,
+          "value": 0
+        }
+      ]
+    ],
+    "expected": {
+      "peakDbFS": -6.020599913279624,
+      "rmsDbFS": -7.569619513137056,
+      "silentRegions": [
+        {
+          "start": 0,
+          "end": 0.4
+        },
+        {
+          "start": 2.5,
+          "end": 3
+        }
+      ],
+      "duration": 3,
+      "suggestion": {
+        "start": 0.4,
+        "end": 2.5
+      }
+    }
+  },
+  {
+    "name": "digital-silence",
+    "sampleRate": 8000,
+    "channels": [
+      [
+        {
+          "frames": 24000,
+          "value": 0
+        }
+      ]
+    ],
+    "expected": {
+      "peakDbFS": null,
+      "rmsDbFS": null,
+      "silentRegions": [
+        {
+          "start": 0,
+          "end": 3
+        }
+      ],
+      "duration": 3,
+      "suggestion": null
+    }
+  },
+  {
+    "name": "partial-final-window",
+    "sampleRate": 8000,
+    "channels": [
+      [
+        {
+          "frames": 20000,
+          "value": 0.25
+        },
+        {
+          "frames": 4003,
+          "value": 0
+        }
+      ]
+    ],
+    "expected": {
+      "peakDbFS": -12.041199826559248,
+      "rmsDbFS": -12.833555121211447,
+      "silentRegions": [
+        {
+          "start": 2.5,
+          "end": 3.000375
+        }
+      ],
+      "duration": 3.000375,
+      "suggestion": {
+        "start": 0,
+        "end": 2.5
+      }
+    }
+  },
+  {
+    "name": "active-too-short-to-trim",
+    "sampleRate": 8000,
+    "channels": [
+      [
+        {
+          "frames": 9600,
+          "value": 0
+        },
+        {
+          "frames": 4800,
+          "value": 0.5
+        },
+        {
+          "frames": 9600,
+          "value": 0
+        }
+      ]
+    ],
+    "expected": {
+      "peakDbFS": -6.020599913279624,
+      "rmsDbFS": -13.010299956639813,
+      "silentRegions": [
+        {
+          "start": 0,
+          "end": 1.2
+        },
+        {
+          "start": 1.8,
+          "end": 3
+        }
+      ],
+      "duration": 3,
+      "suggestion": null
+    }
+  },
+  {
+    "name": "unequal-stereo-levels",
+    "sampleRate": 8000,
+    "channels": [
+      [
+        {
+          "frames": 24000,
+          "value": 0.2
+        }
+      ],
+      [
+        {
+          "frames": 24000,
+          "value": -0.6
+        }
+      ]
+    ],
+    "expected": {
+      "peakDbFS": -4.43697464718089,
+      "rmsDbFS": -6.9896997197856265,
+      "silentRegions": [],
+      "duration": 3,
+      "suggestion": null
+    }
+  }
+]
