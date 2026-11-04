@@ -1,0 +1,121 @@
+import Foundation
+import SwiftUI
+
+struct RingifyPrimaryButton: View {
+    @Environment(\.ringifyVisualStyle) private var visualStyle
+    let title: LocalizedStringKey
+    var systemImage: String?
+    var isLoading = false
+    var isDisabled = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                if isLoading {
+                    ProgressView().tint(.white)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                }
+                Text(title).fontWeight(.semibold)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 52)
+            .foregroundStyle(.white)
+            .background {
+                if visualStyle == .studio {
+                    RoundedRectangle(cornerRadius: 16).fill(RingifyTheme.Studio.action)
+                } else {
+                    RoundedRectangle(cornerRadius: 16).fill(RingifyTheme.brandGradient)
+                }
+            }
+        }
+        .disabled(isDisabled || isLoading)
+        .opacity(isDisabled ? 0.5 : 1)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+struct RingifyEmptyState: View {
+    let icon: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
+    var actionTitle: LocalizedStringKey?
+    var action: (() -> Void)?
+
+    var body: some View {
+        ContentUnavailableView {
+            Label(title, systemImage: icon)
+        } description: {
+            Text(message)
+        } actions: {
+            if let actionTitle, let action {
+                Button(actionTitle, action: action)
+                    .buttonStyle(.borderedProminent)
+                    .tint(RingifyTheme.accent)
+            }
+        }
+    }
+}
+
+struct RingifyLoadingView: View {
+    var title: LocalizedStringKey = "common.processing"
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ProgressView().controlSize(.large).tint(RingifyTheme.accent)
+            Text(title).font(.subheadline).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct WaveformView: View {
+    let samples: [Float]
+    var tint: Color = RingifyTheme.accent
+    var dimmedTint: Color = Color.secondary.opacity(0.22)
+    var selection: ClosedRange<Double> = 0...1
+
+    var body: some View {
+        GeometryReader { proxy in
+            Canvas { context, size in
+                let values = samples.isEmpty ? [Float(0)] : samples
+                let width = max(1, size.width / CGFloat(values.count))
+                for (index, rawValue) in values.enumerated() {
+                    let x = CGFloat(index) * width
+                    let normalizedX = Double(index) / Double(max(1, values.count - 1))
+                    let magnitude = rawValue.isFinite ? max(0.03, min(1, CGFloat(abs(rawValue)))) : 0.03
+                    let height = max(3, magnitude * size.height)
+                    let rect = CGRect(
+                        x: x,
+                        y: (size.height - height) / 2,
+                        width: max(1.5, width * 0.58),
+                        height: height
+                    )
+                    let color = selection.contains(normalizedX) ? tint : dimmedTint
+                    context.fill(Path(roundedRect: rect, cornerRadius: width), with: .color(color))
+                }
+            }
+            .accessibilityHidden(true)
+        }
+    }
+
+}
+
+struct DurationText: View {
+    let seconds: TimeInterval
+
+    var body: some View {
+        Text(Self.formatted(seconds))
+            .font(.system(.body, design: .monospaced, weight: .medium))
+            .contentTransition(.numericText())
+    }
+
+    static func formatted(_ seconds: TimeInterval) -> String {
+        let safe = max(0, seconds.isFinite ? seconds : 0)
+        let minutes = Int(safe) / 60
+        let remainder = safe - Double(minutes * 60)
+        return String(format: "%02d:%04.1f", minutes, remainder)
+    }
+}
