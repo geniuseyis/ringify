@@ -20,6 +20,9 @@ struct RootView: View {
         }
         .task {
             guard isLaunching else { return }
+            #if DEBUG
+            if UITestSupport.holdsSplash { return }
+            #endif
             do { try await Task.sleep(for: .milliseconds(650)) }
             catch { return }
             guard !Task.isCancelled else { return }
