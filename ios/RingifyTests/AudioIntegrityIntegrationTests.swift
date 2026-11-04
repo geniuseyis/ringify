@@ -44,6 +44,21 @@ final class AudioIntegrityIntegrationTests: XCTestCase {
         XCTAssertFalse(service.isPlaying)
     }
 
+    func testCompletionFromAnotherPlayerCannotRestartPausedLoop() throws {
+        let url = try fixture()
+        let service = AVAudioPlaybackService()
+        defer { service.stop(); try? FileManager.default.removeItem(at: url) }
+        try service.load(url: url)
+        try service.play(selection: EditSelection(start: 0.2, end: 1.7), loop: true)
+        service.seek(to: 0.7)
+        service.pause()
+        let unrelated = try AVAudioPlayer(contentsOf: url)
+        service.finishPlayback(for: ObjectIdentifier(unrelated), successfully: true)
+        XCTAssertFalse(service.isPlaying)
+        XCTAssertEqual(service.currentTime, 0.7, accuracy: 0.05)
+        XCTAssertFalse(unrelated.isPlaying)
+    }
+
     func testRefreshingActiveLoopDoesNotRestartTheSelectedRegion() throws {
         let url = try fixture()
         let service = AVAudioPlaybackService()

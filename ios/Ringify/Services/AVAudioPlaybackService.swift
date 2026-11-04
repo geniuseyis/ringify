@@ -65,7 +65,17 @@ final class AVAudioPlaybackService: NSObject, AudioPlaybackService, AVAudioPlaye
         player.currentTime = min(max(0, time), player.duration)
     }
 
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        let identity = ObjectIdentifier(player)
+        Task { @MainActor [weak self] in
+            self?.finishPlayback(for: identity, successfully: flag)
+        }
+    }
+
+    // Transfer only the identity across the delegate boundary, never the
+    // non-Sendable AVAudioPlayer. Ignore callbacks from a replaced source.
+    func finishPlayback(for identity: ObjectIdentifier, successfully flag: Bool) {
+        guard let player, ObjectIdentifier(player) == identity else { return }
         if flag, loopsSelection, let playbackSelection {
             player.currentTime = playbackSelection.start
             if player.play() { startMonitor(); return }
