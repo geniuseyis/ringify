@@ -8,7 +8,8 @@ final class ProjectExportStateTests: XCTestCase {
             sourceKind: .audioFile, sourceDuration: 12, selection: EditSelection(start: 1, end: 8))
     }
     private var output: ExportedRingtone {
-        ExportedRingtone(url: URL(fileURLWithPath: "/tone.m4a"), duration: 7, byteCount: 100)
+        ExportedRingtone(url: URL(fileURLWithPath: "/tone.m4a"), duration: 7, byteCount: 100,
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000))
     }
     func testSelectingAnotherProjectInvalidatesResult() {
         let original = project()
