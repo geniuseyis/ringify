@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 final class AppModel: ObservableObject {
     let container: AppContainer
+    let preferenceStore: UserDefaults
 
     @Published var currentProject: RingtoneProject? {
         didSet {
@@ -33,9 +34,10 @@ final class AppModel: ObservableObject {
     private var presetReadToken = UUID()
     private var deletingIDs: Set<UUID> = []
 
-    init(container: AppContainer) {
+    init(container: AppContainer, defaults: UserDefaults = .standard) {
         self.container = container
-        if let data = UserDefaults.standard.data(forKey: "ringify.settings"),
+        preferenceStore = defaults
+        if let data = defaults.data(forKey: "ringify.settings"),
            let decoded = try? JSONDecoder().decode(UserSettings.self, from: data) {
             settings = decoded
         } else {
@@ -623,7 +625,7 @@ final class AppModel: ObservableObject {
     private func persistSettings() {
         do {
             let data = try JSONEncoder().encode(settings)
-            UserDefaults.standard.set(data, forKey: "ringify.settings")
+            preferenceStore.set(data, forKey: "ringify.settings")
         } catch { presentStorage(error) }
     }
 }

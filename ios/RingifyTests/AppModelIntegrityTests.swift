@@ -148,6 +148,19 @@ final class AppModelIntegrityTests: XCTestCase {
         catch { XCTAssertEqual(error as? RingifyError, .storageUnavailable(reason: "Store could not open")) }
     }
 
+    func testInjectedPreferencesPersistWithoutChangingStandardDefaults() throws {
+        let name = "com.ringify.tests.preferences.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+        let original = UserDefaults.standard.data(forKey: "ringify.settings")
+        let store = InMemoryProjectStorageService()
+        let model = AppModel(container: container(storage: store), defaults: defaults)
+        model.settings = UserSettings(appearance: .dark, language: .english)
+        let restored = AppModel(container: container(storage: store), defaults: defaults)
+        XCTAssertEqual(restored.settings, model.settings)
+        XCTAssertEqual(UserDefaults.standard.data(forKey: "ringify.settings"), original)
+    }
+
     func testQueuedEditCannotResurrectDeletedProject() async throws {
         let storage = InMemoryProjectStorageService()
         let model = AppModel(container: container(storage: storage))
