@@ -57,14 +57,24 @@ export function filterStudio(channels:Float32Array[],rate:number,settings:Studio
 // Linked-channel 5ms lookahead, immediate attenuation and 50ms release. Since
 // rendering is offline, future peaks are visible without shifting output time.
 export function limitPeaks(channels:Float32Array[],rate:number,ceiling:number){
-  const length=channels[0].length,lookahead=Math.max(1,Math.round(rate*.005)),release=Math.exp(-1/(rate*.05))
-  const peaks=new Float64Array(length),deque=new Int32Array(length)
-  for(const channel of channels)for(let i=0;i<length;i++){if(!Number.isFinite(channel[i]))throw Error('Invalid audio samples');peaks[i]=Math.max(peaks[i],Math.abs(channel[i]))}
-  let head=0,tail=0,right=0,gain=1
+  const length=channels[0]?.length??0
+  if(![1,2].includes(channels.length)||length<1||channels.some(channel=>channel.length!==length)
+    ||!Number.isFinite(rate)||rate<=0||rate>192000||!Number.isFinite(ceiling)||ceiling<.1||ceiling>.99)throw Error('Invalid limiter format')
+  const lookahead=Math.max(1,Math.round(rate*.005)),release=Math.exp(-1/(rate*.05))
+  // Only retain the lookahead window: at most 961 entries at 192 kHz.
+  // Samples at right have not been modified yet, so no full-length peak copy
+  // is required. Match the native limiter's bounded monotonic queue.
+  const capacity=Math.min(length,lookahead+1),peaks=new Float64Array(capacity),deque=new Int32Array(capacity)
+  let head=0,count=0,right=0,gain=1
   for(let i=0;i<length;i++){
-    while(right<Math.min(length,i+lookahead+1)){while(tail>head&&peaks[deque[tail-1]]<=peaks[right])tail--;deque[tail++]=right++}
-    while(tail>head&&deque[head]<i)head++
-    const target=peaks[deque[head]]>ceiling?ceiling/peaks[deque[head]]:1
+    while(count>0&&deque[head]<i){head=(head+1)%capacity;count--}
+    while(right<Math.min(length,i+lookahead+1)){
+      let peak=0
+      for(const channel of channels){if(!Number.isFinite(channel[right]))throw Error('Invalid audio samples');peak=Math.max(peak,Math.abs(channel[right]))}
+      while(count>0&&peaks[(head+count-1)%capacity]<=peak)count--
+      const tail=(head+count)%capacity;deque[tail]=right++;peaks[tail]=peak;count++
+    }
+    const target=peaks[head]>ceiling?ceiling/peaks[head]:1
     gain=Math.min(target,1-(1-gain)*release)
     for(const channel of channels)channel[i]*=gain
   }
