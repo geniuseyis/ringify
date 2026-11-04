@@ -1,3 +1,4 @@
+import Foundation
 import RingifyCore
 import SwiftUI
 
@@ -5,9 +6,13 @@ struct AudioEditorView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var router: AppRouter
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.scenePhase) private var scenePhase
     @ScaledMetric(relativeTo: .caption2) private var waveformInset: CGFloat = 24
     @State private var selection = EditSelection(start: 0, end: 1)
     @State private var zoom = 1.0
+    @GestureState private var pinchStartZoom: Double? = nil
+    @State private var editingFeedback = false
+    @State private var loadedProjectID: UUID?
     @State private var loopPlayback = false
     @State private var hasLoadedPlayback = false
     @State private var history = EditorHistory(
@@ -47,7 +52,13 @@ struct AudioEditorView: View {
         .onChange(of: model.currentProject?.id) { _, _ in resetFromProject() }
         .onChange(of: selection) { _, _ in stopPlayback() }
         .onChange(of: loopPlayback) { _, _ in refreshLoopPlayback() }
-        .onDisappear { stopPlayback() }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase != .active else { return }
+            _ = persistSelection()
+            if model.container.playback.isPlaying { model.container.playback.pause() }
+        }
+        .onDisappear { _ = persistSelection(); stopPlayback() }
+        .sensoryFeedback(.selection, trigger: editingFeedback)
     }
 
     @ViewBuilder private func studio(_ project: RingtoneProject) -> some View {
@@ -193,18 +204,37 @@ struct AudioEditorView: View {
                             playhead: playhead,
                             inset: waveformInset,
                             intervals: rulerIntervals,
-                            onEditingEnded: commitSelection
+                            onEditingEnded: { commitSelection(for: project.id) }
                         )
                         .frame(height: 200)
                     }
                     .frame(width: max(proxy.size.width, proxy.size.width * zoom))
                 }
+                .simultaneousGesture(
+                    MagnifyGesture()
+                        .updating($pinchStartZoom) { _, origin, _ in
+                            // GestureState also resets when the system cancels
+                            // a gesture, rather than only on normal completion.
+                            if origin == nil { origin = zoom }
+                        }
+                        .onChanged { value in
+                            zoom = StudioZoomRules.proposed(start: pinchStartZoom ?? zoom,
+                                magnification: Double(value.magnification))
+                        }
+                        .onEnded { value in
+                            if let origin = pinchStartZoom {
+                                zoom = StudioZoomRules.proposed(start: origin,
+                                    magnification: Double(value.magnification))
+                            }
+                        }
+                )
             }
             .frame(height: 230)
         }
         .padding(.vertical, 14)
         .background(RingifyTheme.Studio.canvas, in: RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius))
         .overlay { RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius).strokeBorder(RingifyTheme.Studio.canvasBorder) }
+        .id(project.id)
     }
 
     private func playbackControls(_ project: RingtoneProject) -> some View {
@@ -243,7 +273,7 @@ struct AudioEditorView: View {
                     .accessibilityIdentifier("studio.stop")
                 }
                 Button {
-                    if model.updateCurrentProject({ $0.selection = selection }) {
+                    if persistSelection() {
                         router.push(.effects)
                     }
                 } label: {
@@ -271,7 +301,7 @@ struct AudioEditorView: View {
             }
             HStack(spacing: 12) {
                 Image(systemName: "minus.magnifyingglass").accessibilityHidden(true)
-                Slider(value: $zoom, in: 1...4)
+                Slider(value: $zoom, in: StudioZoomRules.range)
                     .frame(minHeight: 44)
                     .accessibilityLabel("editor.zoom")
                     .accessibilityIdentifier("studio.zoom")
@@ -321,11 +351,21 @@ struct AudioEditorView: View {
     }
 
     private func undo() {
-        if let snapshot = history.undo() { selection = snapshot.selection }
+        guard let projectID = loadedProjectID, model.currentProject?.id == projectID else { return }
+        if let snapshot = history.undo() {
+            selection = snapshot.selection
+            _ = persistSelection()
+            editingFeedback.toggle()
+        }
     }
 
     private func redo() {
-        if let snapshot = history.redo() { selection = snapshot.selection }
+        guard let projectID = loadedProjectID, model.currentProject?.id == projectID else { return }
+        if let snapshot = history.redo() {
+            selection = snapshot.selection
+            _ = persistSelection()
+            editingFeedback.toggle()
+        }
     }
 
     private func resetSelection(_ project: RingtoneProject) {
@@ -334,19 +374,31 @@ struct AudioEditorView: View {
             end: min(project.sourceDuration, RingtoneRules.maximumDuration),
             sourceDuration: project.sourceDuration
         )
+        guard loadedProjectID == project.id,
+            StudioSelectionPersistence.commit(reset, expectedProjectID: project.id, model: model) else { return }
+        if selection != reset { editingFeedback.toggle() }
         history.commit(EditorSnapshot(selection: reset, effects: project.effects))
         selection = reset
     }
 
     private func resetFromProject() {
         hasLoadedPlayback = false
+        zoom = StudioZoomRules.range.lowerBound
+        loadedProjectID = model.currentProject?.id
         guard let project = model.currentProject else { return }
         selection = project.selection
         history.reset(to: EditorSnapshot(selection: project.selection, effects: project.effects))
     }
 
-    private func commitSelection() {
+    private func persistSelection() -> Bool {
+        guard let projectID = loadedProjectID else { return false }
+        return StudioSelectionPersistence.commit(selection, expectedProjectID: projectID, model: model)
+    }
+
+    private func commitSelection(for projectID: UUID) {
+        guard loadedProjectID == projectID, persistSelection() else { return }
         let effects = model.currentProject?.effects ?? .neutral
+        if history.current.selection != selection { editingFeedback.toggle() }
         history.commit(EditorSnapshot(selection: selection, effects: effects))
     }
 }
@@ -425,28 +477,32 @@ private struct EditorWaveformSelectionView: View {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
                 handle
-                    .position(x: inset + startX, y: proxy.size.height / 2)
+                    .position(x: inset + startX, y: proxy.size.height * (endX - startX < 44 ? 0.25 : 0.5))
                     .gesture(startDrag(width: width))
+                    .focusable(interactions: .edit)
+                    .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
+                        handleKey(press, boundary: .start)
+                    }
                     .accessibilityElement()
+                    .accessibilityIdentifier("studio.trim.start")
                     .accessibilityLabel("editor.trimStart")
                     .accessibilityValue(DurationText.formatted(selection.start))
                     .accessibilityAdjustableAction { direction in
-                        let delta = direction == .increment ? 0.1 : -0.1
-                        selection.start = min(selection.end - RingtoneRules.minimumDuration,
-                            max(0, max(selection.end - RingtoneRules.maximumDuration, selection.start + delta)))
-                        onEditingEnded()
+                        adjust(.start, by: direction == .increment ? 0.1 : -0.1)
                     }
                 handle
-                    .position(x: inset + endX, y: proxy.size.height / 2)
+                    .position(x: inset + endX, y: proxy.size.height * (endX - startX < 44 ? 0.75 : 0.5))
                     .gesture(endDrag(width: width))
+                    .focusable(interactions: .edit)
+                    .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
+                        handleKey(press, boundary: .end)
+                    }
                     .accessibilityElement()
+                    .accessibilityIdentifier("studio.trim.end")
                     .accessibilityLabel("editor.trimEnd")
                     .accessibilityValue(DurationText.formatted(selection.end))
                     .accessibilityAdjustableAction { direction in
-                        let delta = direction == .increment ? 0.1 : -0.1
-                        selection.end = max(selection.start + RingtoneRules.minimumDuration,
-                            min(duration, min(selection.start + RingtoneRules.maximumDuration, selection.end + delta)))
-                        onEditingEnded()
+                        adjust(.end, by: direction == .increment ? 0.1 : -0.1)
                     }
             }
         }
@@ -454,6 +510,21 @@ private struct EditorWaveformSelectionView: View {
         .accessibilityLabel("editor.waveform")
         .accessibilityIdentifier("studio.waveform")
         .accessibilityValue("\(DurationText.formatted(selection.start)) – \(DurationText.formatted(selection.end))")
+    }
+
+    private func handleKey(_ press: KeyPress, boundary: StudioTrimRules.Boundary) -> KeyPress.Result {
+        let backward = press.key == .leftArrow || press.key == .downArrow
+        let step = press.modifiers.contains(.shift) ? 1.0 : 0.1
+        adjust(boundary, by: backward ? -step : step)
+        return .handled
+    }
+
+    private func adjust(_ boundary: StudioTrimRules.Boundary, by delta: Double) {
+        let next = StudioTrimRules.adjustedSelection(selection, boundary: boundary,
+            delta: delta, sourceDuration: duration)
+        guard next != selection else { return }
+        selection = next
+        onEditingEnded()
     }
 
     private var handle: some View {
@@ -471,7 +542,8 @@ private struct EditorWaveformSelectionView: View {
                 if dragStartSelection == nil { dragStartSelection = selection.start }
                 let proposed = (dragStartSelection ?? selection.start)
                     + Double(value.translation.width / width) * duration
-                selection.start = min(selection.end - RingtoneRules.minimumDuration, max(0, max(selection.end - RingtoneRules.maximumDuration, proposed)))
+                selection = StudioTrimRules.adjustedSelection(selection, boundary: .start,
+                    delta: proposed - selection.start, sourceDuration: duration)
             }
             .onEnded { _ in
                 dragStartSelection = nil
@@ -485,7 +557,8 @@ private struct EditorWaveformSelectionView: View {
                 if dragEndSelection == nil { dragEndSelection = selection.end }
                 let proposed = (dragEndSelection ?? selection.end)
                     + Double(value.translation.width / width) * duration
-                selection.end = max(selection.start + RingtoneRules.minimumDuration, min(duration, min(selection.start + RingtoneRules.maximumDuration, proposed)))
+                selection = StudioTrimRules.adjustedSelection(selection, boundary: .end,
+                    delta: proposed - selection.end, sourceDuration: duration)
             }
             .onEnded { _ in
                 dragEndSelection = nil
