@@ -4,7 +4,7 @@ import {readFile,readdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,resolve} from 'node:path';
 const root=resolve(import.meta.dirname,'..');
-const folders=['ios/Ringify','ios/RingifyTests','packages/RingifyCore/Sources','packages/RingifyCore/Tests'];
+const folders=['ios/Ringify','ios/RingifyTests','ios/RingifyUITests','packages/RingifyCore/Sources','packages/RingifyCore/Tests'];
 async function swiftFiles(folder){
  const entries=await readdir(join(root,folder),{withFileTypes:true});
  return (await Promise.all(entries.map(entry=>entry.isDirectory()?swiftFiles(folder+'/'+entry.name):

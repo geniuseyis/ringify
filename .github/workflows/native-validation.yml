@@ -4,13 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       scope:
-        description: Core only first; iOS includes Simulator tests and Release build
+        description: Core, iOS unit tests, or native UI gallery with unit tests and Release build
         type: choice
         required: true
         default: core
         options:
           - core
           - ios
+          - ui
+      viewport:
+        description: Native UI reference viewport (ignored for core/ios)
+        type: choice
+        required: true
+        default: '390'
+        options:
+          - '390'
+          - '393'
 
 permissions:
   contents: read
@@ -29,6 +38,7 @@ jobs:
       # Apple FB22237318: StoreKitTest CLI fails on iOS 26.5. Keep all tests
       # enabled on the preinstalled 26.2 runtime; do not install or hide failures.
       IOS_VALIDATION_RUNTIME: '26.2'
+      UI_VIEWPORT: ${{ inputs.viewport }}
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified 2026-11-04
@@ -52,7 +62,7 @@ jobs:
           swift test --package-path packages/RingifyCore 2>&1 | tee artifacts/core-test.log
 
       - name: Prepare verified XcodeGen for this temporary runner
-        if: inputs.scope == 'ios'
+        if: inputs.scope != 'core'
         shell: bash
         env:
           XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
@@ -70,19 +80,45 @@ jobs:
           dirname "$binary" >> "$GITHUB_PATH"
 
       - name: Generate Xcode project and test on an available iPhone Simulator
-        if: inputs.scope == 'ios'
+        if: inputs.scope != 'core'
         shell: bash
         run: |
           set -euo pipefail
           xcrun simctl list devices available --json > artifacts/simulators.json
           simulator="$(node scripts/select-ios-simulator.mjs < artifacts/simulators.json)"
+          scheme=Ringify
+          if [[ "$VALIDATION_SCOPE" == ui ]]; then
+            case "$UI_VIEWPORT" in
+              390) device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-13 ;;
+              393) device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-15 ;;
+              *) printf 'Invalid UI reference viewport\n' >&2; exit 1 ;;
+            esac
+            runtime="com.apple.CoreSimulator.SimRuntime.iOS-${IOS_VALIDATION_RUNTIME//./-}"
+            simulator="$(xcrun simctl create "Ringify UI $UI_VIEWPORT" "$device_type" "$runtime")"
+            xcrun simctl boot "$simulator"
+            scheme=RingifyUI
+          fi
           printf 'Selected iOS runtime %s, device %s\n' "$IOS_VALIDATION_RUNTIME" "$simulator"
           (cd ios && xcodegen generate --spec project.yml) 2>&1 | tee artifacts/xcodegen.log
-          xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Debug \
+          test_status=0
+          xcodebuild -project ios/Ringify.xcodeproj -scheme "$scheme" -configuration Debug \
             -destination "platform=iOS Simulator,id=$simulator" -destination-timeout 180 \
             -derivedDataPath "$RUNNER_TEMP/RingifyDerivedData" \
             -resultBundlePath artifacts/Tests.xcresult -parallel-testing-enabled NO \
-            CODE_SIGNING_ALLOWED=NO test 2>&1 | tee artifacts/ios-test.log
+            CODE_SIGNING_ALLOWED=NO test 2>&1 | tee artifacts/ios-test.log || test_status=$?
+          if [[ "$VALIDATION_SCOPE" == ui ]]; then
+            if runner_data="$(xcrun simctl get_app_container "$simulator" com.ringify.app.uitests.xctrunner data)"; then
+              if [[ -d "$runner_data/Documents/RingifyUIScreenshots" ]]; then
+                mkdir -p artifacts/native-ui
+                cp -R "$runner_data/Documents/RingifyUIScreenshots/." artifacts/native-ui/
+              elif [[ "$test_status" -eq 0 ]]; then
+                printf 'UI tests passed but no screenshots were saved\n' >&2; exit 1
+              fi
+            elif [[ "$test_status" -eq 0 ]]; then
+              printf 'UI runner container not found\n' >&2; exit 1
+            fi
+          fi
+          if [[ "$test_status" -ne 0 ]]; then exit "$test_status"; fi
           xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Release \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/RingifyDerivedData" \
