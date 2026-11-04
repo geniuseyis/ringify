@@ -24,8 +24,7 @@ actor AVAudioTrimService: AudioTrimService {
         input.framePosition = first
         var fileSettings = format.settings
         fileSettings[AVLinearPCMIsNonInterleaved] = false
-        let output = try AVAudioFile(forWriting: destinationURL, settings: fileSettings,
-            commonFormat: .pcmFormatFloat32, interleaved: false)
+        let output = try FinalizedPCMWriter(url: destinationURL, settings: fileSettings)
         var completed = false
         defer { if !completed { try? FileManager.default.removeItem(at: destinationURL) } }
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 8_192) else { throw RingifyError.corruptMedia }
@@ -41,6 +40,7 @@ actor AVAudioTrimService: AudioTrimService {
             remaining -= Int64(buffer.frameLength)
         }
         try Task.checkCancellation()
+        output.finish()
         completed = true
         return destinationURL
     }

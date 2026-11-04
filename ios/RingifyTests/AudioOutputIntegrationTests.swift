@@ -59,11 +59,36 @@ final class AudioOutputIntegrationTests: XCTestCase {
         XCTAssertEqual(result.length, 72_000)
         let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: result.processingFormat, frameCapacity: 72_000))
         try result.read(into: buffer)
+        XCTAssertEqual(buffer.frameLength, 72_000)
         let values = try XCTUnwrap(buffer.floatChannelData)[0]
         for i in [0, 10, 8191, 8192, 71_999] {
             XCTAssertEqual(values[i], Float(sin(2 * Double.pi * 440 * Double(i + 6_000) / 48_000) * 0.5))
         }
         XCTAssertEqual(try Data(contentsOf: source), bytes)
+    }
+
+    func testPCMWriterFinalizesBeforeReadAndRejectsFurtherWrites() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("caf")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let format = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1))
+        let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 127))
+        buffer.frameLength = 127
+        let samples = try XCTUnwrap(buffer.floatChannelData)[0]
+        for index in 0..<127 { samples[index] = Float(index - 63) / 128 }
+        let expected = Array(UnsafeBufferPointer(start: samples, count: 127))
+        let writer = try FinalizedPCMWriter(url: url, settings: format.settings)
+        try writer.write(from: buffer)
+        writer.finish()
+        writer.finish()
+        let result = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
+        let read = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: result.processingFormat, frameCapacity: 127))
+        try result.read(into: read)
+        XCTAssertEqual(result.length, 127)
+        XCTAssertEqual(read.frameLength, 127)
+        XCTAssertEqual(Array(UnsafeBufferPointer(start: try XCTUnwrap(read.floatChannelData)[0], count: 127)), expected)
+        let bytes = try Data(contentsOf: url)
+        XCTAssertThrowsError(try writer.write(from: buffer))
+        XCTAssertEqual(try Data(contentsOf: url), bytes)
     }
 
     func testEachRealOutputProfileVerifiesCodecPrecisionDurationAndSource() async throws {
