@@ -1,6 +1,7 @@
-import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { formatTime } from '../lib/format'
 import { timeAtPosition, trimBoundary } from '../lib/waveformCoordinates'
+import {useWaveformPinchZoom} from '../hooks/useWaveformPinchZoom'
 
 interface WaveformProps {
   peaks: number[]
@@ -11,15 +12,38 @@ interface WaveformProps {
   editable?: boolean
   onChange?: (start: number, end: number) => void
   zoom?: number
+  onZoomChange?: (zoom: number) => void
   compact?: boolean
   timeFormatter?: (time: number) => string
+  labels?: {start: string; end: string}
 }
 
 export function Waveform({ peaks, duration, start, end, playhead = start, editable = false,
-  onChange, zoom = 1, compact = false, timeFormatter = formatTime }: WaveformProps) {
+  onChange, zoom = 1, onZoomChange, compact = false, timeFormatter = formatTime,
+  labels = {start: 'Kesim başlangıcı', end: 'Kesim bitişi'} }: WaveformProps) {
   const track = useRef<HTMLDivElement>(null)
+  const viewport = useRef<HTMLDivElement>(null)
+  const [trackWidth, setTrackWidth] = useState(0)
+  useLayoutEffect(() => {
+    const element = track.current
+    if (!editable || !element) return
+    const measure = () => {
+      const width = element.getBoundingClientRect().width
+      if (width > 0) setTrackWidth(width)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [editable])
+  const canPinch = editable && Boolean(onZoomChange)
+  const pinchHandlers = useWaveformPinchZoom({viewport, track, zoom, onZoomChange, enabled: canPinch})
   const safeDuration = Math.max(0.1, duration)
-  const change = (kind: 'start' | 'end', time: number) => onChange?.(...trimBoundary(kind, time, start, end, safeDuration))
+  const crowded = editable && (end - start) / safeDuration * (trackWidth || 300 * zoom) < 44
+  const change = (kind: 'start' | 'end', time: number) => {
+    const next = trimBoundary(kind, time, start, end, safeDuration)
+    if (next[0] !== start || next[1] !== end) onChange?.(...next)
+  }
   const pointer = (kind: 'start' | 'end', event: PointerEvent<HTMLButtonElement>) => {
     const rect = track.current?.getBoundingClientRect()
     if (rect) change(kind, timeAtPosition(event.clientX, rect.left, rect.width, safeDuration))
@@ -35,9 +59,9 @@ export function Waveform({ peaks, duration, start, end, playhead = start, editab
     }
   }
   return (
-    <div className="waveform-viewport">
+    <div ref={viewport} className="waveform-viewport" {...pinchHandlers} style={canPinch ? {touchAction: 'pan-y'} : undefined}>
       <div className="waveform-track" style={{ width: `${Math.max(1, zoom) * 100}%` }}>
-        <div ref={track} data-testid="waveform-track" className={`waveform ${compact ? 'waveform-compact' : ''}`}>
+        <div ref={track} data-testid="waveform-track" className={`waveform ${compact ? 'waveform-compact' : ''}`} style={crowded ? {minHeight: 88} : undefined}>
           <div className="waveform-grid" aria-hidden="true">
             {[0, 25, 50, 75, 100].map((position) => <span key={position} style={{ left: `${position}%` }} />)}
           </div>
@@ -53,8 +77,9 @@ export function Waveform({ peaks, duration, start, end, playhead = start, editab
           <span className="playhead" style={{ left: `${playhead / safeDuration * 100}%` }} aria-hidden="true" />
           {editable ? (['start', 'end'] as const).map((kind) => (
             <button key={kind} type="button" role="slider" className="trim-control"
-              style={{ left: `${(kind === 'start' ? start : end) / safeDuration * 100}%` }}
-              aria-label={kind === 'start' ? 'Kesim başlangıcı' : 'Kesim bitişi'}
+              style={{ left: `${(kind === 'start' ? start : end) / safeDuration * 100}%`,
+                ...(crowded ? {top: kind === 'start' ? '0%' : '50%', height: '50%'} : {}) }}
+              aria-label={labels[kind]}
               aria-valuemin={kind === 'start' ? Math.max(0, end - 29) : start + 1}
               aria-valuemax={kind === 'start' ? end - 1 : Math.min(safeDuration, start + 29)}
               aria-valuenow={kind === 'start' ? start : end}
