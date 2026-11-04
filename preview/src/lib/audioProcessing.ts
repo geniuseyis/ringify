@@ -1,6 +1,7 @@
 import type { AudioEffects } from '../types'
 import {filterStudio,isNeutralStudio,limitPeaks,studioSettings,validateStudioRate} from './studioEffects'
-import {crossfadeOwnedLoop,validateLoopCrossfade} from './loopCrossfade'
+import {crossfadeOwnedLoop,loopOverlapFrames} from './loopCrossfade'
+import {importLimits} from './mediaImportLimits'
 
 export interface AudioSamples {
   sampleRate: number
@@ -22,7 +23,10 @@ export interface ProcessedAudio {
 export function renderSelection(buffer: AudioSamples, start: number, end: number, effects: AudioEffects): ProcessedAudio {
   if(!Number.isInteger(buffer.numberOfChannels)||buffer.numberOfChannels<1||buffer.numberOfChannels>2)throw Error('Yalnız mono/stereo desteklenir / Only mono/stereo is supported')
   if (![start, end, buffer.sampleRate, effects.volume, effects.fadeIn, effects.fadeOut].every(Number.isFinite)
-    || buffer.sampleRate <= 0 || start < 0 || end <= start || end > buffer.length / buffer.sampleRate + 1e-6
+    || !Number.isSafeInteger(buffer.length) || buffer.length < 1
+    || !Number.isInteger(buffer.sampleRate) || buffer.sampleRate <= 0 || buffer.sampleRate > 192000
+    || typeof effects.normalize !== 'boolean'
+    || start < 0 || end <= start || end > buffer.length / buffer.sampleRate + 1e-6
     || effects.volume < 0 || effects.fadeIn < 0 || effects.fadeOut < 0 || buffer.numberOfChannels < 1) {
     throw new Error('Invalid audio selection or effects')
   }
@@ -36,18 +40,24 @@ export function renderSelection(buffer: AudioSamples, start: number, end: number
   const fadeOut = Math.min(effects.fadeOut, duration / 2)
   const studio=studioSettings(effects.studio)
   validateStudioRate(studio,buffer.sampleRate)
+  const outputChannels=studio.channels==='mono'?1:studio.channels==='stereo'?2:count
+  if(length*Math.max(count,outputChannels)*4>importLimits.decodedBytes)throw Error('Audio selection exceeds memory limit')
+  const seconds=effects.loopCrossfade===undefined?0:effects.loopCrossfade
+  loopOverlapFrames(seconds,buffer.sampleRate,length)
+  const inputs=Array.from({length:count},(_,channel)=>buffer.getChannelData(channel))
+  if(inputs.some(channel=>channel.length!==buffer.length))throw Error('Invalid source channel length')
   // Preserve the legacy neutral path byte-for-byte. Only active new settings
   // allocate/filter a selected copy; never process the unselected entire source.
   let selected:Float32Array[]|undefined
   if(!isNeutralStudio(studio)){
-    const copies=Array.from({length:count},(_,channel)=>buffer.getChannelData(channel).slice(first,last))
+    const copies=inputs.map(channel=>channel.slice(first,last))
     if(copies.some(values=>values.length!==length||values.some(value=>!Number.isFinite(value))))throw Error('Invalid audio samples')
     selected=filterStudio(copies,buffer.sampleRate,studio)
   }
   const outputCount=selected?.length??count
   let peak = 0
   for (let channel = 0; channel < outputCount; channel += 1) {
-    const values = selected?.[channel]??buffer.getChannelData(channel)
+    const values = selected?.[channel]??inputs[channel]
     for (let index = selected?0:first; index < (selected?length:last); index += 1) {
       if (!Number.isFinite(values[index])) throw new Error('Invalid audio samples')
       peak = Math.max(peak, Math.abs(values[index]))
@@ -58,7 +68,7 @@ export function renderSelection(buffer: AudioSamples, start: number, end: number
   const appliedGain = peak > 0 ? (studio.limiter?requestedGain:Math.min(requestedGain, 0.99 / peak)) : 0
   if(!Number.isFinite(appliedGain))throw Error('Invalid audio gain')
   const channels = Array.from({ length: outputCount }, (_, channel) => {
-    const input = selected?.[channel]??buffer.getChannelData(channel)
+    const input = selected?.[channel]??inputs[channel]
     const output = new Float32Array(length)
     for (let frame = 0; frame < length; frame += 1) {
       const attack = fadeIn > 0 ? Math.min(1, frame / (fadeIn * buffer.sampleRate)) : 1
@@ -69,8 +79,6 @@ export function renderSelection(buffer: AudioSamples, start: number, end: number
     return output
   })
   if(studio.limiter)limitPeaks(channels,buffer.sampleRate,studio.ceiling)
-  const seconds=effects.loopCrossfade===undefined?0:effects.loopCrossfade
-  validateLoopCrossfade(seconds)
   if(!seconds)return {sampleRate:buffer.sampleRate,channels,length,duration,appliedGain}
   const loop=crossfadeOwnedLoop(channels,buffer.sampleRate,seconds)
   return {sampleRate:buffer.sampleRate,channels:loop.channels,length:loop.length,duration:loop.length/buffer.sampleRate,appliedGain,

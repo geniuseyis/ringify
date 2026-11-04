@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { renderSelection, encodePCMAsWav } from './audioProcessing'
 import { audioFixture } from '../test/audioFixtures'
 import { calculatePeaks } from './audio'
+import { neutralStudio } from './studioEffects'
 
 const neutral = {volume:1,fadeIn:0,fadeOut:0,normalize:false}
 describe('shared playback/export PCM', () => {
@@ -48,5 +49,32 @@ describe('shared playback/export PCM', () => {
   it('waveform includes the right channel and true silence', () => {
     expect(calculatePeaks(audioFixture([[0,0],[0,0.8]],2),2)[1]).toBeCloseTo(0.8)
     expect(calculatePeaks(audioFixture([[0,0]],2),2)).toEqual([0,0])
+  })
+  it.each([NaN,Infinity,-1,0,1.5,Number.MAX_SAFE_INTEGER+1])('rejects invalid frame count %s before reading samples',length=>{
+    const input={...audioFixture([[0.1,0.2]],2),length,getChannelData:vi.fn()}
+    expect(()=>renderSelection(input,0,1,neutral)).toThrow(/Invalid audio/)
+    expect(input.getChannelData).not.toHaveBeenCalled()
+  })
+  it.each([NaN,Infinity,0,-1,1.5,192001])('rejects invalid PCM rate %s before reading samples',sampleRate=>{
+    const input={...audioFixture([[0.1,0.2]],2),sampleRate,getChannelData:vi.fn()}
+    expect(()=>renderSelection(input,0,1,neutral)).toThrow(/Invalid audio/)
+    expect(input.getChannelData).not.toHaveBeenCalled()
+  })
+  it.each([undefined,'false'])('rejects malformed normalize=%s rather than applying a truthy setting',normalize=>{
+    expect(()=>renderSelection(audioFixture([[0.1,0.2]],2),0,1,{...neutral,normalize} as never)).toThrow(/Invalid audio/)
+  })
+  it.each([false,true])('rejects mismatched source channel lengths with filters=%s',filtered=>{
+    const input=audioFixture([Array<number>(8000).fill(.1),Array<number>(7999).fill(.2)],8000)
+    expect(()=>renderSelection(input,0,1,{...neutral,...(filtered?{studio:{...neutralStudio,mid:1}}:{})})).toThrow(/channel length/)
+  })
+  it.each(['original','stereo'] as const)('checks %s output memory before channel access or copies',channels=>{
+    const input={sampleRate:192000,length:7_000_000,numberOfChannels:channels==='original'?2:1,getChannelData:vi.fn()}
+    expect(()=>renderSelection(input,0,input.length/input.sampleRate,{...neutral,studio:{...neutralStudio,channels}})).toThrow(/memory limit/)
+    expect(input.getChannelData).not.toHaveBeenCalled()
+  })
+  it('rejects invalid loop settings before reading or filtering a source',()=>{
+    const input={...audioFixture([[0.1,0.2]],2),getChannelData:vi.fn()}
+    expect(()=>renderSelection(input,0,1,{...neutral,loopCrossfade:.3})).toThrow(/overlap/)
+    expect(input.getChannelData).not.toHaveBeenCalled()
   })
 })
