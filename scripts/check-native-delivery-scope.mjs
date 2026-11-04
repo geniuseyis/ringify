@@ -27,6 +27,9 @@ const allowed=new Set([
  ,'ios/Ringify/Screens/SettingsView.swift'
  ,'ios/Ringify/Resources/Ringify.storekit','shared/pro-offering.json'
  ,'preview/src/screens/PaywallScreen.tsx','preview/src/screens/PaywallScreen.test.tsx','preview/src/lib/proOffering.test.ts'
+ ,'preview/src/lib/segmentSuggestions.ts','preview/src/lib/segmentSuggestions.test.ts'
+ ,'preview/src/screens/SegmentSuggestionsPanel.tsx','preview/src/screens/SegmentSuggestionsPanel.test.tsx'
+ ,'preview/src/hooks/useSegmentPlayer.advanced.test.tsx'
 ]);
 const boundaries=[];
 for(const[file,previous]of Object.entries(baseline.hashes)){
@@ -65,7 +68,7 @@ const report={clientDate:'2026-11-03',scope:'Static source boundaries and real s
  unchangedWebSources:boundaries.filter(x=>x.file.startsWith('preview/src/')&&x.previous===x.current).length,
  newSwiftFiles:Object.keys(parser.files).filter(p=>!baseline.hashes[p]),addedTests:tests.length,tests,
  coreBuild:'Prior stdlib.h/SwiftShims manifest failure; not rerun.',coreTests:'NOT_TESTED',nativeBuild:'NOT_TESTED',nativeTests:'NOT_TESTED',
- webTests:'390/390 Vitest passed, 56 files; TypeScript/Vite passed. Personal preset browser: 26 checks/5 PNG; markers: 10 checks/5 PNG; loop: 25 checks/4 PNG. Lockfile unchanged.'};
+ webTests:'405/405 Vitest passed, 56 files; TypeScript/Vite passed. Reliability browser: 19 checks/2 real PNG. Earlier preset/marker/loop/capacity results are historical. Lockfile unchanged.'};
 await writeFile(join(root,'design/review/native-delivery-scope.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({passed,parserFiles:report.parserFiles,unchangedFiles:report.unchangedFiles,changes:report.changes.length,unchangedWebSources:report.unchangedWebSources,newSwiftFiles:report.newSwiftFiles.length,addedTests:tests.length,testResult:'NOT_TESTED'}));
 if(!passed)process.exitCode=1;
