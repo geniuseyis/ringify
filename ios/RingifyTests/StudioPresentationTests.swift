@@ -44,6 +44,9 @@ import XCTest
     func testHelpSearchUsesTurkishCaseFoldingAndFormatKeywords() {
         let locale = Locale(identifier: "tr_TR")
         XCTAssertTrue(RingifyHelpTopic.permissions.matches(query: "  MİKROFON ", localizedTitle: "Mikrofon ve izinler", locale: locale))
+        XCTAssertTrue(RingifyHelpTopic.permissions.matches(query: "MI\u{0307}KROFON", localizedTitle: "Mikrofon ve izinler", locale: locale))
+        XCTAssertTrue(RingifyHelpTopic.permissions.matches(query: "KAYIT", localizedTitle: "Mikrofon ve izinler", locale: locale))
+        XCTAssertTrue(RingifyHelpTopic.formats.matches(query: "BİÇİMLER", localizedTitle: "Desteklenen biçimler", locale: locale))
         XCTAssertTrue(RingifyHelpTopic.formats.matches(query: "MP3", localizedTitle: "Desteklenen biçimler", locale: locale))
         XCTAssertFalse(RingifyHelpTopic.permissions.matches(query: "mp3", localizedTitle: "Mikrofon ve izinler", locale: locale))
         XCTAssertTrue(RingifyHelpTopic.storage.matches(query: "  ", localizedTitle: "Depolama", locale: locale))

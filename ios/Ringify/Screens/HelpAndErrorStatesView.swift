@@ -48,8 +48,12 @@ enum RingifyHelpTopic: String, CaseIterable, Identifiable {
         case .importFiles: "dosya file import içe aktar video"
         case .storage: "depolama storage proje project sil delete"
         }
-        return (localizedTitle + " " + keywords).folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale)
-            .contains(needle.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale))
+        // Apply locale case conversion before removing the dot from Turkish İ.
+        // A simultaneous case/diacritic fold can turn MİKROFON into mıkrofon.
+        func normalized(_ text: String) -> String {
+            text.lowercased(with: locale).folding(options: .diacriticInsensitive, locale: locale)
+        }
+        return normalized(localizedTitle + " " + keywords).contains(normalized(needle))
     }
 }
 
