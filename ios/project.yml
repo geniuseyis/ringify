@@ -25,8 +25,8 @@ targets:
         excludes:
           - Resources
           - Supporting/Info.plist
-    resources:
       - path: Ringify/Resources
+        buildPhase: resources
         excludes:
           - Ringify.storekit
     info:
@@ -50,8 +50,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: RingifyTests
-    resources:
       - path: Ringify/Resources/Ringify.storekit
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ringify.app.tests
