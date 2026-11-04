@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "RingifyCore",
+    platforms: [.iOS(.v17), .macOS(.v12)],
     products: [
         .library(name: "RingifyCore", targets: ["RingifyCore"])
     ],

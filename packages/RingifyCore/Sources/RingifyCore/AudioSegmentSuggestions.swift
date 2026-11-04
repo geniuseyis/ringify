@@ -31,7 +31,7 @@ public struct AudioSegmentAccumulator: Sendable {
               Double(frameCount) / sampleRate <= 120 else { throw RingifyError.corruptMedia }
         rate = sampleRate; channels = channelCount; expected = frameCount
         span = min(frameCount, Int64((Double(duration.rawValue) * sampleRate).rounded()))
-        let step = max(1, Int64((sampleRate * 0.05).rounded())), last = frameCount - span
+        let step = max(1, Int((sampleRate * 0.05).rounded())), last = frameCount - span
         candidates = stride(from: Int64(0), through: last, by: step).map { Candidate(first: $0) }
         if candidates.last?.first != last { candidates.append(Candidate(first: last)) }
     }
