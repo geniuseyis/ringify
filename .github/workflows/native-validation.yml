@@ -1,0 +1,105 @@
+name: Native validation (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Core only first; iOS includes Simulator tests and Release build
+        type: choice
+        required: true
+        default: core
+        options:
+          - core
+          - ios
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    runs-on: macos-26
+    timeout-minutes: 35
+    env:
+      CI: '1'
+      VALIDATION_SCOPE: ${{ inputs.scope }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified 2026-11-04
+        with:
+          persist-credentials: false
+
+      - name: Record toolchain and prepare logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          sw_vers | tee artifacts/macos.txt
+          xcodebuild -version | tee artifacts/xcode.txt
+          swift --version | tee artifacts/swift.txt
+
+      - name: Build and test RingifyCore
+        shell: bash
+        run: |
+          set -euo pipefail
+          swift build --package-path packages/RingifyCore 2>&1 | tee artifacts/core-build.log
+          swift test --package-path packages/RingifyCore 2>&1 | tee artifacts/core-test.log
+
+      - name: Prepare verified XcodeGen for this temporary runner
+        if: inputs.scope == 'ios'
+        shell: bash
+        env:
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/ringify-xcodegen-2.46.0"
+          mkdir -p "$tools"
+          curl --fail --location --retry 2 --max-time 120 \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.zip \
+            --output "$tools/xcodegen.zip"
+          printf '%s  %s\n' "$XCODEGEN_SHA256" "$tools/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$tools/xcodegen.zip" -d "$tools/unpacked"
+          binary="$(find "$tools/unpacked" -type f -name xcodegen -print | sed -n '1p')"
+          test -n "$binary" && test -x "$binary"
+          dirname "$binary" >> "$GITHUB_PATH"
+
+      - name: Generate Xcode project and test on an available iPhone Simulator
+        if: inputs.scope == 'ios'
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl list devices available --json > artifacts/simulators.json
+          simulator="$(node scripts/select-ios-simulator.mjs < artifacts/simulators.json)"
+          (cd ios && xcodegen generate --spec project.yml) 2>&1 | tee artifacts/xcodegen.log
+          xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Debug \
+            -destination "platform=iOS Simulator,id=$simulator" -destination-timeout 180 \
+            -derivedDataPath "$RUNNER_TEMP/RingifyDerivedData" \
+            -resultBundlePath artifacts/Tests.xcresult -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO test 2>&1 | tee artifacts/ios-test.log
+          xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/RingifyDerivedData" \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee artifacts/ios-release-build.log
+
+      - name: Upload logs and native test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-validation-${{ github.run_id }}-${{ inputs.scope }}
+          path: artifacts/
+          retention-days: 3
+          if-no-files-found: warn
+
+      - name: Explain acceptance limits
+        if: always()
+        shell: bash
+        run: |
+          printf '%s\n' \
+            '## Ringify native validation' \
+            'See individual step results and the uploaded logs. Failed steps are not bypassed.' \
+            'This workflow does not sign, archive, publish, or validate a physical iPhone.' \
+            'StoreKit sandbox purchases, real microphone/audio quality, VoiceOver and App Store acceptance remain separate.' \
+            >> "$GITHUB_STEP_SUMMARY"
