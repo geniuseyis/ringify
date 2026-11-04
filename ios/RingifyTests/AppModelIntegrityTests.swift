@@ -138,7 +138,8 @@ final class AppModelIntegrityTests: XCTestCase {
         model.currentProject = original
         XCTAssertFalse(model.updateCurrentProject { $0.effects.studio.ceiling = .nan })
         XCTAssertEqual(model.currentProject, original)
-        XCTAssertNotNil(model.errorMessage)
+        XCTAssertEqual(model.issue, .corruptFile)
+        XCTAssertNil(model.errorMessage) // Typed issues use localized UI text, not raw diagnostics.
     }
 
     func testUnavailableStoreNeverAcceptsEphemeralWrites() async {
