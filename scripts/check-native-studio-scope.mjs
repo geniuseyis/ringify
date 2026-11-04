@@ -14,7 +14,17 @@ const allowed = new Set([
     'PresentationSupportViews','RingtoneGuideView','RingtonePreviewView','SettingsView',
     'VoiceRecorderView'].map(name => `Screens/${name}.swift`)
 ].map(file => `ios/Ringify/${file}`));
-const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/RingifyTests/StudioPresentationTests.swift'];
+// Approved P02 geometry/gesture package. Keep DSP, persistence and all other
+// web modules protected rather than widening the entire preview scope.
+for (const file of ['components/Waveform.tsx','components/Waveform.test.tsx','screens/StudioScreen.tsx','lib/waveformCoordinates.ts','lib/waveformCoordinates.test.ts']) {
+  allowed.add(`preview/src/${file}`);
+}
+const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/RingifyTests/StudioPresentationTests.swift',
+  'ios/Ringify/DesignSystem/StudioZoomRules.swift', 'ios/RingifyTests/StudioZoomRulesTests.swift',
+  'ios/Ringify/DesignSystem/StudioTrimRules.swift', 'ios/RingifyTests/StudioTrimRulesTests.swift',
+  'ios/Ringify/Screens/StudioSelectionPersistence.swift','ios/RingifyTests/StudioSelectionPersistenceTests.swift',
+  'preview/src/hooks/useWaveformPinchZoom.ts','preview/src/lib/waveformZoom.ts',
+  'preview/src/lib/waveformZoom.test.ts','preview/src/components/WaveformPinch.test.tsx'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
 for (const [file, before] of Object.entries(baseline.hashes)) {
@@ -31,10 +41,10 @@ async function walk(folder) {
 }
 const current = (await Promise.all(['ios/Ringify','ios/RingifyTests','preview/src','packages/RingifyCore/Sources','packages/RingifyCore/Tests'].map(walk))).flat();
 const added = current.filter(file => !(file in baseline.hashes));
-check('Only documented native theme and XCTest sources added', added.length === additions.length && added.every(file => additions.includes(file)), added);
+check('Only documented presentation, interaction and test sources added', added.length === additions.length && added.every(file => additions.includes(file)), added);
 for (const [label, prefix] of Object.entries({web:'preview/', core:'packages/RingifyCore/', services:'ios/Ringify/Services/', viewModels:'ios/Ringify/ViewModels/', resources:'ios/Ringify/Resources/'})) {
-  const files = Object.keys(baseline.hashes).filter(file => file.startsWith(prefix));
-  check(`${label} byte-for-byte unchanged`, files.length > 0 && files.every(file => unchanged.includes(file)), {files: files.length});
+  const files = Object.keys(baseline.hashes).filter(file => file.startsWith(prefix) && !allowed.has(file));
+  check(`${label} protected files byte-for-byte unchanged`, files.length > 0 && files.every(file => unchanged.includes(file)), {files: files.length});
 }
 // These declarations contain no brace-bearing literal text; balanced extraction
 // compares the complete approved palette/operation implementations, not snippets.
