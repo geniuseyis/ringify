@@ -38,26 +38,33 @@ export class SegmentPlayer {
       const pcm = renderSelection(this.input, this.start, this.end, this.effects)
       this.duration = pcm.duration
       this.sourceOffset = pcm.sourceOffset ?? 0
-      this.rendered = this.context.createBuffer(pcm.channels.length, pcm.length, pcm.sampleRate)
-      pcm.channels.forEach((values, channel) => this.rendered!.getChannelData(channel).set(values))
+      const rendered = this.context.createBuffer(pcm.channels.length, pcm.length, pcm.sampleRate)
+      pcm.channels.forEach((values, channel) => rendered.getChannelData(channel).set(values))
+      this.rendered = rendered
     }
     if (this.offset >= this.duration - 1e-6) this.offset = 0
     const source = this.context.createBufferSource()
-    source.buffer = this.rendered
-    source.loop = this.looping
-    source.loopStart = 0
-    source.loopEnd = this.duration
-    source.connect(this.context.destination)
-    source.onended = () => {
-      if (this.source !== source) return
-      this.detach()
-      this.active = false
-      this.offset = 0
-    }
     this.source = source
-    this.startedAt = this.context.currentTime
-    this.active = true
-    source.start(0, this.offset)
+    try {
+      source.buffer = this.rendered
+      source.loop = this.looping
+      source.loopStart = 0
+      source.loopEnd = this.duration
+      source.connect(this.context.destination)
+      source.onended = () => {
+        if (this.source !== source) return
+        this.detach()
+        this.active = false
+        this.offset = 0
+      }
+      this.startedAt = this.context.currentTime
+      source.start(0, this.offset)
+      this.active = true
+    } catch (error) {
+      this.active = false
+      this.detach()
+      throw error
+    }
   }
   private detach() {
     if (!this.source) return

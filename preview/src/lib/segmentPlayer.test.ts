@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { SegmentPlayer } from './segmentPlayer'
 import { FakeAudioContext, audioFixture } from '../test/audioFixtures'
 const effects = {volume:1,fadeIn:0.1,fadeOut:0.1,normalize:false}
@@ -37,5 +37,43 @@ describe('selection playback clock', () => {
     const pending = instance.play(); instance.stop(); resume(); await pending
     expect(context.sources).toHaveLength(0)
     expect(instance.isPlaying).toBe(false)
+  })
+  it.each(['connect','start'] as const)('cleans up a failed %s and retries from the paused position',async method=>{
+    const {context,instance}=player()
+    await instance.play();context.currentTime=1.25;instance.pause()
+    const create=context.createBufferSource.bind(context)
+    let disconnected=0
+    vi.spyOn(context,'createBufferSource').mockImplementationOnce(()=>{
+      const source=create()
+      vi.spyOn(source,'disconnect').mockImplementation(()=>{disconnected++})
+      vi.spyOn(source,method).mockImplementationOnce(()=>{throw Error('Audio device failure')})
+      return source
+    })
+    await expect(instance.play()).rejects.toThrow('Audio device failure')
+    expect(instance.isPlaying).toBe(false)
+    expect(instance.position).toBe(1.25)
+    expect(disconnected).toBe(1)
+    expect(context.sources[1].onended).toBeNull()
+    context.currentTime=10;await instance.play()
+    expect(instance.isPlaying).toBe(true)
+    expect(context.sources[2].starts).toEqual([1.25])
+  })
+  it('discards a partially copied stereo buffer before retrying',async()=>{
+    const context=new FakeAudioContext()
+    const instance=new SegmentPlayer(context as unknown as AudioContext,audioFixture([[.1,.2],[.3,.4]],2),0,1,{...effects,fadeIn:0,fadeOut:0})
+    const create=context.createBuffer.bind(context)
+    const createBuffer=vi.spyOn(context,'createBuffer').mockImplementationOnce((...args)=>{
+      const buffer=create(...args),channel=buffer.getChannelData.bind(buffer)
+      buffer.getChannelData=index=>{if(index===1)throw Error('Buffer unavailable');return channel(index)}
+      return buffer
+    })
+    await expect(instance.play()).rejects.toThrow('Buffer unavailable')
+    expect(instance.isPlaying).toBe(false);expect(context.sources).toHaveLength(0)
+    await instance.play()
+    expect(createBuffer).toHaveBeenCalledTimes(2)
+    expect(context.sources[0].buffer!.numberOfChannels).toBe(2)
+    expect(context.sources[0].buffer!.getChannelData(0)[0]).toBeCloseTo(.1)
+    expect(context.sources[0].buffer!.getChannelData(1)[0]).toBeCloseTo(.3)
+    expect(context.sources[0].buffer!.getChannelData(1)[1]).toBeCloseTo(.4)
   })
 })
