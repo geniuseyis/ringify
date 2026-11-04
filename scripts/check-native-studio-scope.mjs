@@ -19,12 +19,31 @@ const allowed = new Set([
 for (const file of ['components/Waveform.tsx','components/Waveform.test.tsx','screens/StudioScreen.tsx','lib/waveformCoordinates.ts','lib/waveformCoordinates.test.ts']) {
   allowed.add(`preview/src/${file}`);
 }
+// Approved P04/P05 web-only PCM guards, playback rollback and bounded limiter.
+// Native services, Core, IndexedDB and purchase sources remain protected.
+for (const file of ['audioProcessing.ts','audioProcessing.test.ts','segmentPlayer.ts','segmentPlayer.test.ts','studioEffects.ts']) {
+  allowed.add(`preview/src/lib/${file}`);
+}
+// Real macOS failure 41915100338: minimum Apple platforms and Int64.Stride.
+allowed.add('packages/RingifyCore/Package.swift');
+allowed.add('packages/RingifyCore/Sources/RingifyCore/AudioSegmentSuggestions.swift');
+allowed.add('packages/RingifyCore/Tests/RingifyCoreTests/ProjectExportStateTests.swift');
+// Real iOS failure 41916450785: delegate isolation and stale player regression.
+allowed.add('ios/Ringify/Services/AVAudioPlaybackService.swift');
+allowed.add('ios/RingifyTests/AudioIntegrityIntegrationTests.swift');
+// Real Simulator run 41918375556: PCM finalization and typed issue assertions.
+allowed.add('ios/project.yml'); // Resource phases were not being generated.
+allowed.add('ios/Ringify/Services/AVAudioTrimService.swift');
+allowed.add('ios/RingifyTests/AudioOutputIntegrationTests.swift');
+allowed.add('ios/RingifyTests/AppModelIntegrityTests.swift');
 const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/RingifyTests/StudioPresentationTests.swift',
   'ios/Ringify/DesignSystem/StudioZoomRules.swift', 'ios/RingifyTests/StudioZoomRulesTests.swift',
   'ios/Ringify/DesignSystem/StudioTrimRules.swift', 'ios/RingifyTests/StudioTrimRulesTests.swift',
   'ios/Ringify/Screens/StudioSelectionPersistence.swift','ios/RingifyTests/StudioSelectionPersistenceTests.swift',
   'preview/src/hooks/useWaveformPinchZoom.ts','preview/src/lib/waveformZoom.ts',
-  'preview/src/lib/waveformZoom.test.ts','preview/src/components/WaveformPinch.test.tsx'];
+  'preview/src/lib/waveformZoom.test.ts','preview/src/components/WaveformPinch.test.tsx',
+  'preview/src/lib/peakLimiter.test.ts',
+  'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
 for (const [file, before] of Object.entries(baseline.hashes)) {
@@ -34,7 +53,7 @@ for (const [file, before] of Object.entries(baseline.hashes)) {
     else { changed.push({file, before, after}); if (!allowed.has(file)) unexpected.push(file); }
   } catch (error) { unexpected.push(`${file}: ${error.code}`); }
 }
-check('No baseline source removed; changes confined to presentation allowlist', unexpected.length === 0, {unexpected});
+check('No baseline source removed; changes confined to documented UI/audio/build fixes', unexpected.length === 0, {unexpected});
 async function walk(folder) {
   const entries = await readdir(join(root, folder), {withFileTypes: true});
   return (await Promise.all(entries.map(row => row.isDirectory() ? walk(`${folder}/${row.name}`) : [`${folder}/${row.name}`]))).flat();

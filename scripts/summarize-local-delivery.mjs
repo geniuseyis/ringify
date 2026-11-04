@@ -19,26 +19,64 @@ const stale = [];
 for (const [file, expected] of Object.entries(parser.files)) {
   if(createHash('sha256').update(await readFile(join(root,file))).digest('hex') !== expected) stale.push(file);
 }
+let coreEvidence;
+try { coreEvidence = JSON.parse(await read('design/review/native-core-validation.json')); }
+catch (error) { if(error.code !== 'ENOENT') throw error; }
+const staleCore = [];
+for (const [file, expected] of Object.entries(coreEvidence?.sourceHashes ?? {})) {
+  if(createHash('sha256').update((await read(file)).replace(/\r\n/g,'\n')).digest('hex') !== expected) staleCore.push(file);
+}
+const testedCore = coreEvidence?.runs.find(run => run.id === coreEvidence.successfulRun);
+const coreCurrent = testedCore?.conclusion === 'success' && Object.keys(coreEvidence.sourceHashes).length > 0 && staleCore.length === 0;
+let actionsEvidence;
+try { actionsEvidence = JSON.parse(await read('design/review/native-actions.json')); }
+catch (error) { if(error.code !== 'ENOENT') throw error; }
+const latestIOS = actionsEvidence?.runs.find(run => run.scope === 'ios');
+const iosResult = latestIOS ? (latestIOS.status === 'completed' ? (latestIOS.conclusion === 'success' ? 'PASS' : 'FAIL') : latestIOS.status.toUpperCase()) : 'NOT_TESTED';
+let iosEvidence;
+try { iosEvidence = JSON.parse(await read('design/review/native-ios-validation.json')); }
+catch (error) { if(error.code !== 'ENOENT') throw error; }
+const lastIOSExecution = iosEvidence?.runs.at(-1);
+const staleIOSSources = [];
+for(const [file,expected] of Object.entries(iosEvidence?.sourceHashes ?? {})) {
+  const bytes = await readFile(join(root,file));
+  const source = /\.(swift|yml|plist|json|strings|storekit|xcprivacy)$/.test(file) ? bytes.toString('utf8').replace(/\r\n/g,'\n') : bytes;
+  if(createHash('sha256').update(source).digest('hex') !== expected) staleIOSSources.push(file);
+}
+const iosCurrent = lastIOSExecution?.debugBuild === 'PASS' && lastIOSExecution?.releaseBuild === 'PASS' && lastIOSExecution?.tests?.failed === 0 && Object.keys(iosEvidence.sourceHashes).length > 0 && staleIOSSources.length === 0;
+const addedClasses = addedXCTestFiles.map(file=>file.split('/').at(-1).replace('.swift',''));
+const recordedAddedCases = lastIOSExecution?.testCases.filter(test=>addedClasses.includes(test.suite)) ?? [];
+const staleAddedTests = [];
+for(const file of addedXCTestFiles) {
+  if(iosEvidence && createHash('sha256').update((await read(file)).replace(/\r\n/g,'\n')).digest('hex') !== iosEvidence.sourceHashes[file]) staleAddedTests.push(file);
+}
+const addedResult = recordedAddedCases.length === addedXCTestMethods && recordedAddedCases.every(test=>test.result === 'PASS') && staleAddedTests.length === 0 ? 'PASS' : (recordedAddedCases.length ? 'FAIL_OR_RETEST_PENDING' : 'NOT_TESTED');
 const report = {
-  date: '2026-11-04', scope: 'Local source delivery; not App Store readiness or native runtime acceptance.',
+  date: new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), scope: 'Local source delivery; not App Store readiness or native runtime acceptance.',
   web: {testResult:tests.success && tests.numFailedTests === 0 ? 'PASS' : 'FAIL',
     passed:tests.numPassedTests,total:tests.numTotalTests,files:tests.testResults.length,
     build:/built in \d/.test(buildLog) ? 'PASS' : 'FAIL',
-    dependencyAudit:audit.metadata?.vulnerabilities ?? null},
+    dependencyAudit:audit.metadata?.vulnerabilities ?? null,
+    dependencyAuditScope:'Previously recorded audit; dependencies and lockfile unchanged in this delivery.'},
   native: {implementation:'IMPLEMENTED_NOT_TESTED', parser:parser.passed && stale.length === 0 ? 'PASS' : 'FAIL',
     parsedFiles:Object.keys(parser.files).length,staleParserEvidence:stale,
     sourceChecks:{passed:scope.checks.filter(row=>row.passed).length,total:scope.checks.length,unchanged:scope.unchanged.length,changed:scope.changed.length,added:scope.added.length},
     releaseStaticChecks:{passed:release.checks.filter(row=>row.passed).length,total:release.checks.length},
-    addedXCTestMethods,addedXCTestFiles,addedXCTestResult:'NOT_TESTED',
-    coreBuild:'FAIL: manifest C runtime/header configuration (previous recorded attempt; not rerun without environment changes)',
-    coreTest: /SwiftShims/.test(swiftLog) ? 'FAIL: manifest SwiftShims; test runner did not start' : 'REVIEW_LOG',
-    iosBuild:'NOT_TESTED',runtimeAndVisualAcceptance:'BLOCKED_BY_MACOS'},
+    addedXCTestMethods,addedXCTestFiles,addedXCTestResult:addedResult,
+    addedXCTestEvidence:lastIOSExecution ? {run:lastIOSExecution.id,passed:recordedAddedCases.filter(test=>test.result==='PASS').length,failed:recordedAddedCases.filter(test=>test.result==='FAIL').length,staleSources:staleAddedTests} : null,
+    coreBuild:coreEvidence ? (coreCurrent ? testedCore.build : 'STALE_EVIDENCE') : 'FAIL: Windows manifest C runtime/header configuration (previous recorded attempt)',
+    coreTest:coreEvidence ? (coreCurrent && testedCore.tests?.failed === 0 ? 'PASS' : 'REVIEW_LOG') : (/SwiftShims/.test(swiftLog) ? 'FAIL: Windows manifest SwiftShims; test runner did not start' : 'REVIEW_LOG'),
+    coreMacEvidence:coreEvidence ? {run:coreEvidence.successfulRun,tests:testedCore?.tests,staleSources:staleCore} : null,
+    iosWorkflow:latestIOS ? {result:iosResult,run:latestIOS.id,sha:latestIOS.sha,url:latestIOS.url,scope:'Recorded workflow result; physical device and visual acceptance are separate.'} : null,
+    iosLastExecution:lastIOSExecution ? {run:lastIOSExecution.id,sha:lastIOSExecution.sha,debugBuild:lastIOSExecution.debugBuild,tests:lastIOSExecution.tests,releaseBuild:lastIOSExecution.releaseBuild,staleSources:staleIOSSources} : null,
+    iosBuild:iosResult === 'PASS' && !iosCurrent ? 'STALE_EVIDENCE' : iosResult,
+    runtimeAndVisualAcceptance:iosCurrent ? 'PARTIAL: native unit/fixture acceptance PASS; UI/device acceptance pending' : (coreEvidence ? 'NOT_TESTED' : 'BLOCKED_BY_MACOS')},
   releaseReady:false,
   userConfirmedPending:['Apple Developer Team ID','Real HTTPS privacy/support URLs','App Store Connect products'],
-  remaining:['Core/Apple SDK build and tests','Native simulator and device visual/accessibility acceptance',
+  remaining:[...(!iosCurrent ? [coreCurrent ? 'Apple SDK final tests and Release acceptance' : 'Core/Apple SDK build and tests'] : []),'Native simulator and device visual/accessibility acceptance',
     'AVFoundation codec/PCM/recording acceptance','SwiftData disk migration, journal and rollback acceptance',
     'StoreKit sandbox, 20 slot products, restore/refund/expiry','Signing, metadata, Archive, TestFlight and App Review'],
-  evidence:['final-web-tests.json','final-web-build.log','final-npm-audit.json','native-studio-scope.json','release-audit.json','native-syntax.json','final-swift-test.log']
+  evidence:['final-web-tests.json','final-web-build.log','final-npm-audit.json','native-studio-scope.json','release-audit.json','native-syntax.json','final-swift-test.log',...(coreEvidence?['native-core-validation.json']:[]),...(actionsEvidence?['native-actions.json']:[]),...(iosEvidence?['native-ios-validation.json']:[])]
 };
 await writeFile(join(root,'design/review/local-delivery.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report,null,2));
