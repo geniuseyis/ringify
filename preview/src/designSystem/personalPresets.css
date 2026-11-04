@@ -1,0 +1,11 @@
+.personal-presets{margin:0 0 18px;padding:0 14px;border-radius:var(--n-radius-card);background:var(--n-surface)}
+.personal-presets>summary{min-height:60px;padding:18px 0;font-weight:600;cursor:pointer}
+.personal-presets form{display:grid;gap:10px;padding:14px 0;border-top:1px solid var(--n-line)}
+.personal-presets input{min-width:0;width:100%;min-height:44px;border:1px solid var(--n-line);border-radius:10px;background:var(--n-bg);color:var(--n-text);font:inherit;padding:10px}
+.personal-presets button{min-width:44px;min-height:44px;border:1px solid var(--n-line);border-radius:10px;background:var(--n-bg);color:var(--n-text);font:inherit;padding:9px 12px;cursor:pointer}
+.personal-presets button:disabled{opacity:.6;cursor:default}.personal-presets button:focus-visible,.personal-presets input:focus-visible{outline:2px solid var(--n-accent);outline-offset:3px}
+.personal-presets .preset-actions{display:flex;flex-wrap:wrap;gap:8px}.personal-presets .preset-row{display:flex;align-items:center;gap:6px;padding:10px 0;border-top:1px solid var(--n-line)}
+.personal-presets .preset-apply{flex:1;min-width:0;text-align:start;overflow-wrap:anywhere}.personal-presets .preset-row>button:not(.preset-apply){display:grid;place-items:center;flex-shrink:0;padding:8px}
+.personal-presets .preset-confirm{border:1px solid var(--n-line);border-radius:12px;padding:12px;margin:8px 0}.personal-presets .preset-confirm button+button{margin-inline-start:8px}
+.personal-presets p{font-size:var(--n-type-caption);line-height:1.5}.personal-presets [role=alert]{padding:10px 0;color:var(--n-text)}
+@media(prefers-reduced-motion:no-preference){.personal-presets button{transition:background 160ms ease,transform 160ms ease}.personal-presets button:active:not(:disabled){transform:scale(.985)}}
