@@ -1,0 +1,67 @@
+{
+  "checks": [
+    {
+      "name": "All 66 actual local PNGs decode",
+      "passed": true,
+      "evidence": 66
+    },
+    {
+      "name": "PNG dimensions match captured viewports",
+      "passed": true
+    },
+    {
+      "name": "light 390 filters show all correct comparisons",
+      "passed": true
+    },
+    {
+      "name": "light 393 filters show all correct comparisons",
+      "passed": true
+    },
+    {
+      "name": "dark 390 filters show all correct comparisons",
+      "passed": true
+    },
+    {
+      "name": "dark 393 filters show all correct comparisons",
+      "passed": true
+    },
+    {
+      "name": "Screen filter selects the requested comparison",
+      "passed": true
+    },
+    {
+      "name": "Screenshot opens in a real accessible dialog",
+      "passed": true
+    },
+    {
+      "name": "Escape dismisses the image viewer and restores focus",
+      "passed": true
+    },
+    {
+      "name": "1200 gallery has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "390 gallery has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "320 gallery has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Expanded accessibility gallery fits 320px",
+      "passed": true
+    },
+    {
+      "name": "Gallery has no browser exceptions",
+      "passed": true,
+      "evidence": []
+    },
+    {
+      "name": "Final app captures have no undersized visible controls",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
