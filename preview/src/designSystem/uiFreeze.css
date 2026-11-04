@@ -1,0 +1,68 @@
+/* Apple V2 UI hierarchy. Shared only by the redesigned management flows. */
+.uf-detail-nav{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:4px;min-height:58px;padding:5px 12px;border-bottom:1px solid var(--n-line);background:var(--n-bg);flex:none}
+.uf-detail-nav>button{display:grid;place-items:center;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--n-accent)}
+.uf-detail-nav h1{margin:0;min-width:0;text-align:center;font-size:var(--n-type-body);line-height:1.3;font-weight:600;letter-spacing:-.02em;overflow-wrap:anywhere;outline:none}
+.uf-detail-nav>span{display:flex;justify-content:flex-end}
+.uf-settings .screen-content,.uf-help .screen-content{display:flex;flex-direction:column;min-height:0;height:100%}
+.uf-settings-body{display:flex;flex-direction:column;min-height:0;height:100%}
+.uf-settings .m5-title-row{padding:18px var(--n-inset) 8px;margin:0;flex:none}
+.uf-settings .m5-title-row h1{margin:0;color:var(--n-text)}
+.uf-settings .uf-settings-content{padding:12px var(--n-inset) 28px;min-height:0;overflow-y:auto}
+.uf-group{margin:0 0 26px}.uf-group>h2{margin:0 12px 8px;font-size:var(--n-type-caption);color:var(--n-secondary);font-weight:400}
+.uf-group-list{overflow:hidden;border-radius:var(--n-radius-card);background:var(--n-surface)}
+.uf-group-list>*+*{border-top:1px solid var(--n-line)}
+.uf-setting-row{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:13px 14px;border:0;background:transparent;color:var(--n-text);text-align:left;font:inherit}
+.uf-setting-icon{display:grid;place-items:center;width:26px;flex:none;color:var(--n-accent)}
+.uf-setting-label{flex:1;min-width:0;font-size:var(--n-type-body);line-height:1.35;overflow-wrap:anywhere}
+.uf-setting-row small{max-width:42%;font-size:var(--n-type-caption);color:var(--n-secondary);text-align:right;overflow-wrap:anywhere}
+.uf-setting-row>svg:last-child{flex:none;color:var(--n-secondary)}
+.uf-setting-row[aria-pressed=true]{color:var(--n-accent);background:var(--n-soft)}
+.uf-account-row{display:flex;align-items:center;gap:12px;width:100%;min-height:78px;padding:16px 14px;border:0;background:transparent;color:var(--n-text);text-align:left;font:inherit}
+.uf-account-crown{display:grid;place-items:center;flex:none;width:46px;height:46px;border-radius:12px;background:var(--n-soft);color:var(--n-accent)}
+.uf-account-row>span:nth-child(2){display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.uf-account-row strong{font-size:var(--n-type-headline);font-weight:600}.uf-account-row small{font-size:var(--n-type-caption);color:var(--n-secondary)}
+.uf-account-row>svg{color:var(--n-secondary);flex:none}
+.uf-about{text-align:center;font-size:var(--n-type-caption);color:var(--n-secondary);margin:0;padding:0 0 12px}
+.uf-detail-intro{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:18px 2px 24px;color:var(--n-accent)}
+.uf-detail-intro h2,.uf-prose h2{font-size:var(--n-type-title2);line-height:1.25;letter-spacing:-.03em;color:var(--n-text);margin:0;overflow-wrap:anywhere}
+.uf-detail-intro p,.uf-prose p{margin:0;line-height:1.6;font-size:var(--n-type-body);color:var(--n-secondary)}
+.uf-info-list{padding:0 14px;margin:0 0 24px;background:var(--n-surface);border-radius:var(--n-radius-card);overflow:hidden}
+.uf-info-list>div{display:flex;gap:16px;align-items:baseline;justify-content:space-between;padding:15px 0}.uf-info-list>div+div{border-top:1px solid var(--n-line)}
+.uf-info-list dt{font-size:var(--n-type-caption);color:var(--n-secondary)}.uf-info-list dd{font-size:var(--n-type-body);color:var(--n-text);margin:0;text-align:right;overflow-wrap:anywhere;min-width:0}
+.uf-prose{display:flex;flex-direction:column;gap:18px;padding:18px 0 24px;color:var(--n-accent)}
+.uf-prose a{min-height:44px;display:flex;align-items:center;color:var(--n-accent);overflow-wrap:anywhere}
+.uf-storage-summary{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 14px 30px;color:var(--n-accent)}
+.uf-storage-summary strong{font-size:var(--n-type-largeTitle);letter-spacing:-.04em;color:var(--n-text);overflow-wrap:anywhere}
+.uf-storage-summary span,.uf-storage-summary small{color:var(--n-secondary);font-size:var(--n-type-caption)}
+.uf-danger-button{width:100%;min-height:48px;padding:12px;border:0;border-radius:var(--n-radius-control);background:var(--r-danger);color:var(--r-on-action);font:inherit;font-weight:600}
+.uf-setting-row.is-danger{color:var(--r-danger)}.uf-setting-row.is-danger .uf-setting-icon{color:var(--r-danger)}
+:is(.uf-settings,.uf-help,.uf-library) :is(button,a,input,select):focus-visible{outline:2px solid var(--n-accent);outline-offset:2px}
+.uf-help .uf-help-workspace{flex:1;overflow-y:auto;min-height:0;padding:16px var(--n-inset) 26px}
+.uf-help .c7-search{margin:0 0 18px}.uf-help .c7-section-heading{margin-top:22px}
+.uf-help .uf-topic-row{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;border:0;padding:13px 14px;background:transparent;color:var(--n-text);font:inherit;font-size:var(--n-type-body)}
+.uf-topic-row>span{flex:1;min-width:0;line-height:1.35;overflow-wrap:anywhere}.uf-topic-row>svg{flex:none;color:var(--n-accent)}
+.uf-topic-row>svg:last-child{color:var(--n-secondary)}.uf-help .uf-help-answer{padding:22px 0 12px;display:flex;flex-direction:column;gap:22px}
+.uf-help-answer>p{margin:0;font-size:var(--n-type-body);line-height:1.7;color:var(--n-secondary)}
+.uf-help-answer .uf-topic-symbol{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:var(--n-soft);color:var(--n-accent)}
+.uf-help .uf-help-caption{font-size:var(--n-type-caption);color:var(--n-secondary);margin:0 0 12px}
+.uf-library .uf-library-toolbar{display:flex;align-items:center;gap:8px;margin:2px 0 12px}
+.uf-library-toolbar>button{min-height:44px;border:0;background:transparent;color:var(--n-accent);font:inherit;font-size:var(--n-type-caption);display:flex;align-items:center;justify-content:center;gap:6px;padding:8px}
+.uf-library-toolbar>button:first-child{padding-left:0}.uf-library-toolbar>button:last-child{margin-left:auto;flex:none;width:44px}
+.uf-library-toolbar>button[aria-pressed=true]{font-weight:600}.uf-library-toolbar>button>span{color:var(--n-secondary);font-variant-numeric:tabular-nums}
+.uf-library .uf-filter-heading{display:flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--n-secondary);font-size:var(--n-type-caption)}
+.uf-filter-heading strong{font-weight:500;flex:1}.uf-filter-heading button{min-height:44px;border:0;background:transparent;color:var(--n-accent);font:inherit}
+.uf-library .m5-library-summary{margin-bottom:12px}.uf-library .m5-search-row{margin-bottom:12px}.uf-library .m5-filters{margin-bottom:0}
+.uf-library .m5-title-row{margin-bottom:10px}.uf-library .m5-project-main{min-height:86px}
+.uf-library .m5-project-copy small{display:none}.uf-library .m5-project-icon{width:46px;height:46px}
+.uf-library .m5-project-meta{font-size:var(--n-type-caption)}.uf-library .m5-project-copy em{font-size:var(--n-type-caption)}
+.uf-library .m5-project-copy strong{font-weight:600}.uf-library .m5-project-copy em{margin-left:8px}
+.uf-library .uf-project-details{padding:12px 0}.uf-project-details .uf-info-list{background:var(--n-bg)}
+.uf-library .uf-sheet-section-title{font-size:var(--n-type-headline);margin:0;color:var(--n-text)}
+.uf-library .library-tool-sheet label{font-size:var(--n-type-body);color:var(--n-text)}
+.uf-library .uf-sheet-back{display:flex;align-items:center;gap:6px;border:0!important;padding-left:0!important;align-self:flex-start}
+.uf-library .library-tool-sheet select{width:100%;min-height:46px;border:1px solid var(--n-line);border-radius:var(--n-radius-control);background:var(--n-surface);color:var(--n-text);font:inherit;padding:10px 12px}
+.uf-library .library-tool-sheet>button{display:flex;align-items:center;justify-content:center;gap:8px}
+.uf-collection-row{display:flex;align-items:center;gap:8px}.uf-collection-row>button:first-child{flex:1;display:flex;gap:10px;align-items:center;text-align:left;min-width:0}
+.uf-collection-row>button:first-child span{flex:1;overflow-wrap:anywhere}.uf-collection-row small{color:var(--n-secondary)}.uf-collection-row>button:last-child{flex:none;width:44px;padding:0}
+@container(max-width:330px){.uf-info-list>div{flex-direction:column;gap:5px}.uf-info-list dd{text-align:left}.uf-setting-row{flex-wrap:wrap}.uf-setting-row small{max-width:100%}.uf-library-toolbar>button{font-size:var(--n-type-caption)}}
+@media(prefers-reduced-motion:reduce){:is(.uf-settings,.uf-help,.uf-library) *{scroll-behavior:auto}}

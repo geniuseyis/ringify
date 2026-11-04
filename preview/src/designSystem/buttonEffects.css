@@ -1,0 +1,75 @@
+/* Accent actions only. Decorative layers never intercept input or run continuously. */
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create) {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  box-shadow:var(--r-shadow-action);
+}
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create)::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  border-radius:inherit;
+  pointer-events:none;
+  background:linear-gradient(115deg,transparent 28%,rgba(255,255,255,.20) 49%,transparent 70%);
+  opacity:0;
+  transform:translateX(-120%);
+}
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create,.r-secondary,.w6-back) {
+  transition:box-shadow var(--r-quick),transform var(--r-motion-buttonSpring) cubic-bezier(.2,.8,.2,1);
+}
+.v2-screen :is(.r-secondary,.w6-back) {
+  box-shadow:var(--r-shadow-secondaryAction);
+}
+@media(hover:hover) and (pointer:fine) {
+  .v2-screen :is(.r-primary,.m5-new,.r-play,.r-create):hover:not(:disabled):not([aria-disabled=true]) {
+    box-shadow:var(--r-shadow-actionHover);
+  }
+  .v2-screen :is(.r-primary,.m5-new,.r-play,.r-create):hover:not(:disabled):not([aria-disabled=true])::after {
+    animation:ringify-button-sheen var(--r-motion-buttonSheen) ease-out;
+  }
+  .v2-screen :is(.r-secondary,.w6-back):hover:not(:disabled):not([aria-disabled=true]) {
+    box-shadow:var(--r-shadow-secondaryHover);
+  }
+}
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create):active:not(:disabled):not([aria-disabled=true]) {
+  box-shadow:var(--r-shadow-actionPressed);
+}
+.v2-screen :is(.r-secondary,.w6-back):active:not(:disabled):not([aria-disabled=true]) {
+  box-shadow:var(--r-shadow-secondaryPressed);
+}
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create,.r-secondary,.w6-back):is(:disabled,[aria-disabled=true]) {
+  box-shadow:none;
+}
+/* Keep the keyboard ring distinct from the decorative glow, including download links. */
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create,.r-secondary,.w6-back):focus-visible {
+  outline:var(--r-focus-width) solid var(--r-accent);
+  outline-offset:var(--r-focus-offset);
+}
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create):focus-visible:not(:disabled):not([aria-disabled=true])::after {
+  animation:ringify-button-sheen var(--r-motion-buttonSheen) ease-out;
+}
+.v2-screen :is(.r-primary,.m5-new,.r-play,.r-create):is(:disabled,[aria-disabled=true])::after {
+  display:none;
+  animation:none;
+}
+@keyframes ringify-button-sheen {
+  0% { opacity:0; transform:translateX(-120%); }
+  20% { opacity:1; }
+  100% { opacity:0; transform:translateX(120%); }
+}
+@media(prefers-reduced-motion:reduce), (prefers-contrast:more), (forced-colors:active) {
+  .v2-screen :is(.r-primary,.m5-new,.r-play,.r-create)::after { display:none; animation:none!important; }
+}
+@media(forced-colors:active) {
+  .v2-screen :is(.r-primary,.m5-new,.r-play,.r-create,.r-secondary,.w6-back) {
+    box-shadow:none;
+    outline:1px solid ButtonText;
+    outline-offset:0;
+  }
+  .v2-screen :is(.r-primary,.m5-new,.r-play,.r-create,.r-secondary,.w6-back):focus-visible {
+    outline:3px solid Highlight;
+    outline-offset:3px;
+  }
+}

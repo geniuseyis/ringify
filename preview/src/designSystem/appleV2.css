@@ -1,0 +1,116 @@
+/* Ringify 3.0: Home and Studio only; the other screens keep their accepted design. */
+.theme-light :is(.v3-screen,.v3-tab-bar){--n-bg:var(--n-light-background);--n-surface:var(--n-light-surface);--n-raised:var(--n-light-raised);--n-text:var(--n-light-text);--n-secondary:var(--n-light-secondary);--n-accent:var(--n-light-accent);--n-soft:var(--n-light-accentSoft);--n-line:var(--n-light-border);--n-wave:var(--n-light-wave);--n-selection:var(--n-light-selection);--n-cursor:var(--n-light-cursor);--n-nav:var(--n-light-navigation)}
+.theme-dark :is(.v3-screen,.v3-tab-bar){--n-bg:var(--n-dark-background);--n-surface:var(--n-dark-surface);--n-raised:var(--n-dark-raised);--n-text:var(--n-dark-text);--n-secondary:var(--n-dark-secondary);--n-accent:var(--n-dark-accent);--n-soft:var(--n-dark-accentSoft);--n-line:var(--n-dark-border);--n-wave:var(--n-dark-wave);--n-selection:var(--n-dark-selection);--n-cursor:var(--n-dark-cursor);--n-nav:var(--n-dark-navigation)}
+.v3-screen{--r-bg:var(--n-bg);--r-surface:var(--n-surface);--r-raised:var(--n-raised);--r-text:var(--n-text);--r-secondary:var(--n-secondary);--r-tertiary:var(--n-secondary);--r-accent:var(--n-accent);--r-soft:var(--n-soft);--r-border:var(--n-line);--r-action:var(--n-action);--r-shadow-action:none;--r-shadow-actionHover:none;--r-shadow-actionPressed:none;--r-shadow-card:none;--r-shadow-control:none;background:var(--n-bg);color:var(--n-text);font-size:var(--n-type-body);line-height:1.4}
+.v3-screen{--r-shadow-secondaryAction:none;--r-shadow-secondaryHover:none;--r-shadow-secondaryPressed:none}
+/* Local button roles override the shared inline 2.0 variables inherited from the screen. */
+.v3-screen :is(.r-primary,.r-secondary,.r-play,.r-create){--r-action:var(--n-action);--r-shadow-action:none;--r-shadow-actionHover:none;--r-shadow-actionPressed:none;--r-shadow-secondaryAction:none;--r-shadow-secondaryHover:none;--r-shadow-secondaryPressed:none}
+.v3-screen button{font-family:inherit;cursor:pointer;transition:background var(--n-motion-feedback),opacity var(--n-motion-feedback)}
+.v3-screen button:disabled{cursor:default}
+.v3-screen button:active:not(:disabled){transform:none;opacity:.75}
+.v3-screen :is(button,[role=slider]):focus-visible{outline:3px solid var(--n-accent);outline-offset:3px}
+.v3-screen :is(.r-primary,.r-play,.r-create,.r-secondary),.v3-screen :is(.r-primary,.r-play,.r-create,.r-secondary):is(:hover,:focus-visible,:active){box-shadow:none;background-image:none}
+.v3-screen :is(.r-primary,.r-play,.r-create)::after{display:none;animation:none}
+.v3-screen .r-icon{border:0;background:transparent;color:var(--n-text);width:44px;height:44px}
+.v3-screen .r-error{background:var(--n-surface);font-size:var(--n-type-caption)}
+.minimal-preview .ambient-orb{display:none}
+.minimal-preview .preview-caption{color:var(--text-2)}
+.minimal-preview .app-viewport{inset:0}
+.ringify-app.is-v3-screen{display:flex;flex-direction:column;min-height:0}
+.is-v3-screen>.v3-screen{flex:1;min-height:0;height:auto}
+
+/* Grouped content: system type, real project metadata, no invented thumbnails. */
+.v3-home>.screen-content{min-height:100%;padding:18px var(--n-inset) 26px}
+.n3-home-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 24px}
+.n3-home-header h1{margin:0;color:var(--n-text);font-size:var(--n-type-largeTitle);font-weight:700;line-height:1.15;letter-spacing:-.045em}
+.n3-pro-link{display:flex;align-items:center;gap:6px;min-height:44px;min-width:60px;padding:8px 12px;border:0;border-radius:var(--n-radius-control);background:var(--n-soft);color:var(--n-accent);font-size:var(--n-type-caption);font-weight:600}
+.v3-home .n3-create{display:flex;align-items:center;gap:13px;width:100%;min-height:94px;padding:18px 16px;border:0;border-radius:var(--n-radius-card);background:var(--n-action);color:white;text-align:left;box-shadow:none}
+.n3-create-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.16)}
+.n3-create-copy{min-width:0;flex:1}
+.v3-home .n3-create-copy strong{display:block;color:white;font-size:var(--n-type-headline);font-weight:650;line-height:1.25;letter-spacing:-.015em}
+.v3-home .n3-create-copy small{display:block;font-size:var(--n-type-caption);line-height:1.4;margin-top:5px;color:white}
+.n3-create>svg{flex:none}
+.n3-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 26px}
+.n3-shortcuts button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-width:44px;min-height:86px;padding:12px 4px;border:0;border-radius:var(--n-radius-card);background:var(--n-surface);color:var(--n-accent)}
+.n3-shortcuts span{font-size:var(--n-type-caption);font-weight:500;line-height:1.25;text-align:center;color:var(--n-text);overflow-wrap:anywhere}
+.n3-section{margin-top:24px}
+.n3-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.n3-section-heading h2{margin:0;font-size:var(--n-type-headline);font-weight:650;line-height:1.25;letter-spacing:-.02em}
+.n3-text-link{display:flex;align-items:center;justify-content:center;gap:3px;flex:none;min-height:44px;min-width:44px;padding:5px 0;border:0;background:transparent;color:var(--n-accent);font-size:var(--n-type-caption);font-weight:500}
+.n3-project-list{overflow:hidden;border-radius:var(--n-radius-card);background:var(--n-surface)}
+.v3-home .n3-project{display:flex;flex-direction:row;align-items:center;gap:12px;min-height:76px;width:100%;margin:0;padding:12px;border:0;border-radius:0;background:transparent;text-align:left;box-shadow:none;color:var(--n-text)}
+.v3-home .n3-project+.n3-project{border-top:1px solid var(--n-line)}
+.n3-file-art{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:10px;background:var(--n-soft);color:var(--n-accent)}
+.n3-file-art.is-exported{background:var(--n-raised);color:var(--n-text)}
+.n3-project-copy{display:block;min-width:0;flex:1}
+.n3-project-copy strong{display:block;font-size:var(--n-type-body);font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.n3-project-copy small{display:block;margin-top:4px;font-size:var(--n-type-caption);line-height:1.4;color:var(--n-secondary);overflow-wrap:anywhere}
+.n3-chevron{flex:none;color:var(--n-secondary)}
+.n3-resume{display:flex;align-items:center;gap:12px;width:100%;min-height:74px;padding:14px;border:1px solid var(--n-line);border-radius:var(--n-radius-card);background:var(--n-surface);color:var(--n-text);text-align:left}
+.n3-resume>span{flex:1;min-width:0}.n3-resume strong{display:block;font-size:var(--n-type-body);line-height:1.3;font-weight:600;overflow-wrap:anywhere}.n3-resume small{display:block;margin-top:3px;font-size:var(--n-type-caption);color:var(--n-secondary);line-height:1.4}.n3-resume>svg:first-child{color:var(--n-accent);flex:none}
+.v3-home .r-empty{padding:20px 16px;background:var(--n-surface);border:0;border-radius:var(--n-radius-card);box-shadow:none}
+.v3-home .r-empty h3{font-size:var(--n-type-body);font-weight:600;line-height:1.35}
+.v3-home .r-empty p{font-size:var(--n-type-caption);color:var(--n-secondary);line-height:1.45}
+.n3-help-link{display:flex;align-items:center;gap:8px;margin-top:24px;padding:6px 0;min-height:44px;border:0;background:transparent;color:var(--n-accent);font-size:var(--n-type-caption);text-align:left}
+
+/* Studio: measured waveform and established editing controls. */
+.v3-studio .screen-header{flex:none;position:relative;grid-template-columns:48px minmax(0,1fr) 92px;min-height:64px;padding:8px 10px;background:var(--n-bg);border:0;backdrop-filter:none}
+.v3-studio .screen-header .icon-button{min-width:44px;min-height:44px;color:var(--n-text);background:transparent}
+.v3-studio .screen-title{font-size:var(--n-type-headline);font-weight:600;line-height:1.25;overflow-wrap:anywhere;color:var(--n-text)}
+.n3-history{display:flex;align-items:center}.n3-history button{display:grid;place-items:center;width:44px;min-height:44px;padding:0;border:0;background:transparent;color:var(--n-text)}
+.v3-studio>.screen-content{min-height:0;flex:1;gap:0;overflow:hidden;padding:0}
+.v3-studio .r-studio-workspace{display:flex;flex-direction:column;gap:18px;flex:1;min-height:0;padding:8px var(--n-inset) 18px;overflow:auto;overscroll-behavior:contain}
+.v3-studio .r-asset{display:flex;align-items:center;gap:11px;min-height:66px;padding:0;border:0;border-radius:0;background:transparent}
+.v3-studio .r-asset>div{flex:1;min-width:0}.v3-studio .r-asset h2{margin:0;font-size:var(--n-type-body);font-weight:600;line-height:1.3;color:var(--n-text);white-space:normal;overflow-wrap:anywhere}.v3-studio .r-asset p{margin:4px 0 0;font-size:var(--n-type-caption);line-height:1.35;color:var(--n-secondary);white-space:normal;overflow-wrap:anywhere}
+.v3-studio .r-source-badge{flex:none;padding:5px 7px;border-radius:6px;background:var(--n-raised);color:var(--n-secondary);border:0;font-size:var(--n-type-micro);font-weight:500}
+.v3-studio .r-wave-panel{margin:0;padding:12px 0 14px;border:1px solid var(--n-line);border-radius:var(--n-radius-card);background:var(--n-surface);box-shadow:none;animation:none}
+.v3-studio .r-wave-deck{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.v3-studio .waveform-viewport{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--n-line) transparent;overscroll-behavior-x:contain}
+.v3-studio .waveform-track{display:flex;flex-direction:column;gap:10px;padding:0 22px 4px;box-sizing:border-box;container:n3-wave/inline-size}
+.v3-studio .waveform{height:clamp(176px,25dvh,220px);margin:0;border:0;border-radius:0;overflow:visible;background:var(--n-surface)}
+.v3-studio .waveform::before{display:none}
+.v3-studio .timeline-labels{order:-1;margin:0;padding:0;color:var(--n-secondary);font-size:var(--n-type-micro);line-height:1.4;font-weight:500;white-space:nowrap}
+/* em follows text scaling; keep exact endpoint labels when fewer ticks fit. */
+@container n3-wave (max-width:18em){.v3-studio .timeline-labels>span:nth-child(2),.v3-studio .timeline-labels>span:nth-child(4){display:none}}
+@container n3-wave (max-width:11em){.v3-studio .timeline-labels>span:nth-child(3){display:none}}
+.v3-studio .waveform-grid{border-block:1px solid var(--n-line);background:transparent}.v3-studio .waveform-grid span{background:var(--n-line)}
+.v3-studio .waveform-bars{inset:18px 0}.v3-studio .waveform-bars i{background:var(--n-secondary);opacity:.35;border-radius:1px}.v3-studio .waveform-bars i.is-selected{background:var(--n-wave);opacity:1}
+.v3-studio .waveform-selection{background:var(--n-selection);border:0;border-inline:2px solid var(--n-accent)}
+.v3-studio .trim-control span{width:3px;background:var(--n-accent);box-shadow:none}.v3-studio .trim-control span::after{top:auto;bottom:4px;left:-4px;width:11px;height:25px;border:2px solid var(--n-accent);border-radius:4px;background:var(--n-surface);box-shadow:none}
+.v3-studio .trim-control:focus-visible{outline:3px solid var(--n-accent);outline-offset:-3px}.v3-studio .trim-control:focus-visible span{background:var(--n-accent)}
+.v3-studio .playhead{width:1px;background:var(--n-cursor);box-shadow:none}.v3-studio .playhead::before{width:5px;height:6px;left:-2px;background:var(--n-cursor)}
+.v3-studio .r-selection{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:12px 0;border:1px solid var(--n-line);border-radius:var(--n-radius-card);background:var(--n-surface)}
+.v3-studio .r-selection>div{min-width:0;padding:0 6px;border:0;border-radius:0;text-align:center;background:transparent}.v3-studio .r-selection>div+div{border-left:1px solid var(--n-line)}
+.v3-studio .r-selection .r-selected-duration{border:0;border-left:1px solid var(--n-line);border-radius:0;background:transparent}
+.v3-studio .r-selection span{display:block;margin:0 0 5px;color:var(--n-secondary);font-size:var(--n-type-caption);line-height:1.3;overflow-wrap:anywhere}.v3-studio .r-selection strong{color:var(--n-text);font-size:var(--n-type-headline);font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums}.v3-studio .r-selected-duration strong{color:var(--n-accent)}
+.v3-studio .r-selection .is-invalid strong{color:var(--r-danger)}
+.v3-studio .r-tool-panel{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px;border:0;border-radius:var(--n-radius-card);background:var(--n-surface);box-shadow:none}
+.v3-studio .r-tool-panel button{min-height:44px;min-width:44px;padding:8px;border:0;color:var(--n-text);background:transparent;flex:none}.v3-studio .r-tool-panel button span{font-size:var(--n-type-micro)}
+.n3-current-tool{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 10px;border-radius:var(--n-radius-control);background:var(--n-soft);color:var(--n-accent);font-size:var(--n-type-caption);font-weight:600}
+.v3-studio .r-tool-panel>.n3-current-tool{display:flex;flex:none;font-size:var(--n-type-caption);line-height:1.3;margin:0;color:var(--n-accent)}
+.v3-studio .r-zoom{gap:0;border:0;background:transparent;padding:0}.v3-studio .r-zoom output{min-width:28px;font-size:var(--n-type-caption);color:var(--n-secondary)}
+.v3-studio .r-studio-footer{display:flex;flex-direction:column;flex:none;gap:12px;padding:14px var(--n-inset) 16px;border-top:1px solid var(--n-line);background:var(--n-bg);box-shadow:none;backdrop-filter:none}
+.v3-studio .r-transport-heading{display:flex;justify-content:center;gap:0}.v3-studio .r-transport-heading>span{display:none}.v3-studio .r-playback-clock{color:var(--n-secondary);font-size:var(--n-type-caption)}.v3-studio .r-playback-clock strong{font-size:var(--n-type-title);font-weight:500;color:var(--n-text)}
+.v3-studio .r-transport-buttons{justify-content:space-between}.v3-studio .r-main-transport{gap:16px}.v3-studio .r-playback .r-icon{background:transparent;color:var(--n-text)}.v3-studio .r-playback .r-icon[aria-pressed=true]{background:var(--n-soft);color:var(--n-accent);border:1px solid var(--n-accent)}
+.v3-studio .r-play{width:58px;height:58px;background:var(--n-text);color:var(--n-surface);border:0;box-shadow:none}.v3-studio .r-transport-duration{color:var(--n-secondary);font-size:var(--n-type-micro)}
+.v3-studio .r-action{min-height:50px;border:0;border-radius:var(--n-radius-control);font-size:var(--n-type-body);font-weight:600}
+.v3-studio-empty .screen-content{display:flex;flex-direction:column;justify-content:center;gap:24px;padding:28px var(--n-inset);min-height:100%}
+.n3-studio-empty-icon{display:grid;place-items:center;width:64px;height:64px;border-radius:18px;background:var(--n-soft);color:var(--n-accent)}
+.n3-studio-empty-copy h2{margin:0 0 10px;font-size:var(--n-type-title);font-weight:650;line-height:1.2}.n3-studio-empty-copy p{margin:0;color:var(--n-secondary);font-size:var(--n-type-body);line-height:1.5}
+.n3-studio-empty-actions{display:flex;flex-direction:column;gap:10px}.v3-studio-empty .r-action{font-size:var(--n-type-body);border-radius:var(--n-radius-control)}
+
+/* Four destinations. The preview uses web controls; SwiftUI will use TabView. */
+.v3-tab-bar{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:auto;min-height:68px;margin:0;padding:6px 8px max(8px,env(safe-area-inset-bottom));border:0;border-top:1px solid var(--n-line);border-radius:0;background:var(--n-nav);color:var(--n-text);box-shadow:none;backdrop-filter:blur(12px)}
+.v3-tab-bar .tab-item{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-height:52px;min-width:44px;width:100%;padding:5px 2px;border:0;border-radius:0;background:transparent;color:var(--n-secondary)}
+.v3-tab-bar .tab-item span{font-size:var(--n-type-micro);line-height:1.2;font-weight:500;white-space:normal;overflow-wrap:anywhere}
+.v3-tab-bar .tab-item.is-active{background:transparent;color:var(--n-accent)}.v3-tab-bar .tab-item.is-active svg{fill:color-mix(in srgb,var(--n-accent) 12%,transparent)}
+.v3-tab-bar .tab-item:focus-visible{outline:3px solid var(--n-accent);outline-offset:-2px}
+.ringify-app.is-v3-screen>.v3-tab-bar{position:relative;inset:auto;flex:none;min-height:68px;padding:6px 8px max(8px,env(safe-area-inset-bottom));border-radius:0;box-shadow:none}
+.ringify-app.is-v3-screen>.v3-tab-bar .tab-item{min-width:44px;min-height:52px;padding:5px 2px;border-radius:0;gap:5px}
+.ringify-app.is-v3-screen>.v3-tab-bar .tab-item span{font-size:var(--n-type-micro);line-height:1.2;font-weight:500;white-space:normal;overflow-wrap:anywhere}
+.ringify-app.is-v3-screen>.v3-tab-bar .tab-item:not(.is-active){color:var(--n-secondary)}
+@media(max-width:350px){.v3-home>.screen-content{padding-inline:14px}.n3-shortcuts{gap:7px}.n3-home-header h1{font-size:2rem}.v3-studio .r-studio-workspace{padding-inline:12px}.v3-studio .r-studio-footer{padding-inline:14px}.v3-studio .r-main-transport{gap:6px}.n3-pro-link{padding-inline:8px}.v3-studio .r-selection strong{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){.v3-screen *,.v3-screen *::before,.v3-screen *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(prefers-contrast:more){:is(.v3-screen,.v3-tab-bar){--n-line:var(--n-secondary)}.v3-studio .waveform-selection{border:2px solid var(--n-accent)}}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){.v3-tab-bar{background:var(--n-bg);backdrop-filter:none}}
+@media(forced-colors:active){.v3-screen button,.v3-tab-bar button{border:1px solid ButtonText}.v3-screen :is(button,[role=slider]):focus-visible,.v3-tab-bar button:focus-visible{outline-color:Highlight}.v3-studio .waveform-selection{border:2px solid Highlight}}
