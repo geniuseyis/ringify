@@ -148,14 +148,16 @@ struct AudioEditorView: View {
             timeSummary
             editingTools(project)
             AudioProjectMarkersPanel(project: project, currentTime: { playhead }) { marker in
+                guard loadedProjectID == project.id, model.currentProject?.id == project.id else { return }
                 do {
                     selection = try AudioMarkers.selection(for: marker, sourceDuration: project.sourceDuration, preferredDuration: selection.duration)
-                    commitSelection()
+                    commitSelection(for: project.id)
                 } catch { model.present(error) }
             }
             AudioSegmentSuggestionsPanel(project: project, service: model.container.segments) { next in
+                guard loadedProjectID == project.id, model.currentProject?.id == project.id else { return }
                 selection = next
-                commitSelection()
+                commitSelection(for: project.id)
             }
             if !isSelectionValid(project) {
                 Label("editor.durationRule", systemImage: "exclamationmark.circle")
