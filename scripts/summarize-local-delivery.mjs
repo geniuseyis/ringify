@@ -12,6 +12,9 @@ const tests = await json('final-web-tests'), audit = await json('final-npm-audit
 const scope = await json('native-studio-scope'), parser = await json('native-syntax'), release = await json('release-audit');
 const buildLog = await read('design/review/final-web-build.log');
 const swiftLog = await read('design/review/final-swift-test.log');
+const addedXCTestFiles = ['StudioPresentationTests','StudioZoomRulesTests','StudioTrimRulesTests','StudioSelectionPersistenceTests'].map(name => `ios/RingifyTests/${name}.swift`);
+const addedXCTestMethods = (await Promise.all(addedXCTestFiles.map(read)))
+  .reduce((total, source) => total + [...source.matchAll(/^\s*func test\w+\(/gm)].length, 0);
 const stale = [];
 for (const [file, expected] of Object.entries(parser.files)) {
   if(createHash('sha256').update(await readFile(join(root,file))).digest('hex') !== expected) stale.push(file);
@@ -26,8 +29,8 @@ const report = {
     parsedFiles:Object.keys(parser.files).length,staleParserEvidence:stale,
     sourceChecks:{passed:scope.checks.filter(row=>row.passed).length,total:scope.checks.length,unchanged:scope.unchanged.length,changed:scope.changed.length,added:scope.added.length},
     releaseStaticChecks:{passed:release.checks.filter(row=>row.passed).length,total:release.checks.length},
-    addedXCTestMethods:5,addedXCTestResult:'NOT_TESTED',
-    coreBuild:'FAIL: manifest C runtime/header configuration (observed earlier in this session)',
+    addedXCTestMethods,addedXCTestFiles,addedXCTestResult:'NOT_TESTED',
+    coreBuild:'FAIL: manifest C runtime/header configuration (previous recorded attempt; not rerun without environment changes)',
     coreTest: /SwiftShims/.test(swiftLog) ? 'FAIL: manifest SwiftShims; test runner did not start' : 'REVIEW_LOG',
     iosBuild:'NOT_TESTED',runtimeAndVisualAcceptance:'BLOCKED_BY_MACOS'},
   releaseReady:false,
