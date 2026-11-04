@@ -59,6 +59,20 @@ targets:
     dependencies:
       - target: Ringify
       - package: RingifyCore
+  RingifyUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: RingifyUITests
+      - path: Ringify/Resources/Ringify.storekit
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ringify.app.uitests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Ringify
 schemes:
   Ringify:
     build:
@@ -75,3 +89,17 @@ schemes:
           parallelizable: false
     archive:
       config: Release
+  RingifyUI:
+    build:
+      targets:
+        Ringify: all
+        RingifyTests: [test]
+        RingifyUITests: [test]
+    test:
+      config: Debug
+      macroExpansion: Ringify
+      targets:
+        - name: RingifyTests
+          parallelizable: false
+        - name: RingifyUITests
+          parallelizable: false
