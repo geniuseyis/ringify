@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var model: AppModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("ringify.hasCompletedOnboarding") private var completedOnboarding = false
     @State private var isLaunching = true
 
@@ -19,8 +20,10 @@ struct RootView: View {
         }
         .task {
             guard isLaunching else { return }
-            try? await Task.sleep(for: .milliseconds(650))
-            withAnimation(.easeOut(duration: 0.25)) { isLaunching = false }
+            do { try await Task.sleep(for: .milliseconds(650)) }
+            catch { return }
+            guard !Task.isCancelled else { return }
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.25)) { isLaunching = false }
         }
         .sheet(item: $model.issue, onDismiss: { model.errorMessage = nil }) { issue in
             GlobalIssueSheet(issue: issue, detail: model.errorMessage) {
