@@ -8,7 +8,10 @@ struct RingifyApp: App {
     init() {
         #if DEBUG
         if UITestSupport.isEnabled {
-            do { _model = StateObject(wrappedValue: try UITestSupport.makeModel()) }
+            do {
+                let testModel = try UITestSupport.makeModel()
+                _model = StateObject(wrappedValue: testModel)
+            }
             catch { fatalError("Isolated UI test setup failed: \(error)") }
             return
         }
