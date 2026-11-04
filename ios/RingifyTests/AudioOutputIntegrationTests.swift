@@ -57,10 +57,16 @@ final class AudioOutputIntegrationTests: XCTestCase {
             selection: EditSelection(start: 0.125, end: 1.625), destinationURL: destination)
         let result = try AVAudioFile(forReading: destination, commonFormat: .pcmFormatFloat32, interleaved: false)
         XCTAssertEqual(result.length, 72_000)
-        let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: result.processingFormat, frameCapacity: 72_000))
-        try result.read(into: buffer)
-        XCTAssertEqual(buffer.frameLength, 72_000)
-        let values = try XCTUnwrap(buffer.floatChannelData)[0]
+        let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: result.processingFormat, frameCapacity: 8_192))
+        var values: [Float] = []
+        // AVAudioFile may return a short read before EOF. Compare actual PCM,
+        // never unfilled capacity at the end of a single large read buffer.
+        while result.framePosition < result.length {
+            try result.read(into: buffer, frameCount: 8_192)
+            guard buffer.frameLength > 0 else { throw RingifyError.exportVerificationFailed }
+            values.append(contentsOf: UnsafeBufferPointer(start: try XCTUnwrap(buffer.floatChannelData)[0], count: Int(buffer.frameLength)))
+        }
+        XCTAssertEqual(values.count, 72_000)
         for i in [0, 10, 8191, 8192, 71_999] {
             XCTAssertEqual(values[i], Float(sin(2 * Double.pi * 440 * Double(i + 6_000) / 48_000) * 0.5))
         }
