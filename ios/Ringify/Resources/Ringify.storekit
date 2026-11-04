@@ -1,0 +1,539 @@
+{
+  "identifier": "C3B30D8B-1784-4D24-AC7B-27CFBCB27C77",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "4499.99",
+      "familyShareable": false,
+      "internalID": "85AD74BA-D265-4965-933C-14DA5B79D13E",
+      "localizations": [
+        {
+          "description": "Normalize ve 3 kayıtlı proje. Ek proje yuvaları ayrı ücretlidir; planlanan araçlar dahil değildir.",
+          "displayName": "Ringify Pro — Ömür Boyu",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "Normalization and 3 saved projects. Extra slots are charged separately; planned tools are not included.",
+          "displayName": "Ringify Pro — Lifetime",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.pro.lifetime",
+      "referenceName": "Ringify Pro Lifetime",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "B719FFA9-D42E-4BDB-BD38-A2984E9E0DE9",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 1",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 1",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.01",
+      "referenceName": "Ringify Extra Slot 1",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "422EC67E-2E33-472A-B10E-9D620D0A5213",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 2",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 2",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.02",
+      "referenceName": "Ringify Extra Slot 2",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "85B710BA-868B-4434-B4ED-B9F31F83D565",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 3",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 3",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.03",
+      "referenceName": "Ringify Extra Slot 3",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "1C30F39D-9D77-4D4B-BBA8-B2501BCE7752",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 4",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 4",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.04",
+      "referenceName": "Ringify Extra Slot 4",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "B7674148-22AB-4FE7-836F-66C168DD0CE3",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 5",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 5",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.05",
+      "referenceName": "Ringify Extra Slot 5",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "83688CFA-50FB-4B64-979E-0FF6FF88B6B5",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 6",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 6",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.06",
+      "referenceName": "Ringify Extra Slot 6",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "04EBE073-06E5-488D-AAFD-FB1152136FD5",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 7",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 7",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.07",
+      "referenceName": "Ringify Extra Slot 7",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "449F7BB5-A346-48EB-A407-CFC2BF2A0B95",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 8",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 8",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.08",
+      "referenceName": "Ringify Extra Slot 8",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "287836C4-B7E9-4ADB-9A4F-13E5D56E18F8",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 9",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 9",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.09",
+      "referenceName": "Ringify Extra Slot 9",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "FCDB7B60-4DC3-47C2-B55C-62B4F8343383",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 10",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 10",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.10",
+      "referenceName": "Ringify Extra Slot 10",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "5585B657-A080-498E-A639-94FFA9A774A5",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 11",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 11",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.11",
+      "referenceName": "Ringify Extra Slot 11",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "064A0F72-B1FB-44A3-9760-EE0FCDC74400",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 12",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 12",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.12",
+      "referenceName": "Ringify Extra Slot 12",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "00D87382-08F6-4164-9929-FD8032A9A4E2",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 13",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 13",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.13",
+      "referenceName": "Ringify Extra Slot 13",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "2269D7E7-06E4-4B11-9843-92577C7CD12F",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 14",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 14",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.14",
+      "referenceName": "Ringify Extra Slot 14",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "C61402FE-EFE9-4425-AE87-4CAFF7F7C33A",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 15",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 15",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.15",
+      "referenceName": "Ringify Extra Slot 15",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "13735A4F-ADBA-431C-BC4A-BA9DD991B49E",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 16",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 16",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.16",
+      "referenceName": "Ringify Extra Slot 16",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "E961816C-FFCF-4061-941A-7A88F65AABEC",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 17",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 17",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.17",
+      "referenceName": "Ringify Extra Slot 17",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "D59E73AE-890E-41F8-8749-608AFBA1CB9C",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 18",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 18",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.18",
+      "referenceName": "Ringify Extra Slot 18",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "20F3C99D-B9B5-43B7-8B3D-6EA76A4763FD",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 19",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 19",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.19",
+      "referenceName": "Ringify Extra Slot 19",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "21B4BF0D-6303-4F64-9157-DC5EC6F1618A",
+      "localizations": [
+        {
+          "description": "Pro etkinken 1 kalıcı proje yuvası. Proje silinince yeniden kullanılabilir; aynı Apple hesabıyla geri yüklenir.",
+          "displayName": "Ringify — Ek Proje Yuvası 20",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "One permanent extra project slot while Pro is active. Reusable after project deletion and restorable with the same Apple account.",
+          "displayName": "Ringify — Extra Project Slot 20",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.ringify.app.project-slot.20",
+      "referenceName": "Ringify Extra Slot 20",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "1234567890",
+    "_developerTeamID": "",
+    "_lastSynchronizedDate": 0,
+    "_locale": "tr_TR",
+    "_storefront": "TUR",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [
+    {
+      "id": "7B207A44-393F-4A01-8D17-54B85E0FD8E1",
+      "localizations": [
+        {
+          "description": "Ringify Pro erişimi",
+          "displayName": "Ringify Pro",
+          "locale": "tr_TR"
+        },
+        {
+          "description": "Ringify Pro access",
+          "displayName": "Ringify Pro",
+          "locale": "en_US"
+        }
+      ],
+      "name": "Ringify Pro",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "124.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "8F043482-E21A-48D3-AF21-21F603A7F481",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Normalize ve 3 kayıtlı proje. Ek proje yuvaları ayrı ücretlidir; planlanan araçlar dahil değildir.",
+              "displayName": "Ringify Pro — Haftalık",
+              "locale": "tr_TR"
+            },
+            {
+              "description": "Normalization and 3 saved projects. Extra slots are charged separately; planned tools are not included.",
+              "displayName": "Ringify Pro — Weekly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.ringify.app.pro.weekly",
+          "recurringSubscriptionPeriod": "P1W",
+          "referenceName": "Ringify Pro Weekly",
+          "subscriptionGroupID": "7B207A44-393F-4A01-8D17-54B85E0FD8E1",
+          "type": "RecurringSubscription",
+          "winBackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "349.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "9BBA1E87-6D38-47E9-80B8-48DDECF7DA68",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Normalize ve 3 kayıtlı proje. Ek proje yuvaları ayrı ücretlidir; planlanan araçlar dahil değildir.",
+              "displayName": "Ringify Pro — Aylık",
+              "locale": "tr_TR"
+            },
+            {
+              "description": "Normalization and 3 saved projects. Extra slots are charged separately; planned tools are not included.",
+              "displayName": "Ringify Pro — Monthly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.ringify.app.pro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Ringify Pro Monthly",
+          "subscriptionGroupID": "7B207A44-393F-4A01-8D17-54B85E0FD8E1",
+          "type": "RecurringSubscription",
+          "winBackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "2499.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "FBB8061F-492A-48D9-ACD6-83FE1D588C9E",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Normalize ve 3 kayıtlı proje. Ek proje yuvaları ayrı ücretlidir; planlanan araçlar dahil değildir.",
+              "displayName": "Ringify Pro — Yıllık",
+              "locale": "tr_TR"
+            },
+            {
+              "description": "Normalization and 3 saved projects. Extra slots are charged separately; planned tools are not included.",
+              "displayName": "Ringify Pro — Yearly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.ringify.app.pro.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Ringify Pro Yearly",
+          "subscriptionGroupID": "7B207A44-393F-4A01-8D17-54B85E0FD8E1",
+          "type": "RecurringSubscription",
+          "winBackOffers": []
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}
