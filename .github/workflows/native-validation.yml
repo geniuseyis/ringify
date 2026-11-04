@@ -26,6 +26,9 @@ jobs:
     env:
       CI: '1'
       VALIDATION_SCOPE: ${{ inputs.scope }}
+      # Apple FB22237318: StoreKitTest CLI fails on iOS 26.5. Keep all tests
+      # enabled on the preinstalled 26.2 runtime; do not install or hide failures.
+      IOS_VALIDATION_RUNTIME: '26.2'
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified 2026-11-04
@@ -73,6 +76,7 @@ jobs:
           set -euo pipefail
           xcrun simctl list devices available --json > artifacts/simulators.json
           simulator="$(node scripts/select-ios-simulator.mjs < artifacts/simulators.json)"
+          printf 'Selected iOS runtime %s, device %s\n' "$IOS_VALIDATION_RUNTIME" "$simulator"
           (cd ios && xcodegen generate --spec project.yml) 2>&1 | tee artifacts/xcodegen.log
           xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Debug \
             -destination "platform=iOS Simulator,id=$simulator" -destination-timeout 180 \

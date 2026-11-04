@@ -2,7 +2,9 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-export function selectIOSSimulator(payload) {
+export function selectIOSSimulator(payload, requestedVersion) {
+  if(requestedVersion !== undefined && !/^\d+\.\d+(?:\.\d+)?$/.test(requestedVersion)) throw Error('Invalid requested iOS runtime version.');
+  const required = requestedVersion?.split('.').map(Number);
   if (!payload || typeof payload.devices !== 'object' || payload.devices === null || Array.isArray(payload.devices)) {
     throw Error('simctl returned an invalid device list.');
   }
@@ -10,6 +12,7 @@ export function selectIOSSimulator(payload) {
   for (const [runtime, devices] of Object.entries(payload.devices)) {
     const version = runtime.match(/\.iOS-(\d+)-(\d+)(?:-(\d+))?$/);
     if (!version || !Array.isArray(devices)) continue;
+    if(required?.some((part,index)=>part!==Number(version[index+1]??0))) continue;
     for (const device of devices) {
       if (device?.isAvailable !== true || typeof device.name !== 'string' || !device.name.startsWith('iPhone ')) continue;
       if (typeof device.udid !== 'string' || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(device.udid)) continue;
@@ -21,11 +24,11 @@ export function selectIOSSimulator(payload) {
     if ((a.state === 'Booted') !== (b.state === 'Booted')) return a.state === 'Booted' ? -1 : 1;
     return a.udid.localeCompare(b.udid);
   });
-  if (!candidates.length) throw Error('No available iPhone Simulator found; inspect artifacts/simulators.json.');
+  if (!candidates.length) throw Error(`No available iPhone Simulator${requestedVersion ? ` for iOS ${requestedVersion}` : ''} found; inspect artifacts/simulators.json.`);
   return candidates[0].udid;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  try { console.log(selectIOSSimulator(JSON.parse(readFileSync(0, 'utf8')))); }
+  try { console.log(selectIOSSimulator(JSON.parse(readFileSync(0, 'utf8')), process.env.IOS_VALIDATION_RUNTIME)); }
   catch (error) { console.error(error.message); process.exitCode = 1; }
 }

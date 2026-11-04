@@ -28,3 +28,20 @@ test('fails clearly when the device list is invalid or empty', () => {
     assert.throws(() => selectIOSSimulator(payload));
   }
 });
+
+test('honors an explicit runtime even when a newer iPhone is booted',()=>{
+  const devices={'com.apple.CoreSimulator.SimRuntime.iOS-26-2':[device(oldID)],'com.apple.CoreSimulator.SimRuntime.iOS-26-5':[device(newID,{state:'Booted'})]};
+  assert.equal(selectIOSSimulator({devices},'26.2'),oldID);
+});
+
+test('fails instead of silently substituting an unavailable or malformed requested runtime',()=>{
+  const payload={devices:{'com.apple.CoreSimulator.SimRuntime.iOS-26-5':[device(newID)]}};
+  assert.throws(()=>selectIOSSimulator(payload,'26.2'),/for iOS 26.2/);
+  for(const value of ['', 'latest', '26.2;echo', '26'])assert.throws(()=>selectIOSSimulator(payload,value),/Invalid requested/);
+});
+
+test('selects the latest available patch within a requested major/minor',()=>{
+  const devices={'com.apple.CoreSimulator.SimRuntime.iOS-26-2':[device(oldID)],'com.apple.CoreSimulator.SimRuntime.iOS-26-2-1':[device(newID)]};
+  assert.equal(selectIOSSimulator({devices},'26.2'),newID);
+  assert.equal(selectIOSSimulator({devices},'26.2.0'),oldID);
+});
