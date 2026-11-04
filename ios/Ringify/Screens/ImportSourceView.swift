@@ -13,6 +13,7 @@ struct ImportSourceView: View {
     @State private var photoSelection: PhotosPickerItem?
 
     var body: some View {
+        let photoSourceLabel = sourceRow(icon: "photo.on.rectangle.angled", title: "import.photos", message: "import.photos.detail")
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
@@ -25,7 +26,7 @@ struct ImportSourceView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     LazyVGrid(columns: sourceColumns, spacing: 12) {
                         PhotosPicker(selection: $photoSelection, matching: .videos) {
-                            sourceRow(icon: "photo.on.rectangle.angled", title: "import.photos", message: "import.photos.detail")
+                            photoSourceLabel
                         }
                         .accessibilityIdentifier("import.photos")
                         Button { showAudioImporter = true } label: {
