@@ -2,6 +2,7 @@
 import {readFile, readdir, writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve, join} from 'node:path';
+import {execFileSync} from 'node:child_process';
 const root = resolve(import.meta.dirname, '..');
 const read = file => readFile(join(root, file), 'utf8');
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -36,6 +37,9 @@ allowed.add('ios/project.yml'); // Resource phases were not being generated.
 allowed.add('ios/Ringify/Services/AVAudioTrimService.swift');
 allowed.add('ios/RingifyTests/AudioOutputIntegrationTests.swift');
 allowed.add('ios/RingifyTests/AppModelIntegrityTests.swift');
+// P08: isolated preferences and Debug-only UI bootstrap, not data/DSP changes.
+allowed.add('ios/Ringify/App/AppModel.swift');
+allowed.add('ios/Ringify/App/RingifyApp.swift');
 const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/RingifyTests/StudioPresentationTests.swift',
   'ios/Ringify/DesignSystem/StudioZoomRules.swift', 'ios/RingifyTests/StudioZoomRulesTests.swift',
   'ios/Ringify/DesignSystem/StudioTrimRules.swift', 'ios/RingifyTests/StudioTrimRulesTests.swift',
@@ -43,9 +47,21 @@ const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/Rin
   'preview/src/hooks/useWaveformPinchZoom.ts','preview/src/lib/waveformZoom.ts',
   'preview/src/lib/waveformZoom.test.ts','preview/src/components/WaveformPinch.test.tsx',
   'preview/src/lib/peakLimiter.test.ts',
-  'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift'];
+  'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift',
+  'ios/Ringify/Testing/UITestSupport.swift','ios/RingifyUITests/NativeScreenshotsTests.swift'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
+const modelPath = 'ios/Ringify/App/AppModel.swift';
+const testedModel = execFileSync('git', ['show', `7e836d1:${modelPath}`], {cwd:root, encoding:'utf8'}).replace(/\r\n/g,'\n');
+const expectedModel = testedModel
+  .replace('    let container: AppContainer\n', '    let container: AppContainer\n    let preferenceStore: UserDefaults\n')
+  .replace('init(container: AppContainer)', 'init(container: AppContainer, defaults: UserDefaults = .standard)')
+  .replace('        self.container = container\n', '        self.container = container\n        preferenceStore = defaults\n')
+  .replace('UserDefaults.standard.data(forKey:', 'defaults.data(forKey:')
+  .replace('UserDefaults.standard.set(data,', 'preferenceStore.set(data,');
+check('P08 AppModel differs from SDK-tested source only by preference injection',
+  (await read(modelPath)).replace(/\r\n/g,'\n') === expectedModel,
+  {baseline:'7e836d1', unchanged:'Project lifecycle, journals, saving, quotas, DSP and export rules'});
 for (const [file, before] of Object.entries(baseline.hashes)) {
   try {
     const after = hash(await readFile(join(root, file)));
@@ -58,7 +74,7 @@ async function walk(folder) {
   const entries = await readdir(join(root, folder), {withFileTypes: true});
   return (await Promise.all(entries.map(row => row.isDirectory() ? walk(`${folder}/${row.name}`) : [`${folder}/${row.name}`]))).flat();
 }
-const current = (await Promise.all(['ios/Ringify','ios/RingifyTests','preview/src','packages/RingifyCore/Sources','packages/RingifyCore/Tests'].map(walk))).flat();
+const current = (await Promise.all(['ios/Ringify','ios/RingifyTests','ios/RingifyUITests','preview/src','packages/RingifyCore/Sources','packages/RingifyCore/Tests'].map(walk))).flat();
 const added = current.filter(file => !(file in baseline.hashes));
 check('Only documented presentation, interaction and test sources added', added.length === additions.length && added.every(file => additions.includes(file)), added);
 for (const [label, prefix] of Object.entries({web:'preview/', core:'packages/RingifyCore/', services:'ios/Ringify/Services/', viewModels:'ios/Ringify/ViewModels/', resources:'ios/Ringify/Resources/'})) {
