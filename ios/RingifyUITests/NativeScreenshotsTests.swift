@@ -136,12 +136,16 @@ import XCTest
     }
 
     private func capture(_ number: Int, _ state: String, theme: String) throws {
-        let frame = app.windows.firstMatch.frame
-        let width = Int(frame.width.rounded()), height = Int(frame.height.rounded())
-        XCTAssertTrue([(390, 844), (393, 852)].contains { $0.0 == width && $0.1 == height }, "Unexpected logical viewport \(width)x\(height)")
-        let screenshot = app.screenshot(), data = screenshot.pngRepresentation
+        // The first SwiftUI accessibility window can report the content's intrinsic
+        // height during launch. Measure the actual full-screen PNG instead.
+        let screenshot = XCUIScreen.main.screenshot(), data = screenshot.pngRepresentation
+        XCTAssertGreaterThanOrEqual(data.count, 24)
         let pixelWidth = data[16..<20].reduce(0) { ($0 << 8) | Int($1) }
         let pixelHeight = data[20..<24].reduce(0) { ($0 << 8) | Int($1) }
+        let viewport = try XCTUnwrap([(390, 844), (393, 852)].first { width, height in
+            (1...3).contains { scale in pixelWidth == width * scale && pixelHeight == height * scale }
+        }, "Unexpected full-screen PNG dimensions \(pixelWidth)x\(pixelHeight)")
+        let (width, height) = viewport
         let filename = "\(width)x\(height)-\(theme)-\(String(format: "%02d", number))-\(state).png"
         let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("RingifyUIScreenshots", isDirectory: true)
