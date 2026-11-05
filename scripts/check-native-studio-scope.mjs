@@ -34,6 +34,7 @@ allowed.add('packages/RingifyCore/Tests/RingifyCoreTests/ManagedFileDeletionTest
 // Real iOS failure 41916450785: delegate isolation and stale player regression.
 allowed.add('ios/Ringify/Services/AVAudioPlaybackService.swift');
 allowed.add('ios/RingifyTests/AudioIntegrityIntegrationTests.swift');
+allowed.add('ios/RingifyTests/AudioConversionIntegrationTests.swift'); // Real MP4/AAC decode, energy and byte-preservation regression.
 // Real Simulator run 41918375556: PCM finalization and typed issue assertions.
 allowed.add('ios/project.yml'); // Resource phases were not being generated.
 allowed.add('ios/Ringify/Services/AVAudioTrimService.swift');

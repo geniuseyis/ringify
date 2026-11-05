@@ -19,15 +19,18 @@ struct AudioConversionView: View {
                         .frame(minHeight: 44)
                 }
                 .disabled(viewModel.isWorking)
+                .accessibilityIdentifier("conversion.choose")
             } footer: { Text("conversion.limits") }
             Section("conversion.output") {
                 TextField("conversion.filename", text: $viewModel.filename)
                     .disabled(viewModel.isWorking || viewModel.result != nil)
+                    .accessibilityIdentifier("conversion.filename")
                 Picker("conversion.format", selection: $viewModel.format) {
                     Text("WAV / PCM 16-bit").tag(AudioConversionFormat.wav)
                     Text("M4A / AAC").tag(AudioConversionFormat.m4a)
                 }
                 .disabled(viewModel.isWorking || viewModel.result != nil)
+                .accessibilityIdentifier("conversion.format")
             }
             if viewModel.isWorking {
                 Section {
@@ -47,6 +50,7 @@ struct AudioConversionView: View {
                     Button("conversion.start") { viewModel.start() }
                         .disabled(viewModel.sourceURL == nil || viewModel.filename.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .frame(minHeight: 44)
+                        .accessibilityIdentifier("conversion.start")
                 }
             }
         }

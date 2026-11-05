@@ -44,6 +44,11 @@ import XCTest
             tap("home.create")
             waitFor("import.audio")
             try capture(4, "import", theme: theme)
+            tap("import.conversion")
+            waitFor("conversion.choose")
+            XCTAssertFalse(app.buttons["conversion.start"].isEnabled, "No conversion without a real selected file")
+            try capture(15, "conversion-idle", theme: theme)
+            app.navigationBars.buttons.firstMatch.tap()
             tap("import.microphone")
             waitFor("recorder.start")
             try capture(5, "recorder-idle", theme: theme)
@@ -88,7 +93,7 @@ import XCTest
             try capture(12, "pro", theme: theme)
             returnToTabs()
         }
-        XCTAssertEqual(images.count, 38)
+        XCTAssertEqual(images.count, 40)
     }
 
     private func launch(theme: String, fixture: Bool = false, onboarding: Bool = false, holdSplash: Bool = false) {
