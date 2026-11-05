@@ -54,26 +54,32 @@ struct MainTabView: View {
     @EnvironmentObject private var router: AppRouter
 
     var body: some View {
-        NavigationStack(path: $router.path) {
-            TabView(selection: $router.selectedTab) {
-                HomeView()
-                    .tabItem { Label("tab.home", systemImage: "house.fill") }
-                    .tag(AppTab.home)
+        TabView(selection: $router.selectedTab) {
+            navigationRoot(for: .home) { HomeView() }
+                .tabItem { Label("tab.home", systemImage: "house.fill") }
+                .tag(AppTab.home)
 
-                AudioEditorView()
-                    .tabItem { Label("tab.studio", systemImage: "waveform") }
-                    .tag(AppTab.studio)
+            navigationRoot(for: .studio) { AudioEditorView() }
+                .tabItem { Label("tab.studio", systemImage: "waveform") }
+                .tag(AppTab.studio)
 
-                LibraryView()
-                    .tabItem { Label("tab.library", systemImage: "folder") }
-                    .tag(AppTab.library)
+            navigationRoot(for: .library) { LibraryView() }
+                .tabItem { Label("tab.library", systemImage: "folder") }
+                .tag(AppTab.library)
 
-                SettingsView()
-                    .tabItem { Label("tab.settings", systemImage: "gearshape.fill") }
-                    .tag(AppTab.settings)
-            }
-            .tint(RingifyTheme.Studio.accent)
-            .modifier(AppNavigationDestination())
+            navigationRoot(for: .settings) { SettingsView() }
+                .tabItem { Label("tab.settings", systemImage: "gearshape.fill") }
+                .tag(AppTab.settings)
         }
+        .tint(RingifyTheme.Studio.accent)
+    }
+
+    private func navigationRoot<Content: View>(for tab: AppTab, @ViewBuilder content: () -> Content) -> some View {
+        let root = content()
+        return NavigationStack(path: Binding(get: { router.navigationPath(for: tab) },
+            set: { router.setNavigationPath($0, for: tab) })) {
+            root.modifier(AppNavigationDestination())
+        }
+        .toolbar(router.path.isEmpty ? .visible : .hidden, for: .tabBar)
     }
 }

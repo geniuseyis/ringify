@@ -44,6 +44,7 @@ allowed.add('ios/RingifyTests/BundleResourcesTests.swift'); // Assert built laun
 // P08: isolated preferences and Debug-only UI bootstrap, not data/DSP changes.
 allowed.add('ios/Ringify/App/AppModel.swift');
 allowed.add('ios/Ringify/App/RingifyApp.swift');
+allowed.add('ios/Ringify/App/AppNavigation.swift'); // P08: selected-tab-only stacks restore native toolbars.
 // P09 only adds an optional isolated disk location; schema/transactions protected below.
 allowed.add('ios/Ringify/Services/SwiftDataProjectStorageService.swift');
 const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/RingifyTests/StudioPresentationTests.swift',
@@ -55,7 +56,8 @@ const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/Rin
   'preview/src/lib/peakLimiter.test.ts',
   'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift',
   'ios/Ringify/Testing/UITestSupport.swift','ios/RingifyUITests/NativeScreenshotsTests.swift',
-  'ios/RingifyTests/DiskStorageIntegrationTests.swift','ios/RingifyTests/LegacyProjectDiskFixture.swift'];
+  'ios/RingifyTests/DiskStorageIntegrationTests.swift','ios/RingifyTests/LegacyProjectDiskFixture.swift',
+  'ios/RingifyTests/NavigationRoutingTests.swift'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
 const modelPath = 'ios/Ringify/App/AppModel.swift';

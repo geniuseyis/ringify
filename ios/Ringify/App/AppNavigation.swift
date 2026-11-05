@@ -24,10 +24,17 @@ enum AppRoute: Hashable {
 @MainActor
 final class AppRouter: ObservableObject {
     @Published var path: [AppRoute] = []
-    @Published var selectedTab: AppTab = .home
+    @Published var selectedTab: AppTab = .home {
+        didSet { if oldValue != selectedTab { path.removeAll() } }
+    }
 
     func push(_ route: AppRoute) { path.append(route) }
     func popToRoot() { path.removeAll() }
+    func navigationPath(for tab: AppTab) -> [AppRoute] { selectedTab == tab ? path : [] }
+    func setNavigationPath(_ value: [AppRoute], for tab: AppTab) {
+        guard selectedTab == tab else { return }
+        path = value
+    }
 }
 
 struct AppNavigationDestination: ViewModifier {
