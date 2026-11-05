@@ -37,3 +37,7 @@ Thumbs.db
 Desktop.ini
 *.log
 *.tmp
+
+# Personal design galleries stay on disk; the Vite entry remains tracked.
+/design/**/*.html
+/design/**/*.htm
