@@ -131,4 +131,40 @@ import XCTest
             storeURL: XCTUnwrap(URL(string: "https://example.invalid/store"))))
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("unused.store").path))
     }
+
+    func testRepresentativePreStudioDiskSchemaMigratesWithoutChangingMediaOrLegacyEffects() async throws {
+        let root = try temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("Imports/legacy.wav")
+        let output = root.appendingPathComponent("Exports/legacy.m4a")
+        let sourceBytes = Data([1, 3, 5, 7]), outputBytes = Data([2, 4, 6, 8])
+        try sourceBytes.write(to: source)
+        try outputBytes.write(to: output)
+        let original = RingtoneProject(name: "Legacy disk project", sourceFilename: "legacy.wav", sourceURL: source,
+            sourceKind: .audioFile, sourceDuration: 12, selection: EditSelection(start: 2, end: 10),
+            effects: AudioEffectSettings(volume: 0.6, fadeInDuration: 0.4, fadeOutDuration: 0.7, normalize: true),
+            waveformSamples: [0.2, 0.8, 0.3], status: .exported,
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000), updatedAt: Date(timeIntervalSince1970: 1_700_000_123),
+            exportedURL: output)
+        try LegacyProjectDiskFixture.write(original, to: root.appendingPathComponent("integration.store"))
+        let migrated = try store(root)
+        let restored = try await migrated.project(id: original.id)
+        XCTAssertEqual(restored, original)
+        let collections = try await migrated.collections()
+        let presets = try await migrated.audioPresets()
+        let history = try await migrated.exportHistory(projectID: nil)
+        XCTAssertTrue(collections.isEmpty)
+        XCTAssertTrue(presets.isEmpty)
+        XCTAssertTrue(history.isEmpty)
+        XCTAssertEqual(try Data(contentsOf: source), sourceBytes)
+        XCTAssertEqual(try Data(contentsOf: output), outputBytes)
+        var edited = original
+        edited.effects.studio = StudioAudioPreset.warm.settings
+        try await migrated.save(edited)
+        let reopened = try store(root)
+        let afterEdit = try await reopened.project(id: original.id)
+        XCTAssertEqual(afterEdit, edited)
+        XCTAssertEqual(try Data(contentsOf: source), sourceBytes)
+        XCTAssertEqual(try Data(contentsOf: output), outputBytes)
+    }
 }

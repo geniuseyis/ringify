@@ -29,6 +29,8 @@ for (const file of ['audioProcessing.ts','audioProcessing.test.ts','segmentPlaye
 allowed.add('packages/RingifyCore/Package.swift');
 allowed.add('packages/RingifyCore/Sources/RingifyCore/AudioSegmentSuggestions.swift');
 allowed.add('packages/RingifyCore/Tests/RingifyCoreTests/ProjectExportStateTests.swift');
+// P09 recovery fault cases; ManagedFileDeletion production source is unchanged.
+allowed.add('packages/RingifyCore/Tests/RingifyCoreTests/ManagedFileDeletionTests.swift');
 // Real iOS failure 41916450785: delegate isolation and stale player regression.
 allowed.add('ios/Ringify/Services/AVAudioPlaybackService.swift');
 allowed.add('ios/RingifyTests/AudioIntegrityIntegrationTests.swift');
@@ -51,7 +53,7 @@ const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/Rin
   'preview/src/lib/peakLimiter.test.ts',
   'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift',
   'ios/Ringify/Testing/UITestSupport.swift','ios/RingifyUITests/NativeScreenshotsTests.swift',
-  'ios/RingifyTests/DiskStorageIntegrationTests.swift'];
+  'ios/RingifyTests/DiskStorageIntegrationTests.swift','ios/RingifyTests/LegacyProjectDiskFixture.swift'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
 const modelPath = 'ios/Ringify/App/AppModel.swift';
