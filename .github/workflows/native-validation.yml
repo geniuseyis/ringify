@@ -124,6 +124,15 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/RingifyDerivedData" \
             CODE_SIGNING_ALLOWED=NO build 2>&1 | tee artifacts/ios-release-build.log
 
+      - name: Upload native screenshots separately
+        if: always() && inputs.scope == 'ui'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-ui-screenshots-${{ github.run_id }}
+          path: artifacts/native-ui/
+          retention-days: 3
+          if-no-files-found: warn
+
       - name: Upload logs and native test evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
