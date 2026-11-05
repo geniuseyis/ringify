@@ -22,6 +22,9 @@ import XCTest
             let title = localized.localizedString(forKey: "tab.home", value: nil, table: nil)
             XCTAssertFalse(title.isEmpty)
             XCTAssertNotEqual(title, "tab.home")
+            let purpose = localized.localizedString(forKey: "NSMicrophoneUsageDescription", value: nil, table: "InfoPlist")
+            XCTAssertFalse(purpose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertNotEqual(purpose, "NSMicrophoneUsageDescription")
         }
         XCTAssertNotNil(Bundle.main.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"))
         XCTAssertNotNil(UIColor(named: "AccentColor", in: .main, compatibleWith: nil))
