@@ -3,28 +3,30 @@ import UIKit
 import XCTest
 @testable import Ringify
 
-@MainActor final class StudioPresentationTests: XCTestCase {
-    // Thread.isMainThread is unavailable directly in an async context. This
-    // synchronous probe runs in the same uninterrupted color-resolution call.
-    nonisolated private static func isBackgroundResolutionThread() -> Bool { !Thread.isMainThread }
+private enum BackgroundPaletteResolution {
+    // UIKit references stay inside this synchronous call. Only Sendable Color
+    // values cross the task boundary; the thread cannot change mid-resolution.
+    static func resolve(_ colors: [Color]) -> (Bool, [[CGFloat]]) {
+        var channels: [[CGFloat]] = []
+        for style in [UIUserInterfaceStyle.light, .dark] {
+            let traits = UITraitCollection(userInterfaceStyle: style)
+            for value in colors {
+                var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+                let valid = UIColor(value).resolvedColor(with: traits).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+                channels.append(valid ? [red, green, blue, alpha] : [])
+            }
+        }
+        return (!Thread.isMainThread, channels)
+    }
+}
 
+@MainActor final class StudioPresentationTests: XCTestCase {
     func testAdaptivePaletteResolvesOnBackgroundExecutorInBothAppearances() async {
         let colors = [RingifyTheme.Studio.background, RingifyTheme.Studio.surface,
             RingifyTheme.Studio.raised, RingifyTheme.Studio.text, RingifyTheme.Studio.secondary,
             RingifyTheme.Studio.muted, RingifyTheme.Studio.accent, RingifyTheme.Studio.soft,
-            RingifyTheme.Studio.border, RingifyTheme.Studio.strongBorder].map { UIColor($0) }
-        let result = await Task.detached {
-            var channels: [[CGFloat]] = []
-            for style in [UIUserInterfaceStyle.light, .dark] {
-                let traits = UITraitCollection(userInterfaceStyle: style)
-                for color in colors {
-                    var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-                    let valid = color.resolvedColor(with: traits).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-                    channels.append(valid ? [red, green, blue, alpha] : [])
-                }
-            }
-            return (Self.isBackgroundResolutionThread(), channels)
-        }.value
+            RingifyTheme.Studio.border, RingifyTheme.Studio.strongBorder]
+        let result = await Task.detached { BackgroundPaletteResolution.resolve(colors) }.value
         XCTAssertTrue(result.0, "Must exercise the off-main resolution that triggered the real crash")
         XCTAssertEqual(result.1.count, 20)
         for channels in result.1 {
