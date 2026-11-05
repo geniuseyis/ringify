@@ -42,8 +42,9 @@ enum LegacyProjectDiskFixture: VersionedSchema {
     }
 
     @MainActor static func write(_ project: RingtoneProject, to url: URL) throws {
-        let configuration = ModelConfiguration(url: url, cloudKitDatabase: .none)
-        let container = try ModelContainer(for: Self.self, configurations: configuration)
+        let schema = Schema(versionedSchema: Self.self)
+        let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
+        let container = try ModelContainer(for: schema, configurations: configuration)
         let context = ModelContext(container)
         context.autosaveEnabled = false
         context.insert(StoredProject(project))
