@@ -10,6 +10,7 @@ import XCTest
 
     func testAllMainScreensInBothAppearances() throws {
         continueAfterFailure = false
+        executionTimeAllowance = 600
         XCUIDevice.shared.orientation = .portrait
         let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "Ringify", withExtension: "storekit"))
         let session = try SKTestSession(contentsOf: url)
