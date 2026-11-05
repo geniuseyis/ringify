@@ -36,7 +36,7 @@ const coreCurrent = testedCore?.conclusion === 'success' && Object.keys(coreEvid
 let actionsEvidence;
 try { actionsEvidence = JSON.parse(await read('design/review/native-actions.json')); }
 catch (error) { if(error.code !== 'ENOENT') throw error; }
-const latestIOS = actionsEvidence?.runs.find(run => run.scope === 'ios');
+const latestIOS = actionsEvidence?.runs.find(run => ['ios','ui'].includes(run.scope));
 const iosResult = latestIOS ? (latestIOS.status === 'completed' ? (latestIOS.conclusion === 'success' ? 'PASS' : 'FAIL') : latestIOS.status.toUpperCase()) : 'NOT_TESTED';
 let iosEvidence;
 try { iosEvidence = JSON.parse(await read('design/review/native-ios-validation.json')); }
