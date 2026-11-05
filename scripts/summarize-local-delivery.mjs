@@ -2,12 +2,15 @@
 import {readFile, writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve, join} from 'node:path';
+import {execFileSync} from 'node:child_process';
 const root = resolve(import.meta.dirname, '..');
 async function read(file) {
   const bytes = await readFile(join(root, file));
   return bytes.toString(bytes[0] === 0xff && bytes[1] === 0xfe ? 'utf16le' : 'utf8').replace(/^\uFEFF/, '');
 }
 const json = async name => JSON.parse(await read(`design/review/${name}.json`));
+const currentNativeFiles = execFileSync('git', ['ls-files','--cached','--others','--exclude-standard','-z','--','ios','packages/RingifyCore'],
+  {cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
 const tests = await json('final-web-tests'), audit = await json('final-npm-audit');
 const scope = await json('native-studio-scope'), parser = await json('native-syntax'), release = await json('release-audit');
 const buildLog = await read('design/review/final-web-build.log');
@@ -27,6 +30,8 @@ for (const [file, expected] of Object.entries(coreEvidence?.sourceHashes ?? {}))
   if(createHash('sha256').update((await read(file)).replace(/\r\n/g,'\n')).digest('hex') !== expected) staleCore.push(file);
 }
 const testedCore = coreEvidence?.runs.find(run => run.id === coreEvidence.successfulRun);
+const newCoreFiles = currentNativeFiles.filter(file=>file.startsWith('packages/RingifyCore/') && coreEvidence && !(file in coreEvidence.sourceHashes));
+staleCore.push(...newCoreFiles.map(file=>`NEW: ${file}`));
 const coreCurrent = testedCore?.conclusion === 'success' && Object.keys(coreEvidence.sourceHashes).length > 0 && staleCore.length === 0;
 let actionsEvidence;
 try { actionsEvidence = JSON.parse(await read('design/review/native-actions.json')); }
@@ -38,6 +43,10 @@ try { iosEvidence = JSON.parse(await read('design/review/native-ios-validation.j
 catch (error) { if(error.code !== 'ENOENT') throw error; }
 const lastIOSExecution = iosEvidence?.runs.at(-1);
 const staleIOSSources = [];
+// A newly added test/source also invalidates old evidence, even though it was
+// absent from the older run's hash map. Include untracked, non-ignored files.
+const untestedNewNativeFiles = currentNativeFiles.filter(file=>iosEvidence && !(file in iosEvidence.sourceHashes));
+staleIOSSources.push(...untestedNewNativeFiles.map(file=>`NEW: ${file}`));
 for(const [file,expected] of Object.entries(iosEvidence?.sourceHashes ?? {})) {
   const bytes = await readFile(join(root,file));
   const source = /\.(swift|yml|plist|json|strings|storekit|xcprivacy)$/.test(file) ? bytes.toString('utf8').replace(/\r\n/g,'\n') : bytes;
