@@ -37,9 +37,9 @@ struct RingtoneGuideView: View {
                 .frame(maxWidth: .infinity)
                 if supportsModernFlow {
                     if typeSize.isAccessibilitySize {
-                        methodPicker.pickerStyle(.menu)
+                        methodPicker.pickerStyle(.menu).accessibilityIdentifier("guide.method")
                     } else {
-                        methodPicker.pickerStyle(.segmented)
+                        methodPicker.pickerStyle(.segmented).accessibilityIdentifier("guide.method")
                     }
                 }
                 if selectedMethod == .modern {
@@ -91,7 +91,6 @@ struct RingtoneGuideView: View {
             Text("GarageBand").tag(Method.garageBand)
         }
         .frame(minHeight: 44)
-        .accessibilityIdentifier("guide.method")
     }
 
     private func step(_ number: Int, title: LocalizedStringKey, message: LocalizedStringKey) -> some View {

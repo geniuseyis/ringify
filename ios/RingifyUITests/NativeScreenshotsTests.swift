@@ -109,7 +109,9 @@ import XCTest
 
     private func waitFor(_ identifier: String, timeout: TimeInterval = 20, enabled: Bool = false) {
         let element = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), identifier)
+        let exists = element.waitForExistence(timeout: timeout)
+        if !exists { recordFailureContext(identifier) }
+        XCTAssertTrue(exists, identifier)
         if enabled {
             let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: element)
             XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed, identifier)
@@ -125,6 +127,7 @@ import XCTest
             if element.exists && element.isHittable { break }
             app.swipeUp()
         }
+        if !element.exists || !element.isHittable { recordFailureContext(identifier) }
         XCTAssertTrue(element.exists, identifier)
         XCTAssertTrue(element.isHittable, identifier)
         element.tap()
@@ -134,6 +137,19 @@ import XCTest
         let element = app.tabBars.buttons[label]
         XCTAssertTrue(element.waitForExistence(timeout: 15), label)
         element.tap()
+    }
+
+    private func recordFailureContext(_ identifier: String) {
+        // The app is running only with isolated test data. Keep the real state
+        // before a stopping assertion, so the next fix is based on evidence.
+        print("RINGIFY_UI_FAILURE_CONTEXT \(identifier)\n\(app.debugDescription)")
+        let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("RingifyUIScreenshots", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let filename = "diagnostic-\(identifier.replacingOccurrences(of: ".", with: "-")).png"
+            try XCUIScreen.main.screenshot().pngRepresentation.write(to: folder.appendingPathComponent(filename), options: .atomic)
+        } catch { print("RINGIFY_UI_DIAGNOSTIC_WRITE_FAILED") }
     }
 
     private func returnToTabs() {
