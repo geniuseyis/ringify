@@ -55,11 +55,12 @@ extension RingifyTheme {
                     blue: Double(hex & 255) / 255, alpha: 1)
         }
 
-        private static func adaptive(light: UInt32, dark: UInt32) -> Color {
-            // Capture channel values, not actor-isolated UIKit construction.
+        nonisolated private static func adaptive(light: UInt32, dark: UInt32) -> Color {
+            // UIKit/SwiftUI may resolve this provider on AsyncRenderer. The
+            // factory and callback must not inherit MainActor isolation.
             let lightRGB = (Double((light >> 16) & 255) / 255, Double((light >> 8) & 255) / 255, Double(light & 255) / 255)
             let darkRGB = (Double((dark >> 16) & 255) / 255, Double((dark >> 8) & 255) / 255, Double(dark & 255) / 255)
-            return Color(uiColor: UIColor { traits in
+            return Color(uiColor: UIColor { @Sendable traits in
                 let rgb = traits.userInterfaceStyle == .dark ? darkRGB : lightRGB
                 return UIColor(red: rgb.0, green: rgb.1, blue: rgb.2, alpha: 1)
             })

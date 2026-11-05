@@ -4,6 +4,33 @@ import XCTest
 @testable import Ringify
 
 @MainActor final class StudioPresentationTests: XCTestCase {
+    func testAdaptivePaletteResolvesOnBackgroundExecutorInBothAppearances() async {
+        let colors = [RingifyTheme.Studio.background, RingifyTheme.Studio.surface,
+            RingifyTheme.Studio.raised, RingifyTheme.Studio.text, RingifyTheme.Studio.secondary,
+            RingifyTheme.Studio.muted, RingifyTheme.Studio.accent, RingifyTheme.Studio.soft,
+            RingifyTheme.Studio.border, RingifyTheme.Studio.strongBorder].map { UIColor($0) }
+        let result = await Task.detached {
+            var channels: [[CGFloat]] = []
+            for style in [UIUserInterfaceStyle.light, .dark] {
+                let traits = UITraitCollection(userInterfaceStyle: style)
+                for color in colors {
+                    var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+                    let valid = color.resolvedColor(with: traits).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+                    channels.append(valid ? [red, green, blue, alpha] : [])
+                }
+            }
+            return (!Thread.isMainThread, channels)
+        }.value
+        XCTAssertTrue(result.0, "Must exercise the off-main resolution that triggered the real crash")
+        XCTAssertEqual(result.1.count, 20)
+        for channels in result.1 {
+            XCTAssertEqual(channels.count, 4)
+            XCTAssertTrue(channels.allSatisfy { $0.isFinite && (0...1).contains($0) })
+            XCTAssertEqual(channels.last, 1)
+        }
+        for index in 0..<10 { XCTAssertNotEqual(result.1[index], result.1[index + 10]) }
+    }
+
     private func luminance(_ color: Color, style: UIUserInterfaceStyle) -> Double {
         let resolved = UIColor(color).resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
