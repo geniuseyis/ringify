@@ -11,7 +11,10 @@ check('Read-only contents and no checkout credentials',text.includes('  contents
 check('Bounded standard runner with core default',text.includes('runs-on: macos-26')&&text.includes('timeout-minutes: 35')&&text.includes('default: core'));
 check('No error masking',!text.includes('continue-on-error:')&&!text.includes('|| true'));
 const actions=[...text.matchAll(/uses: (\S+)/g)].map(row=>row[1]);
-check('Actions pinned to full commit IDs',actions.length===2&&actions.every(value=>/@[a-f0-9]{40}$/.test(value)));
+check('Actions pinned to full commit IDs',actions.length===3&&actions.every(value=>/@[a-f0-9]{40}$/.test(value)));
+check('Separate screenshots only for UI and still uploaded on failure',text.includes("if: always() && inputs.scope == 'ui'")
+  &&text.includes('name: native-ui-screenshots-${{ github.run_id }}')&&text.includes('path: artifacts/native-ui/'));
+check('Both evidence artifacts have bounded retention',(text.match(/retention-days: 3/g)??[]).length===2);
 check('Core build and test, native debug test and release build',text.includes('swift build --package-path packages/RingifyCore')&&text.includes('swift test --package-path packages/RingifyCore')&&text.includes('CODE_SIGNING_ALLOWED=NO test')&&text.includes('CODE_SIGNING_ALLOWED=NO build'));
 check('Results saved even after failure, retained briefly',text.includes('if: always()')&&text.includes('retention-days: 3')&&text.includes('artifacts/Tests.xcresult'));
 const folder=join(root,'.git/ringify-day2-20261104/ci-shell');await mkdir(folder,{recursive:true});
