@@ -39,6 +39,7 @@ allowed.add('ios/project.yml'); // Resource phases were not being generated.
 allowed.add('ios/Ringify/Services/AVAudioTrimService.swift');
 allowed.add('ios/RingifyTests/AudioOutputIntegrationTests.swift');
 allowed.add('ios/RingifyTests/AppModelIntegrityTests.swift');
+allowed.add('ios/RingifyTests/BundleResourcesTests.swift'); // Assert built launch/privacy plist, not only source text.
 // P08: isolated preferences and Debug-only UI bootstrap, not data/DSP changes.
 allowed.add('ios/Ringify/App/AppModel.swift');
 allowed.add('ios/Ringify/App/RingifyApp.swift');

@@ -29,8 +29,6 @@ targets:
         buildPhase: resources
         excludes:
           - Ringify.storekit
-    info:
-      path: Ringify/Supporting/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ringify.app
@@ -40,6 +38,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Ringify/Supporting/Info.plist
         SUPPORTS_MACCATALYST: NO
         TARGETED_DEVICE_FAMILY: "1"
     dependencies:

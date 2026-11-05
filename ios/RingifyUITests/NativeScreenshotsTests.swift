@@ -152,6 +152,9 @@ import XCTest
             (1...3).contains { scale in pixelWidth == width * scale && pixelHeight == height * scale }
         }, "Unexpected full-screen PNG dimensions \(pixelWidth)x\(pixelHeight)")
         let (width, height) = viewport
+        let windowFrame = app.windows.firstMatch.frame
+        XCTAssertEqual(Int(windowFrame.width.rounded()), width, "App must fill the reference display")
+        XCTAssertEqual(Int(windowFrame.height.rounded()), height, "Letterboxed compatibility windows are a UI failure")
         let filename = "\(width)x\(height)-\(theme)-\(String(format: "%02d", number))-\(state).png"
         let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("RingifyUIScreenshots", isDirectory: true)

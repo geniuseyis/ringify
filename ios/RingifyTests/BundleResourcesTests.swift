@@ -4,6 +4,17 @@ import XCTest
 @testable import Ringify
 
 @MainActor final class BundleResourcesTests: XCTestCase {
+    func testBuiltAppPreservesLaunchScreenMicrophoneAndPortraitConfiguration() throws {
+        let launch = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "UILaunchScreen") as? [String: Any])
+        XCTAssertEqual(launch["UIColorName"] as? String, "LaunchBackground")
+        let microphone = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") as? String)
+        XCTAssertFalse(microphone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "LSRequiresIPhoneOS") as? Bool, true)
+        XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String], ["UIInterfaceOrientationPortrait"])
+        let scene = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "UIApplicationSceneManifest") as? [String: Any])
+        XCTAssertEqual(scene["UIApplicationSupportsMultipleScenes"] as? Bool, false)
+    }
+
     func testAppBundlesLocalizationsAssetsAndPrivacyButNotStoreKitFixture() throws {
         for language in ["tr", "en"] {
             let url = try XCTUnwrap(Bundle.main.url(forResource: language, withExtension: "lproj"))
