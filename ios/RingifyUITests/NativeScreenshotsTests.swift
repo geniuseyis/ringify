@@ -113,8 +113,14 @@ import XCTest
 
     private func tap(_ identifier: String) {
         let element = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-        XCTAssertTrue(element.waitForExistence(timeout: 20), identifier)
-        for _ in 0..<5 where !element.isHittable { app.swipeUp() }
+        _ = element.waitForExistence(timeout: 2)
+        // LazyVGrid does not instantiate off-screen import cards. Scroll before
+        // asserting existence, just as a person reveals the remaining sources.
+        for _ in 0..<5 {
+            if element.exists && element.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.exists, identifier)
         XCTAssertTrue(element.isHittable, identifier)
         element.tap()
     }
