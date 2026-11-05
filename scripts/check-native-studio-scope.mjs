@@ -57,8 +57,7 @@ const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/Rin
   'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift',
   'ios/Ringify/Testing/UITestSupport.swift','ios/RingifyUITests/NativeScreenshotsTests.swift',
   'ios/RingifyTests/DiskStorageIntegrationTests.swift','ios/RingifyTests/LegacyProjectDiskFixture.swift',
-  'ios/RingifyTests/NavigationRoutingTests.swift',
-  'ios/Ringify/Resources/tr.lproj/InfoPlist.strings','ios/Ringify/Resources/en.lproj/InfoPlist.strings'];
+  'ios/RingifyTests/NavigationRoutingTests.swift'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
 const modelPath = 'ios/Ringify/App/AppModel.swift';
