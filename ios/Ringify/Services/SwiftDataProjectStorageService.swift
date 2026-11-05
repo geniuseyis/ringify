@@ -186,9 +186,17 @@ actor SwiftDataProjectStorageService: ProjectStorageService {
     private let deletion: ManagedFileDeletion
     private let exportRoot: URL
 
-    init(inMemory: Bool = false, directories: AppDirectories? = nil) throws {
+    init(inMemory: Bool = false, directories: AppDirectories? = nil, storeURL: URL? = nil) throws {
         let resolvedDirectories = directories ?? (inMemory ? AppDirectories(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)) : AppDirectories())
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
+        // A caller-owned disk URL enables isolated restart/recovery integration
+        // tests. Normal app startup keeps its existing default store location.
+        let configuration: ModelConfiguration
+        if let storeURL {
+            guard !inMemory, storeURL.isFileURL else { throw RingifyError.corruptMedia }
+            configuration = ModelConfiguration(url: storeURL, cloudKitDatabase: .none)
+        } else {
+            configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
+        }
         container = try ModelContainer(for: StoredProject.self, StoredProjectCollection.self, StoredExportRecord.self, StoredAudioPreset.self, configurations: configuration)
         exportRoot = resolvedDirectories.exports.standardizedFileURL.resolvingSymlinksInPath()
         deletion = ManagedFileDeletion(roots: [resolvedDirectories.imports, resolvedDirectories.exports, resolvedDirectories.recordings],

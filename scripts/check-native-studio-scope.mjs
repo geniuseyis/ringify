@@ -40,6 +40,8 @@ allowed.add('ios/RingifyTests/AppModelIntegrityTests.swift');
 // P08: isolated preferences and Debug-only UI bootstrap, not data/DSP changes.
 allowed.add('ios/Ringify/App/AppModel.swift');
 allowed.add('ios/Ringify/App/RingifyApp.swift');
+// P09 only adds an optional isolated disk location; schema/transactions protected below.
+allowed.add('ios/Ringify/Services/SwiftDataProjectStorageService.swift');
 const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/RingifyTests/StudioPresentationTests.swift',
   'ios/Ringify/DesignSystem/StudioZoomRules.swift', 'ios/RingifyTests/StudioZoomRulesTests.swift',
   'ios/Ringify/DesignSystem/StudioTrimRules.swift', 'ios/RingifyTests/StudioTrimRulesTests.swift',
@@ -48,7 +50,8 @@ const additions = ['ios/Ringify/DesignSystem/RingifyStudioTheme.swift', 'ios/Rin
   'preview/src/lib/waveformZoom.test.ts','preview/src/components/WaveformPinch.test.tsx',
   'preview/src/lib/peakLimiter.test.ts',
   'ios/Ringify/Services/FinalizedPCMWriter.swift','ios/RingifyTests/BundleResourcesTests.swift',
-  'ios/Ringify/Testing/UITestSupport.swift','ios/RingifyUITests/NativeScreenshotsTests.swift'];
+  'ios/Ringify/Testing/UITestSupport.swift','ios/RingifyUITests/NativeScreenshotsTests.swift',
+  'ios/RingifyTests/DiskStorageIntegrationTests.swift'];
 const checks = [], changed = [], unchanged = [], unexpected = [];
 const check = (name, passed, evidence) => checks.push({name, passed: !!passed, evidence});
 const modelPath = 'ios/Ringify/App/AppModel.swift';
@@ -62,6 +65,17 @@ const expectedModel = testedModel
 check('P08 AppModel differs from SDK-tested source only by preference injection',
   (await read(modelPath)).replace(/\r\n/g,'\n') === expectedModel,
   {baseline:'7e836d1', unchanged:'Project lifecycle, journals, saving, quotas, DSP and export rules'});
+const storagePath = 'ios/Ringify/Services/SwiftDataProjectStorageService.swift';
+const testedStorage = execFileSync('git', ['show', `7e836d1:${storagePath}`], {cwd:root, encoding:'utf8'}).replace(/\r\n/g,'\n');
+const currentStorage = (await read(storagePath)).replace(/\r\n/g,'\n');
+const newConfigStart = currentStorage.indexOf('        // A caller-owned disk URL');
+const newConfigEnd = currentStorage.indexOf('        container = try ModelContainer', newConfigStart);
+const restoredStorage = currentStorage.slice(0,newConfigStart)
+  + '        let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)\n'
+  + currentStorage.slice(newConfigEnd);
+check('P09 schema, migrations, journals and storage transactions unchanged', newConfigStart>=0 && newConfigEnd>newConfigStart
+  && restoredStorage.replace('directories: AppDirectories? = nil, storeURL: URL? = nil)', 'directories: AppDirectories? = nil)')===testedStorage,
+  {baseline:'7e836d1', change:'Optional isolated disk configuration only; production default unchanged'});
 for (const [file, before] of Object.entries(baseline.hashes)) {
   try {
     const after = hash(await readFile(join(root, file)));
