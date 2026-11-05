@@ -4,6 +4,10 @@ import XCTest
 @testable import Ringify
 
 @MainActor final class StudioPresentationTests: XCTestCase {
+    // Thread.isMainThread is unavailable directly in an async context. This
+    // synchronous probe runs in the same uninterrupted color-resolution call.
+    nonisolated private static func isBackgroundResolutionThread() -> Bool { !Thread.isMainThread }
+
     func testAdaptivePaletteResolvesOnBackgroundExecutorInBothAppearances() async {
         let colors = [RingifyTheme.Studio.background, RingifyTheme.Studio.surface,
             RingifyTheme.Studio.raised, RingifyTheme.Studio.text, RingifyTheme.Studio.secondary,
@@ -19,7 +23,7 @@ import XCTest
                     channels.append(valid ? [red, green, blue, alpha] : [])
                 }
             }
-            return (!Thread.isMainThread, channels)
+            return (Self.isBackgroundResolutionThread(), channels)
         }.value
         XCTAssertTrue(result.0, "Must exercise the off-main resolution that triggered the real crash")
         XCTAssertEqual(result.1.count, 20)
