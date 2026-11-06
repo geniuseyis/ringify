@@ -102,3 +102,18 @@ schemes:
           parallelizable: false
         - name: RingifyUITests
           parallelizable: false
+          selectedTests:
+            - NativeScreenshotsTests/testAllMainScreensInBothAppearances()
+  RingifyCapture:
+    build:
+      targets:
+        Ringify: all
+        RingifyUITests: [test]
+    test:
+      config: Debug
+      macroExpansion: Ringify
+      targets:
+        - name: RingifyUITests
+          parallelizable: false
+          selectedTests:
+            - NativeScreenshotsTests/testEntryScreensInBothAppearances()
