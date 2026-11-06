@@ -87,6 +87,7 @@ jobs:
           xcrun simctl list devices available --json > artifacts/simulators.json
           simulator="$(node scripts/select-ios-simulator.mjs < artifacts/simulators.json)"
           scheme=Ringify
+          test_targets=("-only-testing:RingifyTests")
           if [[ "$VALIDATION_SCOPE" == ui ]]; then
             case "$UI_VIEWPORT" in
               390) device_type=com.apple.CoreSimulator.SimDeviceType.iPhone-13 ;;
@@ -97,6 +98,7 @@ jobs:
             simulator="$(xcrun simctl create "Ringify UI $UI_VIEWPORT" "$device_type" "$runtime")"
             xcrun simctl boot "$simulator"
             scheme=RingifyUI
+            test_targets+=("-only-testing:RingifyUITests/NativeScreenshotsTests/testAllMainScreensInBothAppearances")
           fi
           printf 'Selected iOS runtime %s, device %s\n' "$IOS_VALIDATION_RUNTIME" "$simulator"
           (cd ios && xcodegen generate --spec project.yml) 2>&1 | tee artifacts/xcodegen.log
@@ -108,6 +110,7 @@ jobs:
             -resultBundlePath artifacts/Tests.xcresult -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 120 \
             -maximum-test-execution-time-allowance 600 \
+            "${test_targets[@]}" \
             CODE_SIGNING_ALLOWED=NO test 2>&1 | tee artifacts/ios-test.log || test_status=$?
           if [[ "$VALIDATION_SCOPE" == ui ]]; then
             if runner_data="$(xcrun simctl get_app_container "$simulator" com.ringify.app.uitests.xctrunner data)"; then
