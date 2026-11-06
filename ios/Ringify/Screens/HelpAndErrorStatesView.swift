@@ -83,7 +83,6 @@ enum RingifyHelpCategory: String, CaseIterable, Identifiable {
 struct HelpAndErrorStatesView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var router: AppRouter
-    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var query = ""
     @State private var category: RingifyHelpCategory = .all
 
@@ -96,67 +95,75 @@ struct HelpAndErrorStatesView: View {
 
     var body: some View {
         List {
-            Section {
-                Label(model.uiText("Nasıl yardımcı olabiliriz?", "How can we help?"), systemImage: "lifepreserver")
-                    .font(.headline)
-                Text(model.uiText("Konunu seçerek adımları ve ilgili araçları açabilirsin.",
-                    "Choose a topic for step-by-step help and the tools you need."))
-                    .font(.subheadline).foregroundStyle(.secondary)
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top),
-                    count: typeSize.isAccessibilitySize ? 1 : 3), spacing: 10) {
-                    quickAction(model.uiText("Dosya ekle", "Add a file"), icon: "square.and.arrow.down") { router.push(.importSource) }
-                    quickAction(model.uiText("iPhone rehberi", "iPhone guide"), icon: "iphone") { router.push(.guide) }
-                    quickAction(model.uiText("Projelerim", "My projects"), icon: "folder") {
-                        router.popToRoot(); router.selectedTab = .library
-                    }
-                }
-            }
-            Section(model.uiText("Yardım konuları", "Help topics")) {
-                Picker(model.uiText("Kategori", "Category"), selection: $category) {
-                    ForEach(RingifyHelpCategory.allCases) { Text($0.title(model)).tag($0) }
-                }
-                .pickerStyle(.menu)
-                .accessibilityIdentifier("help.category")
-                ForEach(topics) { topic in topicLink(topic) }
-                if topics.isEmpty {
-                    RingifyEmptyState(icon: "magnifyingglass", title: LocalizedStringKey(model.uiText("Sonuç bulunamadı", "No results")),
-                        message: LocalizedStringKey(model.uiText("Başka bir konu ara.", "Try another topic.")),
-                        actionTitle: LocalizedStringKey(model.uiText("Aramayı temizle", "Clear search")), action: { query = ""; category = .all })
-                }
-            }
+            shortcutsSection
+            topicsSection
             if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && category == .all {
-            Section {
-                ForEach(RingifyIssue.allCases) { issue in
-                    NavigationLink { IssueDetailView(issue: issue) } label: {
-                        SettingsNavigationRow(title: model.localized("issue.\(issue.rawValue).title"),
-                            icon: issueIcon(issue), tint: issueColor(issue))
-                    }
-                }
-            } header: {
-                Text("help.states")
-            } footer: {
-                Text("help.footer")
-            }
+                troubleshootingSection
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(model.uiText("Yardım Merkezi", "Help Center"))
         .searchable(text: $query, prompt: model.uiText("Yardımda ara", "Search help"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    private var shortcutsSection: some View {
+        Section {
+            quickAction(model.uiText("Dosya ekle", "Add a file"), icon: "square.and.arrow.down") { router.push(.importSource) }
+            quickAction(model.uiText("iPhone rehberi", "iPhone guide"), icon: "iphone") { router.push(.guide) }
+            quickAction(model.uiText("Projelerim", "My projects"), icon: "folder") {
+                router.popToRoot(); router.selectedTab = .library
+            }
+        } header: {
+            Text(model.uiText("Nasıl yardımcı olabiliriz?", "How can we help?")).textCase(nil)
+        } footer: {
+            Text(model.uiText("Konunu seçerek adımları ve ilgili araçları açabilirsin.",
+                "Choose a topic for step-by-step help and the tools you need."))
+        }
+    }
+
+    private var topicsSection: some View {
+        Section {
+            Picker(model.uiText("Kategori", "Category"), selection: $category) {
+                ForEach(RingifyHelpCategory.allCases) { Text($0.title(model)).tag($0) }
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("help.category")
+            ForEach(topics) { topic in topicLink(topic) }
+            if topics.isEmpty {
+                RingifyEmptyState(icon: "magnifyingglass", title: LocalizedStringKey(model.uiText("Sonuç bulunamadı", "No results")),
+                    message: LocalizedStringKey(model.uiText("Başka bir konu ara.", "Try another topic.")),
+                    actionTitle: LocalizedStringKey(model.uiText("Aramayı temizle", "Clear search")), action: { query = ""; category = .all })
+            }
+        } header: {
+            Text(model.uiText("Yardım konuları", "Help topics")).textCase(nil)
+        }
+    }
+
+    private var troubleshootingSection: some View {
+        Section {
+            ForEach(RingifyIssue.allCases) { issue in
+                NavigationLink { IssueDetailView(issue: issue) } label: {
+                    SettingsNavigationRow(title: model.localized("issue.\(issue.rawValue).title"),
+                        icon: issueIcon(issue), tint: issueColor(issue))
+                }
+            }
+        } header: {
+            Text("help.states").textCase(nil)
+        } footer: {
+            Text("help.footer")
+        }
+    }
+
+    // A default Button in a List keeps the system row highlight but tints its label,
+    // and the row's hierarchical .primary would inherit that tint. Color.primary keeps
+    // the title neutral; only the symbol carries the accent.
     private func quickAction(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
-                Image(systemName: icon).foregroundStyle(RingifyTheme.Studio.accent).accessibilityHidden(true)
-                Text(title).font(.caption.weight(.medium)).foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-            .modifier(NativeContentCard(padding: 12))
+            RingifyRow(Text(title), systemImage: icon, showsChevron: true)
+                .foregroundStyle(Color.primary)
         }
-        .buttonStyle(.plain)
+        .accessibilityLabel(title)
     }
 
     private func topicLink(_ topic: RingifyHelpTopic) -> some View {
