@@ -8,6 +8,26 @@ import XCTest
     private var images: [[String: Any]] = []
     private let fixtureName = "Ringify Native Fixture"
 
+    func testEntryScreensInBothAppearances() throws {
+        continueAfterFailure = false
+        executionTimeAllowance = 120
+        XCUIDevice.shared.orientation = .portrait
+        defer { app.terminate() }
+        for theme in ["light", "dark"] {
+            launch(theme: theme, holdSplash: true)
+            try capture(1, "splash", theme: theme)
+            launch(theme: theme, onboarding: true)
+            for page in 0..<3 {
+                waitFor("onboarding.continue")
+                try capture(2, "onboarding-\(page + 1)", theme: theme)
+                tap("onboarding.continue")
+            }
+            waitFor("home.create")
+            try capture(3, "home-empty", theme: theme)
+        }
+        XCTAssertEqual(images.count, 10)
+    }
+
     func testAllMainScreensInBothAppearances() throws {
         continueAfterFailure = false
         executionTimeAllowance = 600
@@ -164,6 +184,10 @@ import XCTest
     }
 
     private func capture(_ number: Int, _ state: String, theme: String) throws {
+        // The page index updates before UIPageViewController's animation ends.
+        // This waits in the test runner, without freezing the app's main thread.
+        Thread.sleep(forTimeInterval: state.hasPrefix("onboarding-") ? 1 : 0.35)
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5), "Capture requires the actual foreground app")
         // The first SwiftUI accessibility window can report the content's intrinsic
         // height during launch. Measure the actual full-screen PNG instead.
         let screenshot = XCUIScreen.main.screenshot(), data = screenshot.pngRepresentation
