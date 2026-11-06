@@ -376,12 +376,14 @@ struct RingifyWaveformThumbnail: View {
     }
 }
 
+// MARK: - Time
+
 struct DurationText: View {
     let seconds: TimeInterval
 
     var body: some View {
         Text(Self.formatted(seconds))
-            .font(.system(.body, design: .monospaced, weight: .medium))
+            .monospacedDigit()
             .contentTransition(.numericText())
     }
 
@@ -390,5 +392,12 @@ struct DurationText: View {
         let minutes = Int(safe) / 60
         let remainder = safe - Double(minutes * 60)
         return String(format: "%02d:%04.1f", minutes, remainder)
+    }
+
+    /// Short form for timeline rulers, where tenths would only add noise: 0:05.
+    static func ruler(_ seconds: TimeInterval) -> String {
+        let safe = max(0, seconds.isFinite ? seconds : 0)
+        let total = Int(safe.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 }
