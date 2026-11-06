@@ -11,45 +11,12 @@ struct AudioEffectsView: View {
     var body: some View {
         Group {
             if let project = model.currentProject {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        NativeProjectIdentity(project: project)
-                        AudioComparisonPanel(project: project, effects: effects, container: model.container)
-                        if isSelectionValid(project) {
-                            effectControls(project: project)
-                        } else {
-                            Label("editor.durationRule", systemImage: "exclamationmark.circle")
-                                .font(.subheadline).foregroundStyle(.red)
-                        }
-                        AdvancedEffectsPanel(project: project, effects: $effects)
-                        PersonalAudioPresetsPanel(project: project, effects: $effects)
-                        AudioAnalysisPanel(project: project, service: model.container.analysis) { selection in
-                            do {
-                                let nextEffects = try effects.limitingFades(to: selection.duration)
-                                effects = nextEffects
-                                model.updateCurrentProject {
-                                    $0.selection = selection
-                                    $0.effects = nextEffects
-                                }
-                            } catch { model.present(error) }
-                        }
-                        NativePrimaryAction(title: LocalizedStringKey(model.uiText("Ön İzle", "Preview")), disabled: !isSelectionValid(project)) {
-                            if model.updateCurrentProject({ $0.effects = effects }) {
-                                router.push(.ringtonePreview)
-                            }
-                        }
-                        .accessibilityIdentifier("effects.continue")
-                    }
-                    .padding(RingifyTheme.horizontalPadding)
-                }
+                effectsList(project: project)
             } else {
                 RingifyEmptyState(icon: "slider.horizontal.3", title: "editor.empty.title", message: "editor.empty.message",
                     actionTitle: "home.create", action: { router.push(.importSource) })
             }
         }
-        .background(RingifyTheme.Studio.background)
-        .tint(RingifyTheme.Studio.accent)
-        .ringifyStudioAppearance()
         .navigationTitle("effects.title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -70,56 +37,108 @@ struct AudioEffectsView: View {
         }
     }
 
+    private func effectsList(project: RingtoneProject) -> some View {
+        List {
+            Section {
+                AudioComparisonPanel(project: project, effects: effects, container: model.container)
+            }
+            if isSelectionValid(project) {
+                audioSection(project: project)
+                processingSection
+            } else {
+                Section {
+                    Label("editor.durationRule", systemImage: "exclamationmark.circle")
+                        .font(.subheadline)
+                        .foregroundStyle(RingifyTheme.danger)
+                }
+            }
+            Section {
+                AdvancedEffectsPanel(project: project, effects: $effects)
+            }
+            Section {
+                PersonalAudioPresetsPanel(project: project, effects: $effects)
+            }
+            Section {
+                analysisPanel(project: project)
+            }
+        }
+        .listStyle(.insetGrouped)
+        .ringifyBottomBar {
+            RingifyPrimaryButton(title: LocalizedStringKey(model.uiText("Ön İzle", "Preview")), isDisabled: !isSelectionValid(project)) {
+                if model.updateCurrentProject({ $0.effects = effects }) {
+                    router.push(.ringtonePreview)
+                }
+            }
+            .accessibilityIdentifier("effects.continue")
+        }
+    }
+
+    private func analysisPanel(project: RingtoneProject) -> some View {
+        AudioAnalysisPanel(project: project, service: model.container.analysis) { selection in
+            do {
+                let nextEffects = try effects.limitingFades(to: selection.duration)
+                effects = nextEffects
+                model.updateCurrentProject {
+                    $0.selection = selection
+                    $0.effects = nextEffects
+                }
+            } catch { model.present(error) }
+        }
+    }
+
     private func isSelectionValid(_ project: RingtoneProject) -> Bool {
         if case .success = RingtoneRules().validate(selection: project.selection, sourceDuration: project.sourceDuration) { return true }
         return false
     }
 
-    private func effectControls(project: RingtoneProject) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(model.uiText("Ses", "Audio")).font(.headline).accessibilityAddTraits(.isHeader)
+    private func audioSection(project: RingtoneProject) -> some View {
+        Section {
             sliderRow("effects.volume", icon: "speaker.wave.2.fill", value: $effects.volume, range: 0...1.5,
                       display: (effects.volume * 100).formatted(.number.precision(.fractionLength(0))) + "%", identifier: "effects.volume")
-                .modifier(NativeContentCard())
-            Text(model.uiText("Geçişler", "Fades")).font(.headline).accessibilityAddTraits(.isHeader)
-            VStack(spacing: 18) {
-                sliderRow("effects.fadeIn", icon: "chart.line.uptrend.xyaxis", value: $effects.fadeInDuration, range: 0...min(5, project.selection.duration / 2),
-                          display: seconds(effects.fadeInDuration), identifier: "effects.fadeIn")
-                Divider()
-                sliderRow("effects.fadeOut", icon: "chart.line.downtrend.xyaxis", value: $effects.fadeOutDuration, range: 0...min(5, project.selection.duration / 2),
-                          display: seconds(effects.fadeOutDuration), identifier: "effects.fadeOut")
-            }
-            .modifier(NativeContentCard())
-            Toggle(isOn: Binding(get: { effects.normalize }, set: { next in
-                guard ProAccessPolicy.canChangeNormalization(current: effects.normalize,
-                    next: next, hasVerifiedPro: purchases.isPro) else {
-                    model.updateCurrentProject { $0.effects = effects }
-                    router.push(.premium)
-                    return
-                }
-                effects.normalize = next
-            })) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label("effects.normalize", systemImage: "waveform.path.ecg")
-                    if !purchases.isPro { Text("Ringify Pro").font(.caption).foregroundStyle(RingifyTheme.Studio.accent) }
-                }
-            }
-            .frame(minHeight: 44)
-            .modifier(NativeContentCard())
-            .accessibilityIdentifier("effects.normalize")
-            VStack(alignment: .leading, spacing: 12) {
-                Toggle(model.uiText("Pürüzsüz loop", "Smooth loop"), isOn: Binding(
-                    get: { effects.loopCrossfadeDuration > 0 }, set: { effects.loopCrossfadeDuration = $0 ? 0.03 : 0 }))
-                    .frame(minHeight: 44)
-                if effects.loopCrossfadeDuration > 0 {
+            sliderRow("effects.fadeIn", icon: "chart.line.uptrend.xyaxis", value: $effects.fadeInDuration, range: 0...min(5, project.selection.duration / 2),
+                      display: seconds(effects.fadeInDuration), identifier: "effects.fadeIn")
+            sliderRow("effects.fadeOut", icon: "chart.line.downtrend.xyaxis", value: $effects.fadeOutDuration, range: 0...min(5, project.selection.duration / 2),
+                      display: seconds(effects.fadeOutDuration), identifier: "effects.fadeOut")
+        } header: {
+            Text(model.uiText("Ses", "Audio")).textCase(nil)
+        }
+    }
+
+    private var processingSection: some View {
+        Section {
+            normalizeToggle
+            Toggle(model.uiText("Pürüzsüz loop", "Smooth loop"), isOn: Binding(
+                get: { effects.loopCrossfadeDuration > 0 }, set: { effects.loopCrossfadeDuration = $0 ? 0.03 : 0 }))
+            if effects.loopCrossfadeDuration > 0 {
+                VStack(alignment: .leading, spacing: 8) {
                     NativeMetadataRow(title: model.uiText("Uç geçişi", "Edge overlap"), value: (effects.loopCrossfadeDuration * 1000).formatted(.number.precision(.fractionLength(0))) + " ms")
                     Slider(value: $effects.loopCrossfadeDuration, in: 0.005...0.25, step: 0.005)
                         .frame(minHeight: 44)
                         .accessibilityLabel(model.uiText("Döngü uç geçişi", "Loop edge overlap"))
                         .accessibilityValue((effects.loopCrossfadeDuration * 1000).formatted(.number.precision(.fractionLength(0))) + " ms")
                 }
-            }.modifier(NativeContentCard())
+            }
         }
+    }
+
+    private var normalizeToggle: some View {
+        Toggle(isOn: Binding(get: { effects.normalize }, set: { next in
+            guard ProAccessPolicy.canChangeNormalization(current: effects.normalize,
+                next: next, hasVerifiedPro: purchases.isPro) else {
+                model.updateCurrentProject { $0.effects = effects }
+                router.push(.premium)
+                return
+            }
+            effects.normalize = next
+        })) {
+            VStack(alignment: .leading, spacing: 2) {
+                Label("effects.normalize", systemImage: "waveform.path.ecg")
+                if !purchases.isPro {
+                    Text("Ringify Pro").font(.caption).foregroundStyle(.tint)
+                }
+            }
+        }
+        .accessibilityIdentifier("effects.normalize")
     }
 
     private func seconds(_ value: Double) -> String {
@@ -150,6 +169,7 @@ struct AudioEffectsView: View {
                 .accessibilityValue(display)
                 .accessibilityIdentifier(identifier)
         }
+        .padding(.vertical, 4)
     }
 
 }
