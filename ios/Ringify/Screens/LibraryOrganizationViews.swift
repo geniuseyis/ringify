@@ -150,7 +150,10 @@ struct LibraryCollectionsView: View {
                             pendingDelete = collection
                             showDeleteConfirmation = true
                         }
-                    } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }
+                    } label: {
+                        Image(systemName: "ellipsis.circle").frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
                     .accessibilityLabel(model.uiText("\(collection.name) seçenekleri", "Options for \(collection.name)"))
                     .disabled(model.isLibraryWorking)
                 }
