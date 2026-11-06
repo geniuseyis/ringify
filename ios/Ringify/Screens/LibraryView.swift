@@ -152,6 +152,9 @@ struct LibraryView: View {
             filterChips
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
+                // Zero row insets let the chip strip scroll to the list edge instead of
+                // being cut off inside the row; contentMargins keeps the first chip aligned.
+                .listRowInsets(EdgeInsets())
         }
     }
 
@@ -172,6 +175,7 @@ struct LibraryView: View {
             .controlSize(.small)
             .padding(.vertical, 8)
         }
+        .contentMargins(.horizontal, RingifyTheme.horizontalPadding, for: .scrollContent)
     }
 
     private var favoritesChip: some View {
