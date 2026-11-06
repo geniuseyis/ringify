@@ -54,97 +54,20 @@ struct LibraryView: View {
 
     var body: some View {
         List {
-            Section {
-                librarySummary
-                    .listRowBackground(Color.clear)
-                filterPicker
-                    .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
-                    .listRowBackground(Color.clear)
-                libraryToolbar
-                    .listRowBackground(Color.clear)
-            }
-            Section {
-                if model.isWorking && model.projects.isEmpty {
-                    RingifyLoadingView().frame(minHeight: 220)
-                } else if visibleProjects.isEmpty {
-                    emptyState
-                } else if gridLayout && !isSelecting {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top),
-                        count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 12) {
-                        ForEach(visibleProjects) { project in
-                            projectRow(project)
-                                .buttonStyle(.plain)
-                                .padding(12)
-                                .background(RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: 20))
-                                .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(RingifyTheme.Studio.border).allowsHitTesting(false) }
-                        }
-                    }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                    .listRowBackground(Color.clear)
-                } else {
-                    ForEach(visibleProjects) { project in
-                        projectRow(project)
-                            .swipeActions(edge: .trailing) {
-                                if !isSelecting {
-                                    Button(role: .destructive) { confirmDeletion([project.id]) } label: {
-                                        Label("library.delete", systemImage: "trash")
-                                    }
-                                    Button { projectToRename = project } label: {
-                                        Label("library.rename", systemImage: "pencil")
-                                    }.tint(RingifyTheme.accent)
-                                }
-                            }
-                            .swipeActions(edge: .leading) {
-                                if !isSelecting {
-                                    Button { toggleFavorite(project) } label: {
-                                        Label(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"),
-                                            systemImage: project.library.favorite ? "star.slash" : "star")
-                                    }
-                                    .tint(RingifyTheme.accent).disabled(model.isLibraryWorking)
-                                }
-                            }
-                    }
-                }
-            } header: {
-                HStack {
-                    Text(preferences.sort.title(model)).textCase(nil)
-                    Spacer()
-                }
-            }
+            controlsSection
+            projectsSection
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .ringifyStudioAppearance()
+        .listStyle(.insetGrouped)
         .searchable(text: $query, prompt: "library.search")
         .navigationTitle(model.uiText("Kütüphane", "Library"))
-        .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                if isSelecting {
-                    Button("common.done") { endSelection() }.disabled(isDeleting || model.isLibraryWorking)
-                } else {
-                    Menu {
-                        Button { showOrganization = true } label: {
-                            Label(model.uiText("Filtrele ve sırala", "Filter and sort"), systemImage: "line.3.horizontal.decrease")
-                        }
-                        Button {
-                            if purchases.isPro { isSelecting = true }
-                            else { router.push(.premium) }
-                        } label: {
-                            Label(model.uiText("Projeleri seç", "Select projects"), systemImage: "checkmark.circle")
-                        }.disabled(model.projects.isEmpty)
-                    } label: {
-                        Image(systemName: "ellipsis.circle").frame(minWidth: 44, minHeight: 44)
-                    }
-                    .accessibilityLabel(model.uiText("Kütüphane seçenekleri", "Library options"))
-                    Button { router.push(.importSource) } label: {
-                        Image(systemName: "plus").frame(minWidth: 44, minHeight: 44)
-                    }
-                    .accessibilityLabel("home.create")
-                }
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar { toolbarContent }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if isSelecting {
+                selectionBar
+                    .background(.bar)
+                    .overlay(alignment: .top) { Divider() }
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            if isSelecting { selectionBar }
         }
         .task { if await model.reloadLibrary() { reconcileCollectionFilter() } }
         .onChange(of: model.collections.map(\.id)) { _, _ in reconcileCollectionFilter() }
@@ -157,23 +80,16 @@ struct LibraryView: View {
         .sheet(isPresented: $showOrganization) {
             NavigationStack {
                 LibraryOrganizationView(preferences: Binding(get: { preferences }, set: { savePreferences($0) }))
-                    .ringifyStudioAppearance()
             }
         }
         .sheet(item: $projectToRename) { project in
             RenameProjectSheet(project: project) { await model.renameProject(project, to: $0) }
-                .environment(\.ringifyVisualStyle, .classic)
-                .tint(RingifyTheme.AppleV2.accent)
         }
         .sheet(item: $projectToOrganize) { project in
             LibraryCollectionAssignmentView(projectID: project.id)
-                .environment(\.ringifyVisualStyle, .classic)
-                .tint(RingifyTheme.AppleV2.accent)
         }
         .sheet(isPresented: $showBatchOrganization) {
             LibraryBatchOrganizationView(projectIDs: selectedIDs)
-                .environment(\.ringifyVisualStyle, .classic)
-                .tint(RingifyTheme.AppleV2.accent)
         }
         .confirmationDialog(model.uiText("Seçilen projeler silinsin mi?", "Delete the selected projects?"),
             isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
@@ -199,58 +115,110 @@ struct LibraryView: View {
         }
     }
 
-    private var librarySummary: some View {
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
-            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
-        return layout {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(model.uiText("\(model.projects.count) proje", "\(model.projects.count) projects"))
-                    .font(.subheadline.weight(.semibold))
-                Text(model.uiText("\(model.projects.filter { $0.status == .draft }.count) taslak · \(model.projects.filter { $0.status == .exported }.count) hazır",
-                    "\(model.projects.filter { $0.status == .draft }.count) drafts · \(model.projects.filter { $0.status == .exported }.count) exported"))
-                    .font(.caption).foregroundStyle(.secondary)
+    @ToolbarContentBuilder private var toolbarContent: some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            if isSelecting {
+                Button("common.done") { endSelection() }.disabled(isDeleting || model.isLibraryWorking)
+            } else {
+                Menu {
+                    Button { showOrganization = true } label: {
+                        Label(model.uiText("Filtrele ve sırala", "Filter and sort"), systemImage: "line.3.horizontal.decrease")
+                    }
+                    Button {
+                        if purchases.isPro { isSelecting = true }
+                        else { router.push(.premium) }
+                    } label: {
+                        Label(model.uiText("Projeleri seç", "Select projects"), systemImage: "checkmark.circle")
+                    }.disabled(model.projects.isEmpty)
+                } label: {
+                    Image(systemName: "ellipsis.circle").frame(minWidth: 44, minHeight: 44)
+                }
+                .accessibilityLabel(model.uiText("Kütüphane seçenekleri", "Library options"))
+                Button { router.push(.importSource) } label: {
+                    Image(systemName: "plus").frame(minWidth: 44, minHeight: 44)
+                }
+                .accessibilityLabel("home.create")
             }
-            if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
-            Button { gridLayout.toggle() } label: {
-                Image(systemName: gridLayout ? "list.bullet" : "square.grid.2x2")
-                    .frame(width: 44, height: 44)
-                    .background(RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(RingifyTheme.Studio.border) }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(model.uiText("Görünümü değiştir", "Change layout"))
-            .accessibilityValue(gridLayout ? model.uiText("Izgara", "Grid") : model.uiText("Liste", "List"))
-            .accessibilityIdentifier("library.layout")
         }
     }
 
-    private var libraryToolbar: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) { libraryToolbarButtons }
-            VStack(alignment: .leading, spacing: 10) { libraryToolbarButtons }
+    // MARK: Controls
+
+    private var controlsSection: some View {
+        Section {
+            filterPicker
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            filterChips
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
         }
-        .buttonStyle(.bordered)
     }
 
-    @ViewBuilder private var libraryToolbarButtons: some View {
+    private var favoriteCount: Int { model.projects.filter { $0.library.favorite }.count }
+
+    /// Favorites, collections, sort and layout stay visible on the list (user decision):
+    /// one line of small capsules that scrolls sideways instead of breaking words.
+    private var filterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                favoritesChip
+                collectionsChip
+                sortChip
+                layoutChip
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            .padding(.vertical, 8)
+        }
+    }
+
+    private var favoritesChip: some View {
         Button { preferenceBinding(\.favoritesOnly).wrappedValue = !preferences.favoritesOnly } label: {
-            Label(model.uiText("Favoriler \(model.projects.filter { $0.library.favorite }.count)", "Favorites \(model.projects.filter { $0.library.favorite }.count)"), systemImage: "star")
-                .font(.subheadline).frame(minHeight: 44)
+            Label(model.uiText("Favoriler · \(favoriteCount)", "Favorites · \(favoriteCount)"),
+                systemImage: preferences.favoritesOnly ? "star.fill" : "star")
+                .lineLimit(1)
+                .fixedSize()
+                .modifier(LibraryChipHitArea())
         }
+        // Selected state only: an explicit tint fills the active capsule; the others keep the system look.
+        .tint(preferences.favoritesOnly ? RingifyTheme.accent : nil)
         .accessibilityAddTraits(preferences.favoritesOnly ? [.isSelected] : [])
-        .tint(preferences.favoritesOnly ? RingifyTheme.Studio.accent : RingifyTheme.Studio.secondary)
         .accessibilityIdentifier("library.favorites.filter")
+    }
+
+    private var collectionsChip: some View {
         Button { showOrganization = true } label: {
             Label(model.uiText("Koleksiyonlar", "Collections"), systemImage: "folder")
-                .font(.subheadline).frame(minHeight: 44)
+                .lineLimit(1)
+                .fixedSize()
+                .modifier(LibraryChipHitArea())
         }
         .accessibilityIdentifier("library.collections")
+    }
+
+    private var sortChip: some View {
         Button { showOrganization = true } label: {
-            Image(systemName: "arrow.up.arrow.down").frame(width: 44, height: 44)
+            Label(preferences.sort.title(model), systemImage: "arrow.up.arrow.down")
+                .lineLimit(1)
+                .fixedSize()
+                .modifier(LibraryChipHitArea())
         }
         .accessibilityLabel(model.uiText("Filtrele ve sırala", "Filter and sort"))
+        .accessibilityValue(preferences.sort.title(model))
         .accessibilityIdentifier("library.sort")
+    }
+
+    private var layoutChip: some View {
+        Button { gridLayout.toggle() } label: {
+            Image(systemName: gridLayout ? "list.bullet" : "square.grid.2x2")
+                .fixedSize()
+                .modifier(LibraryChipHitArea())
+        }
+        .accessibilityLabel(model.uiText("Görünümü değiştir", "Change layout"))
+        .accessibilityValue(gridLayout ? model.uiText("Izgara", "Grid") : model.uiText("Liste", "List"))
+        .accessibilityIdentifier("library.layout")
     }
 
     @ViewBuilder private var filterPicker: some View {
@@ -267,6 +235,110 @@ struct LibraryView: View {
         ForEach([LibraryStatusFilter.all, .ready, .drafts]) { option in Text(option.title(model)).tag(option) }
     }
 
+    // MARK: Projects
+
+    private var projectsSection: some View {
+        Section {
+            projectsContent
+        } header: {
+            projectsHeader
+        }
+    }
+
+    @ViewBuilder private var projectsContent: some View {
+        if model.isWorking && model.projects.isEmpty {
+            RingifyLoadingView().frame(minHeight: 220)
+                .listRowBackground(Color.clear)
+        } else if visibleProjects.isEmpty {
+            emptyState
+        } else if gridLayout && !isSelecting {
+            projectGrid
+        } else {
+            projectList
+        }
+    }
+
+    private var projectList: some View {
+        ForEach(visibleProjects) { project in
+            projectRow(project)
+                .swipeActions(edge: .trailing) {
+                    if !isSelecting {
+                        Button(role: .destructive) { confirmDeletion([project.id]) } label: {
+                            Label("library.delete", systemImage: "trash")
+                        }
+                        Button { projectToRename = project } label: {
+                            Label("library.rename", systemImage: "pencil")
+                        }
+                    }
+                }
+                .swipeActions(edge: .leading) {
+                    if !isSelecting {
+                        Button { toggleFavorite(project) } label: {
+                            Label(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"),
+                                systemImage: project.library.favorite ? "star.slash" : "star")
+                        }
+                        .tint(RingifyTheme.action).disabled(model.isLibraryWorking)
+                    }
+                }
+        }
+    }
+
+    private var projectCountText: String {
+        model.uiText("\(model.projects.count) proje", "\(model.projects.count) projects")
+    }
+
+    private var statusCountText: String {
+        let drafts = model.projects.filter { $0.status == .draft }.count
+        let exported = model.projects.filter { $0.status == .exported }.count
+        return model.uiText("\(drafts) taslak · \(exported) hazır", "\(drafts) drafts · \(exported) exported")
+    }
+
+    /// Sort order on the left, the project counter on the right; the draft and
+    /// exported breakdown joins the line only when it fits.
+    private var projectsHeader: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(preferences.sort.title(model)).lineLimit(1)
+                Spacer(minLength: 8)
+                Text(projectCountText).lineLimit(1)
+                Text(statusCountText).lineLimit(1).foregroundStyle(.secondary)
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(preferences.sort.title(model)).lineLimit(1)
+                Spacer(minLength: 8)
+                Text(projectCountText).lineLimit(1)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(preferences.sort.title(model))
+                Text(projectCountText)
+                Text(statusCountText).foregroundStyle(.secondary)
+            }
+        }
+        .textCase(nil)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var projectGrid: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12, alignment: .top),
+            count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 12) {
+            ForEach(visibleProjects) { project in
+                NavigationLink {
+                    LibraryProjectDetailView(projectID: project.id)
+                } label: {
+                    LibraryGridProjectLabel(project: project)
+                        .ringifyCard(padding: 12)
+                        .contentShape(.contextMenuPreview,
+                            RoundedRectangle(cornerRadius: RingifyTheme.cardRadius, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .contextMenu { projectActions(project) }
+            }
+        }
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
     private var emptyState: some View {
         ContentUnavailableView {
             Label(model.projects.isEmpty ? model.localized("library.empty.title") : model.localized("library.noResults.title"),
@@ -277,7 +349,7 @@ struct LibraryView: View {
         } actions: {
             if model.projects.isEmpty {
                 Button("home.create") { router.push(.importSource) }
-                    .buttonStyle(.borderedProminent).tint(RingifyTheme.accent)
+                    .ringifyPrimaryAction()
             } else {
                 Button(model.uiText("Aramayı ve filtreyi temizle", "Clear search and filter")) {
                     query = ""
@@ -287,11 +359,15 @@ struct LibraryView: View {
                     next.collection = .all
                     savePreferences(next)
                 }
-                .buttonStyle(.bordered)
+                .ringifySecondaryAction()
             }
         }
         .frame(minHeight: 240)
         .listRowBackground(Color.clear)
+    }
+
+    private func collectionNames(_ project: RingtoneProject) -> String {
+        model.collections.filter { project.library.collectionIDs.contains($0.id) }.map(\.name).joined(separator: ", ")
     }
 
     @ViewBuilder private func projectRow(_ project: RingtoneProject) -> some View {
@@ -304,7 +380,7 @@ struct LibraryView: View {
                     Image(systemName: selectedIDs.contains(project.id) ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(selectedIDs.contains(project.id) ? RingifyTheme.accent : Color.secondary)
                         .font(.title3).accessibilityHidden(true)
-                    LibraryProjectLabel(project: project)
+                    RingifyProjectLabel(project: project, detail: collectionNames(project))
                 }
                 .frame(minHeight: 52)
                 .contentShape(Rectangle())
@@ -312,35 +388,30 @@ struct LibraryView: View {
             .buttonStyle(.plain)
             .accessibilityAddTraits(selectedIDs.contains(project.id) ? [.isSelected] : [])
         } else {
-            HStack(spacing: 4) {
-                NavigationLink {
-                    LibraryProjectDetailView(projectID: project.id)
-                        .environment(\.ringifyVisualStyle, .classic)
-                        .tint(RingifyTheme.AppleV2.accent)
-                } label: {
-                    LibraryProjectLabel(project: project, compact: gridLayout)
-                }
-                Menu {
-                    Button("library.edit", systemImage: "scissors") { open(project, at: .editor) }
-                    Button("library.rename", systemImage: "pencil") { projectToRename = project }
-                    Button(model.uiText("Çoğalt", "Duplicate"), systemImage: "plus.square.on.square") {
-                        Task { await model.duplicateProject(id: project.id) }
-                    }.disabled(model.isLibraryWorking || model.isWorking)
-                    Button(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"), systemImage: "star") {
-                        toggleFavorite(project)
-                    }.disabled(model.isLibraryWorking)
-                    Button(model.uiText("Koleksiyonlar", "Collections"), systemImage: "folder") { projectToOrganize = project }
-                    if let exportedURL = project.exportedURL {
-                        ShareLink(item: exportedURL) { Label("library.share", systemImage: "square.and.arrow.up") }
-                    }
-                    Button("library.delete", systemImage: "trash", role: .destructive) { confirmDeletion([project.id]) }
-                } label: {
-                    Image(systemName: "ellipsis").frame(width: 44, height: 44)
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityLabel(model.uiText("\(project.name) seçenekleri", "Options for \(project.name)"))
+            NavigationLink {
+                LibraryProjectDetailView(projectID: project.id)
+            } label: {
+                RingifyProjectLabel(project: project, detail: collectionNames(project))
             }
+            .contextMenu { projectActions(project) }
         }
+    }
+
+    /// The actions the row's former "…" menu offered, unchanged, now in the context menu.
+    @ViewBuilder private func projectActions(_ project: RingtoneProject) -> some View {
+        Button("library.edit", systemImage: "scissors") { open(project, at: .editor) }
+        Button("library.rename", systemImage: "pencil") { projectToRename = project }
+        Button(model.uiText("Çoğalt", "Duplicate"), systemImage: "plus.square.on.square") {
+            Task { await model.duplicateProject(id: project.id) }
+        }.disabled(model.isLibraryWorking || model.isWorking)
+        Button(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"), systemImage: "star") {
+            toggleFavorite(project)
+        }.disabled(model.isLibraryWorking)
+        Button(model.uiText("Koleksiyonlar", "Collections"), systemImage: "folder") { projectToOrganize = project }
+        if let exportedURL = project.exportedURL {
+            ShareLink(item: exportedURL) { Label("library.share", systemImage: "square.and.arrow.up") }
+        }
+        Button("library.delete", systemImage: "trash", role: .destructive) { confirmDeletion([project.id]) }
     }
 
     private var selectionBar: some View {
@@ -359,7 +430,6 @@ struct LibraryView: View {
         }
         .padding(.horizontal, RingifyTheme.horizontalPadding)
         .padding(.vertical, 6)
-        .background(.bar)
     }
 
     private func open(_ project: RingtoneProject, at route: AppRoute) {
@@ -401,66 +471,6 @@ struct LibraryView: View {
     private func endSelection() {
         isSelecting = false
         selectedIDs = []
-    }
-}
-
-private struct LibraryProjectLabel: View {
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.ringifyVisualStyle) private var visualStyle
-    let project: RingtoneProject
-    var compact = false
-
-    private var thumbnail: [Float] {
-        let values = project.waveformSamples
-        let count = min(24, values.count)
-        guard count > 0 else { return [] }
-        return (0..<count).map { index in
-            values[(index * values.count / count)..<((index + 1) * values.count / count)]
-                .reduce(Float.zero) { peak, value in value.isFinite ? max(peak, abs(value)) : peak }
-        }
-    }
-
-    var body: some View {
-        let layout = compact
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-            : AnyLayout(HStackLayout(spacing: 12))
-        return layout {
-            Group {
-                if thumbnail.isEmpty {
-                    Image(systemName: project.status == .exported ? "bell.fill" : "waveform")
-                        .font(.title3).foregroundStyle(visualStyle.accent)
-                } else {
-                    WaveformView(samples: thumbnail, tint: visualStyle.accent).padding(6)
-                }
-            }
-                .frame(width: 44, height: 44)
-                .background(visualStyle.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(project.name).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                    .lineLimit(2)
-                if project.library.favorite {
-                    Label(model.uiText("Favori", "Favorite"), systemImage: "star.fill")
-                        .font(.caption).foregroundStyle(RingifyTheme.accent)
-                }
-                if !project.library.collectionIDs.isEmpty {
-                    Text(model.collections.filter { project.library.collectionIDs.contains($0.id) }.map(\.name).joined(separator: ", "))
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                }
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 5) { metadata }
-                    VStack(alignment: .leading, spacing: 3) { metadata }
-                }
-                .font(.caption).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 3)
-    }
-
-    @ViewBuilder private var metadata: some View {
-        Text(DurationText.formatted(project.selection.duration))
-        Text(project.status == .exported ? model.uiText("Zil sesi", "Ringtone") : model.uiText("Taslak", "Draft"))
     }
 }
 
@@ -607,5 +617,66 @@ private struct RenameProjectSheet: View {
             .interactiveDismissDisabled(isSaving)
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+
+private struct LibraryProjectLabel: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.ringifyVisualStyle) private var visualStyle
+    let project: RingtoneProject
+    var compact = false
+
+    private var thumbnail: [Float] {
+        let values = project.waveformSamples
+        let count = min(24, values.count)
+        guard count > 0 else { return [] }
+        return (0..<count).map { index in
+            values[(index * values.count / count)..<((index + 1) * values.count / count)]
+                .reduce(Float.zero) { peak, value in value.isFinite ? max(peak, abs(value)) : peak }
+        }
+    }
+
+    var body: some View {
+        let layout = compact
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            Group {
+                if thumbnail.isEmpty {
+                    Image(systemName: project.status == .exported ? "bell.fill" : "waveform")
+                        .font(.title3).foregroundStyle(visualStyle.accent)
+                } else {
+                    WaveformView(samples: thumbnail, tint: visualStyle.accent).padding(6)
+                }
+            }
+                .frame(width: 44, height: 44)
+                .background(visualStyle.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(project.name).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                    .lineLimit(2)
+                if project.library.favorite {
+                    Label(model.uiText("Favori", "Favorite"), systemImage: "star.fill")
+                        .font(.caption).foregroundStyle(RingifyTheme.accent)
+                }
+                if !project.library.collectionIDs.isEmpty {
+                    Text(model.collections.filter { project.library.collectionIDs.contains($0.id) }.map(\.name).joined(separator: ", "))
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                }
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 5) { metadata }
+                    VStack(alignment: .leading, spacing: 3) { metadata }
+                }
+                .font(.caption).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 3)
+    }
+
+    @ViewBuilder private var metadata: some View {
+        Text(DurationText.formatted(project.selection.duration))
+        Text(project.status == .exported ? model.uiText("Zil sesi", "Ringtone") : model.uiText("Taslak", "Draft"))
     }
 }
