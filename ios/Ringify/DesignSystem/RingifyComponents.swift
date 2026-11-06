@@ -138,6 +138,28 @@ struct RingifyCircleButton: View {
     }
 }
 
+private struct RingifyCircleFill: ViewModifier {
+    let emphasis: RingifyCircleButton.Emphasis
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            switch emphasis {
+            case .prominent:
+                content.glassEffect(.regular.tint(RingifyTheme.action).interactive(), in: .circle)
+            case .standard:
+                content.glassEffect(.regular.interactive(), in: .circle)
+            }
+        } else {
+            switch emphasis {
+            case .prominent:
+                content.background(RingifyTheme.action, in: Circle())
+            case .standard:
+                content.background(.regularMaterial, in: Circle())
+            }
+        }
+    }
+}
+
 struct RingifyEmptyState: View {
     let icon: String
     let title: LocalizedStringKey
