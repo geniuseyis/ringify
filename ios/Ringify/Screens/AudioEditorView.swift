@@ -517,6 +517,21 @@ struct AudioEditorView: View {
     }
 }
 
+// MARK: - Waveform editor
+
+private enum EditorWaveformMetrics {
+    static let laneHeight: CGFloat = 200
+    static let laneCornerRadius: CGFloat = 6
+    static let rulerSpacing: CGFloat = 8
+    static let frameEdge: CGFloat = 2.5
+    static let handleWidth: CGFloat = 14
+    static let handleCornerRadius: CGFloat = 6
+    static let minimumTargetWidth: CGFloat = 44
+    /// Card margin plus handle width, so a handle's outer edge lines up with the
+    /// divider and the summary, and its 44 pt target stays inside the scroller.
+    static let laneInset: CGFloat = RingifyTheme.horizontalPadding + handleWidth
+}
+
 private struct EditorTimelineRuler: View {
     let duration: TimeInterval
     let inset: CGFloat
