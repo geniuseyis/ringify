@@ -1,0 +1,86 @@
+name: Unsigned device build (manual)
+
+# Builds an unsigned Release .ipa for a physical iPhone. It is meant for personal
+# testing with a sideloading tool (for example Sideloadly) that re-signs the app
+# with the tester's own Apple ID. It is not an App Store or TestFlight build.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified 2026-11-04
+        with:
+          persist-credentials: false
+
+      - name: Prepare verified XcodeGen for this temporary runner
+        shell: bash
+        env:
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/ringify-xcodegen-2.46.0"
+          mkdir -p "$tools"
+          curl --fail --location --retry 2 --max-time 120 \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.zip \
+            --output "$tools/xcodegen.zip"
+          printf '%s  %s\n' "$XCODEGEN_SHA256" "$tools/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$tools/xcodegen.zip" -d "$tools/unpacked"
+          binary="$(find "$tools/unpacked" -type f -name xcodegen -print | sed -n '1p')"
+          test -n "$binary" && test -x "$binary"
+          dirname "$binary" >> "$GITHUB_PATH"
+
+      - name: Build an unsigned Release app for iPhone
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          xcodebuild -version | tee artifacts/xcode.txt
+          (cd ios && xcodegen generate --spec project.yml) 2>&1 | tee artifacts/xcodegen.log
+          xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/RingifyDerivedData" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee artifacts/ios-device-build.log
+
+      - name: Package the app as an .ipa
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/RingifyDerivedData/Build/Products/Release-iphoneos/Ringify.app"
+          test -d "$app"
+          staging="$RUNNER_TEMP/ipa"
+          mkdir -p "$staging/Payload"
+          cp -R "$app" "$staging/Payload/"
+          (cd "$staging" && zip -qry "$GITHUB_WORKSPACE/artifacts/Ringify-unsigned.ipa" Payload)
+          ls -lh artifacts/Ringify-unsigned.ipa
+
+      - name: Upload the .ipa
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ringify-unsigned-ipa-${{ github.run_id }}
+          path: artifacts/Ringify-unsigned.ipa
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Explain how to install
+        if: always()
+        shell: bash
+        run: |
+          printf '%s\n' \
+            '## Ringify unsigned device build' \
+            'Download the artifact, then install it with a sideloading tool that signs it with your own Apple ID.' \
+            'Free Apple IDs: the app expires after 7 days and in-app purchases cannot be tested.' \
+            'Enable Settings → Privacy & Security → Developer Mode on the iPhone before the first launch.' \
+            >> "$GITHUB_STEP_SUMMARY"
