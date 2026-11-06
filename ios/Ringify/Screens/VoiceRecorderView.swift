@@ -347,3 +347,32 @@ private struct RecorderRecordButton: View {
         .accessibilityLabel(title)
     }
 }
+
+/// Real input level history, newest bar at the trailing edge. With no
+/// measurements it draws a flat hairline; it never invents values.
+private struct RecorderLevelHistory: View {
+    let levels: [Double]
+    private let barWidth: CGFloat = 3
+    private let barGap: CGFloat = 2
+
+    var body: some View {
+        Canvas { context, size in
+            guard size.width > 0, size.height > 0 else { return }
+            guard !levels.isEmpty else {
+                let line = CGRect(x: 0, y: size.height / 2 - 0.5, width: size.width, height: 1)
+                context.fill(Path(line), with: .color(Color.secondary))
+                return
+            }
+            let step = barWidth + barGap
+            let capacity = max(1, Int((size.width + barGap) / step))
+            for (offset, level) in levels.suffix(capacity).reversed().enumerated() {
+                let height = max(2, CGFloat(level) * size.height)
+                let rect = CGRect(x: size.width - barWidth - CGFloat(offset) * step,
+                                  y: (size.height - height) / 2,
+                                  width: barWidth,
+                                  height: height)
+                context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(RingifyTheme.accent))
+            }
+        }
+    }
+}
