@@ -38,6 +38,27 @@ Desktop.ini
 *.log
 *.tmp
 
-# Personal design galleries stay on disk; the Vite entry remains tracked.
-/design/**/*.html
-/design/**/*.htm
+# Local design workspace: galleries, captures and review evidence stay on disk.
+# Only the shared tokens and the brand source are part of the project.
+/design/*
+!/design/tokens.json
+!/design/brand/
+
+# Internal notes and working documents stay local; the repository keeps the
+# design contract and the README screenshots.
+/AGENTS.md
+/PROGRESS.md
+/RINGIFY_PROGRESS_REPORT.md
+/docs/*
+!/docs/NATIVE_APPLE_DESIGN.md
+!/docs/screenshots/
+
+# One-off scope checks and delivery helpers stay local.
+/scripts/*
+!/scripts/validate-native.sh
+!/scripts/select-ios-simulator.mjs
+!/scripts/select-ios-simulator.test.mjs
+!/scripts/check-native-syntax.mjs
+!/scripts/release-audit.mjs
+!/scripts/sync-slot-catalog.mjs
+/.github/workflows/native-diagnostics.yml
