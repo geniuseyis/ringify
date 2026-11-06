@@ -70,7 +70,7 @@
 
 "recorder.title" = "Ses Kaydı";
 "recorder.level" = "Ses seviyesi";
-"recorder.idle" = "Kayda başlamak için mikrofona dokun";
+"recorder.idle" = "Kayda başlamak için düğmeye dokun";
 "recorder.recording" = "Kayıt yapılıyor";
 "recorder.paused" = "Kayıt duraklatıldı";
 "recorder.ready" = "Kaydın düzenlemeye hazır";
