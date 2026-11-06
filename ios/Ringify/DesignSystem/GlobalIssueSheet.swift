@@ -9,38 +9,48 @@ struct GlobalIssueSheet: View {
 
     var body: some View {
         ScrollView {
-          VStack(spacing: 22) {
-            Image(systemName: icon)
-                .font(.system(size: 56))
-                .foregroundStyle(color)
-            Text(LocalizedStringKey("issue.\(issue.rawValue).title"))
-                .font(.title2.bold())
-                .multilineTextAlignment(.center)
-            Text(LocalizedStringKey("issue.\(issue.rawValue).message"))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            if let detail, !detail.isEmpty {
-                Text(detail)
-                    .font(.caption)
+            VStack(spacing: 22) {
+                Image(systemName: icon)
+                    .font(.largeTitle)
+                    .foregroundStyle(color)
+                issueText("title")
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
+                issueText("message")
                     .foregroundStyle(.secondary)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RingifyTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                    .multilineTextAlignment(.center)
+                if let detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RingifyTheme.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                issueText("action")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button("settings.help", systemImage: "questionmark.circle") {
+                    dismiss()
+                    router.push(.help)
+                }
+                .frame(minHeight: 44)
+                .ringifySecondaryAction()
             }
-            Text(LocalizedStringKey("issue.\(issue.rawValue).action"))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-            Button("settings.help", systemImage: "questionmark.circle") {
-                dismiss()
-                router.push(.help)
-            }
-            .frame(minHeight: 44)
-            .buttonStyle(.bordered)
+            .padding(RingifyTheme.horizontalPadding)
+        }
+        .ringifyBottomBar {
             RingifyPrimaryButton(title: "common.done", action: dismiss)
-          }
-          .padding(RingifyTheme.horizontalPadding)
         }
         .presentationDetents([.medium, .large])
+    }
+
+    // The key must reach LocalizedStringKey as a String. As an interpolated literal,
+    // Swift would look up "issue.%@.title" and the sheet would show the raw key.
+    private func issueText(_ part: String) -> Text {
+        let key = "issue.\(issue.rawValue).\(part)"
+        return Text(LocalizedStringKey(key))
     }
 
     private var icon: String {
