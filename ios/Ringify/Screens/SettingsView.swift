@@ -114,21 +114,7 @@ private struct AccountDetailView: View {
 
     var body: some View {
         List {
-            Section(model.uiText("Durumun", "Your status")) {
-                LabeledContent(model.uiText("Üyelik", "Membership"), value: purchases.isPro ? "Ringify Pro" : "Ringify Normal")
-                if purchases.hasLifetime {
-                    Label("premium.lifetime.active", systemImage: "checkmark.seal.fill").foregroundStyle(RingifyTheme.success)
-                }
-                ForEach(ProPlan.allCases.filter { purchases.verifiedPlans.contains($0) }) { plan in
-                    LabeledContent(model.uiText("Doğrulanan plan", "Verified plan"),
-                        value: model.localized("premium.plan.\(plan.rawValue)"))
-                }
-                LabeledContent(model.uiText("Kayıtlı projeler", "Saved projects"), value: "\(model.projects.count)")
-                LabeledContent(model.uiText("Plan kapasitesi", "Plan capacity"), value: "\(capacity)")
-                NavigationLink { ProjectCapacityView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Proje kapasitesi ve ek yuvalar", "Project capacity and extra slots"), icon: "square.stack")
-                }
-            }
+            statusSection
             Section {
                 Text(model.uiText(
                     "Ringify hesabı açman gerekmez. Pro lisansın, App Store'da kullandığın Apple Hesabının doğrulanmış satın alımlarına bağlıdır.",
@@ -146,9 +132,28 @@ private struct AccountDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(model.uiText("Hesap ve Lisans", "Account and License"))
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var statusSection: some View {
+        Section {
+            LabeledContent(model.uiText("Üyelik", "Membership"), value: purchases.isPro ? "Ringify Pro" : "Ringify Normal")
+            if purchases.hasLifetime {
+                Label("premium.lifetime.active", systemImage: "checkmark.seal.fill").foregroundStyle(RingifyTheme.success)
+            }
+            ForEach(ProPlan.allCases.filter { purchases.verifiedPlans.contains($0) }) { plan in
+                LabeledContent(model.uiText("Doğrulanan plan", "Verified plan"),
+                    value: model.localized("premium.plan.\(plan.rawValue)"))
+            }
+            LabeledContent(model.uiText("Kayıtlı projeler", "Saved projects"), value: "\(model.projects.count)")
+            LabeledContent(model.uiText("Plan kapasitesi", "Plan capacity"), value: "\(capacity)")
+            NavigationLink { ProjectCapacityView() } label: {
+                SettingsNavigationRow(title: model.uiText("Proje kapasitesi ve ek yuvalar", "Project capacity and extra slots"), icon: "square.stack")
+            }
+        } header: {
+            Text(model.uiText("Durumun", "Your status")).textCase(nil)
+        }
     }
 }
 
