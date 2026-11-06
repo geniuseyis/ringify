@@ -16,48 +16,32 @@ struct AudioAnalysisPanel: View {
         _viewModel = StateObject(wrappedValue: AudioAnalysisViewModel(service: service))
     }
 
+    // The DisclosureGroup is the single root, so the lifecycle modifiers below
+    // attach once; its children are direct List rows with native separators.
     var body: some View {
         DisclosureGroup {
-            VStack(alignment: .leading, spacing: 16) {
-                if !purchases.isPro {
-                    Button("analysis.unlock") { router.push(.premium) }
-                        .frame(minHeight: 44)
+            if !purchases.isPro {
+                Button("analysis.unlock") { router.push(.premium) }
+                    .frame(minHeight: 44)
+            } else {
+                Text("analysis.sourceOnly").font(.footnote).foregroundStyle(.secondary)
+                if viewModel.state == .running {
+                    ProgressView("analysis.running")
+                    Button("analysis.cancel") { viewModel.cancel() }.frame(minHeight: 44)
                 } else {
-                    Text("analysis.sourceOnly").font(.footnote).foregroundStyle(.secondary)
-                    if viewModel.state == .running {
-                        ProgressView("analysis.running")
-                        Button("analysis.cancel") { viewModel.cancel() }.frame(minHeight: 44)
-                    } else {
-                        Button("analysis.start") { viewModel.start(project, hasVerifiedPro: purchases.isPro) }
-                            .buttonStyle(.bordered).frame(minHeight: 44)
-                    }
-                    if case .failed = viewModel.state {
-                        Text("analysis.failed").foregroundStyle(RingifyTheme.danger)
-                    }
-                    if case .ready(let result) = viewModel.state {
-                        measurement("analysis.peak", value: decibels(result.peakDbFS))
-                        measurement("analysis.rms", value: decibels(result.rmsDbFS))
-                        measurement("analysis.silence", value: String(result.silentRegions.count))
-                        if let selection = result.suggestion {
-                            Text("\(DurationText.formatted(selection.start)) – \(DurationText.formatted(selection.end))")
-                                .font(.subheadline.monospacedDigit())
-                            Button("analysis.applyTrim") {
-                                guard let current = model.currentProject,
-                                      let suggestion = viewModel.suggestion(for: current, hasVerifiedPro: purchases.isPro) else { return }
-                                onApply(suggestion)
-                            }
-                            .buttonStyle(.bordered).frame(minHeight: 44)
-                        } else {
-                            Text("analysis.noSuggestion").font(.footnote).foregroundStyle(.secondary)
-                        }
-                    }
+                    Button("analysis.start") { viewModel.start(project, hasVerifiedPro: purchases.isPro) }
+                        .buttonStyle(.bordered).frame(minHeight: 44)
+                }
+                if case .failed = viewModel.state {
+                    Text("analysis.failed").foregroundStyle(RingifyTheme.danger)
+                }
+                if case .ready(let result) = viewModel.state {
+                    resultRows(result)
                 }
             }
-            .padding(.top, 12)
         } label: {
             Label("analysis.title", systemImage: "waveform.path.ecg")
         }
-        .ringifyCard()
         .onAppear { viewModel.updateInput(project) }
         .onChange(of: AudioAnalysisInput(project)) { _, _ in viewModel.updateInput(project) }
         .onChange(of: purchases.isPro) { _, active in if !active { viewModel.cancel() } }
@@ -68,10 +52,27 @@ struct AudioAnalysisPanel: View {
         value.map { $0.formatted(.number.precision(.fractionLength(1)).locale(locale)) + " dBFS" } ?? "−∞ dBFS"
     }
 
+    @ViewBuilder private func resultRows(_ result: AudioSignalAnalysis) -> some View {
+        measurement("analysis.peak", value: decibels(result.peakDbFS))
+        measurement("analysis.rms", value: decibels(result.rmsDbFS))
+        measurement("analysis.silence", value: String(result.silentRegions.count))
+        if let selection = result.suggestion {
+            Text("\(DurationText.formatted(selection.start)) – \(DurationText.formatted(selection.end))")
+                .font(.subheadline.monospacedDigit())
+            Button("analysis.applyTrim") {
+                guard let current = model.currentProject,
+                      let suggestion = viewModel.suggestion(for: current, hasVerifiedPro: purchases.isPro) else { return }
+                onApply(suggestion)
+            }
+            .buttonStyle(.bordered).frame(minHeight: 44)
+        } else {
+            Text("analysis.noSuggestion").font(.footnote).foregroundStyle(.secondary)
+        }
+    }
+
     private func measurement(_ title: LocalizedStringKey, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.headline.monospacedDigit())
+        LabeledContent(title) {
+            Text(value).monospacedDigit()
         }
         .accessibilityElement(children: .combine)
     }
