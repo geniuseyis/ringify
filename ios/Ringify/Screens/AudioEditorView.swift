@@ -7,7 +7,11 @@ struct AudioEditorView: View {
     @EnvironmentObject private var router: AppRouter
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.scenePhase) private var scenePhase
-    @ScaledMetric(relativeTo: .caption2) private var waveformInset: CGFloat = 24
+    @ScaledMetric(relativeTo: .caption2) private var rulerHeight: CGFloat = 16
+    // The inline layout at accessibility sizes grows its round controls so the
+    // scaled symbols stay inside them. The bottom bar keeps 56 and 44.
+    @ScaledMetric(relativeTo: .title2) private var inlinePlayDiameter: CGFloat = 56
+    @ScaledMetric(relativeTo: .body) private var inlineControlDiameter: CGFloat = 44
     @State private var selection = EditSelection(start: 0, end: 1)
     @State private var zoom = 1.0
     @GestureState private var pinchStartZoom: Double? = nil
@@ -15,11 +19,30 @@ struct AudioEditorView: View {
     @State private var loadedProjectID: UUID?
     @State private var loopPlayback = false
     @State private var hasLoadedPlayback = false
+    @State private var showMarkers = false
+    @State private var showSuggestions = false
     @State private var history = EditorHistory(
         initial: EditorSnapshot(selection: EditSelection(start: 0, end: 1), effects: .neutral)
     )
 
     var body: some View {
+        screen
+            .onAppear { resetFromProject() }
+            // A panel belongs to one project. Closing it here also stops a stale
+            // flag from reopening the sheet for the next project.
+            .onChange(of: model.currentProject?.id) { _, _ in resetFromProject(); closePanels() }
+            .onChange(of: selection) { _, _ in stopPlayback() }
+            .onChange(of: loopPlayback) { _, _ in refreshLoopPlayback() }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase != .active else { return }
+                _ = persistSelection()
+                if model.container.playback.isPlaying { model.container.playback.pause() }
+            }
+            .onDisappear { _ = persistSelection(); stopPlayback() }
+            .sensoryFeedback(.selection, trigger: editingFeedback)
+    }
+
+    private var screen: some View {
         Group {
             if let project = model.currentProject {
                 studio(project)
@@ -27,10 +50,8 @@ struct AudioEditorView: View {
                 emptyStudio
             }
         }
-        .background(RingifyTheme.Studio.background)
-        .tint(RingifyTheme.Studio.accent)
-        .ringifyStudioAppearance()
-        .navigationTitle(model.uiText("Ses Stüdyosu", "Audio Studio"))
+        .background(RingifyTheme.background)
+        .navigationTitle(model.currentProject?.name ?? model.uiText("Ses Stüdyosu", "Audio Studio"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if model.currentProject != nil {
@@ -48,17 +69,8 @@ struct AudioEditorView: View {
                 }
             }
         }
-        .onAppear { resetFromProject() }
-        .onChange(of: model.currentProject?.id) { _, _ in resetFromProject() }
-        .onChange(of: selection) { _, _ in stopPlayback() }
-        .onChange(of: loopPlayback) { _, _ in refreshLoopPlayback() }
-        .onChange(of: scenePhase) { _, phase in
-            guard phase != .active else { return }
-            _ = persistSelection()
-            if model.container.playback.isPlaying { model.container.playback.pause() }
-        }
-        .onDisappear { _ = persistSelection(); stopPlayback() }
-        .sensoryFeedback(.selection, trigger: editingFeedback)
+        .sheet(isPresented: $showMarkers) { markersSheet }
+        .sheet(isPresented: $showSuggestions) { suggestionsSheet }
     }
 
     @ViewBuilder private func studio(_ project: RingtoneProject) -> some View {
@@ -68,7 +80,7 @@ struct AudioEditorView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     workspace(project)
-                    playbackControls(project)
+                    inlinePlaybackControls(project)
                 }
                 .padding(RingifyTheme.horizontalPadding)
             }
@@ -77,115 +89,99 @@ struct AudioEditorView: View {
                 workspace(project)
                     .padding(RingifyTheme.horizontalPadding)
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                playbackControls(project)
-                    .padding(.horizontal, RingifyTheme.horizontalPadding)
-                    .padding(.vertical, 14)
-                    .background(RingifyTheme.Studio.background)
-                    .overlay(alignment: .top) { Divider() }
+            .ringifyBottomBar {
+                transportBar(project)
+                continueButton(project)
             }
         }
     }
 
-    private var emptyStudio: some View {
-        ScrollView {
-            VStack(spacing: 22) {
-                Image(systemName: "waveform")
-                    .font(.largeTitle)
-                    .foregroundStyle(RingifyTheme.Studio.accent)
-                    .padding(20)
-                    .background(RingifyTheme.Studio.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 18))
-                    .accessibilityHidden(true)
-                VStack(spacing: 10) {
-                    Text(model.uiText("Stüdyon hazır", "Your studio is ready"))
-                        .font(.title2.bold())
-                        .accessibilityAddTraits(.isHeader)
-                    Text(model.uiText("Düzenlemek için bir ses ekle veya kayıtlı projeni aç.", "Add audio to edit, or open one of your saved projects."))
-                        .foregroundStyle(.secondary)
-                }
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                Button { router.push(.importSource) } label: {
-                    Label(model.uiText("Ses ekle", "Add audio"), systemImage: "plus")
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(RingifyTheme.Studio.action)
-                .accessibilityIdentifier("studio.import")
-                Button { router.selectedTab = .library } label: {
-                    Label(model.uiText("Kütüphaneyi aç", "Open library"), systemImage: "folder")
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.bordered)
-                .accessibilityIdentifier("studio.library")
-            }
-            .padding(RingifyTheme.horizontalPadding)
-            .padding(.top, 36)
+    // MARK: - Empty state
+
+    @ViewBuilder private var emptyStudio: some View {
+        if typeSize.isAccessibilitySize {
+            ScrollView { emptyStudioContent }
+        } else {
+            emptyStudioContent
         }
     }
+
+    private var emptyStudioContent: some View {
+        ContentUnavailableView {
+            Label(model.uiText("Stüdyon hazır", "Your studio is ready"), systemImage: "waveform")
+                .accessibilityAddTraits(.isHeader)
+        } description: {
+            Text(model.uiText("Düzenlemek için bir ses ekle veya kayıtlı projeni aç.", "Add audio to edit, or open one of your saved projects."))
+        } actions: {
+            Button { router.push(.importSource) } label: {
+                Label(model.uiText("Ses ekle", "Add audio"), systemImage: "plus")
+            }
+            .ringifyPrimaryAction()
+            .accessibilityIdentifier("studio.import")
+            Button { router.selectedTab = .library } label: {
+                Label(model.uiText("Kütüphaneyi aç", "Open library"), systemImage: "folder")
+            }
+            .ringifySecondaryAction()
+            .accessibilityIdentifier("studio.library")
+        }
+    }
+
+    // MARK: - Workspace
 
     private func workspace(_ project: RingtoneProject) -> some View {
-        VStack(spacing: 18) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "waveform")
-                    .font(.title2)
-                    .foregroundStyle(RingifyTheme.Studio.accent)
-                    .frame(width: 44, height: 44)
-                    .background(RingifyTheme.Studio.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(project.name).font(.headline)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(project.sourceFilename).font(.caption).foregroundStyle(.secondary)
-                        .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
-                    Text(DurationText.formatted(project.sourceDuration))
-                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .accessibilityElement(children: .combine)
-            waveformEditor(project)
-            timeSummary
-            editingTools(project)
-            AudioProjectMarkersPanel(project: project, currentTime: { playhead }) { marker in
-                guard loadedProjectID == project.id, model.currentProject?.id == project.id else { return }
-                do {
-                    selection = try AudioMarkers.selection(for: marker, sourceDuration: project.sourceDuration, preferredDuration: selection.duration)
-                    commitSelection(for: project.id)
-                } catch { model.present(error) }
-            }
-            AudioSegmentSuggestionsPanel(project: project, service: model.container.segments) { next in
-                guard loadedProjectID == project.id, model.currentProject?.id == project.id else { return }
-                selection = next
-                commitSelection(for: project.id)
-            }
+        VStack(spacing: 16) {
+            waveformCard(project)
             if !isSelectionValid(project) {
-                Label("editor.durationRule", systemImage: "exclamationmark.circle")
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                durationRuleNotice
             }
+            zoomControl
+            supportActions(project)
         }
+    }
+
+    // The scroller runs edge to edge inside the card so a handle at the very
+    // start or end keeps its full 44 pt target. Everything else takes the margin.
+    private func waveformCard(_ project: RingtoneProject) -> some View {
+        VStack(spacing: 16) {
+            waveformEditor(project)
+            Divider()
+                .padding(.horizontal, RingifyTheme.horizontalPadding)
+            timeSummary
+                .padding(.horizontal, RingifyTheme.horizontalPadding)
+        }
+        .padding(.vertical, RingifyTheme.horizontalPadding)
+        .ringifyCard(padding: 0)
+    }
+
+    private var durationRuleNotice: some View {
+        Label {
+            Text("editor.durationRule")
+        } icon: {
+            Image(systemName: "exclamationmark.circle")
+                .foregroundStyle(RingifyTheme.warning)
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var timeSummary: some View {
         let layout = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
-            : AnyLayout(HStackLayout(alignment: .center, spacing: 10))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
         return layout {
             selectionMetric(model.uiText("Başlangıç", "Start"), seconds: selection.start)
             selectionMetric(model.uiText("Seçili bölüm", "Selection"), seconds: selection.duration, emphasized: true)
             selectionMetric(model.uiText("Bitiş", "End"), seconds: selection.end)
         }
-        .modifier(StudioSurface())
     }
 
     private func selectionMetric(_ title: String, seconds: TimeInterval, emphasized: Bool = false) -> some View {
-        VStack(alignment: typeSize.isAccessibilitySize ? .leading : .center, spacing: 5) {
+        VStack(alignment: typeSize.isAccessibilitySize ? .leading : .center, spacing: 4) {
             Text(title).font(.caption).foregroundStyle(.secondary)
             Text(DurationText.formatted(seconds)).font(.headline.monospacedDigit())
-                .foregroundStyle(emphasized ? RingifyTheme.Studio.accent : Color.primary)
+                .foregroundStyle(emphasized ? RingifyTheme.accent : Color.primary)
         }
+        .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .center)
         .frame(maxWidth: .infinity, alignment: typeSize.isAccessibilitySize ? .leading : .center)
         .accessibilityElement(children: .combine)
     }
@@ -196,22 +192,22 @@ struct AudioEditorView: View {
         TimelineView(.periodic(from: .now, by: 0.1)) { _ in
             GeometryReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        EditorTimelineRuler(duration: project.sourceDuration, inset: waveformInset, intervals: rulerIntervals)
-                            .frame(height: 30)
+                    VStack(spacing: EditorWaveformMetrics.rulerSpacing) {
+                        EditorTimelineRuler(duration: project.sourceDuration, inset: EditorWaveformMetrics.laneInset, intervals: rulerIntervals)
+                            .frame(height: rulerHeight)
                         EditorWaveformSelectionView(
                             samples: project.waveformSamples,
                             duration: project.sourceDuration,
                             selection: $selection,
                             playhead: playhead,
-                            inset: waveformInset,
-                            intervals: rulerIntervals,
+                            inset: EditorWaveformMetrics.laneInset,
                             onEditingEnded: { commitSelection(for: project.id) }
                         )
-                        .frame(height: 200)
+                        .frame(height: EditorWaveformMetrics.laneHeight)
                     }
                     .frame(width: max(proxy.size.width, proxy.size.width * zoom))
                 }
+                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
                 .simultaneousGesture(
                     MagnifyGesture()
                         .updating($pinchStartZoom) { _, origin, _ in
@@ -231,87 +227,203 @@ struct AudioEditorView: View {
                         }
                 )
             }
-            .frame(height: 230)
+            .frame(height: rulerHeight + EditorWaveformMetrics.rulerSpacing + EditorWaveformMetrics.laneHeight)
         }
-        .padding(.vertical, 14)
-        .background(RingifyTheme.Studio.canvas, in: RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius))
-        .overlay { RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius).strokeBorder(RingifyTheme.Studio.canvasBorder) }
         .id(project.id)
     }
 
-    private func playbackControls(_ project: RingtoneProject) -> some View {
-        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
-            VStack(spacing: 12) {
-                Text(DurationText.formatted(max(0, playhead - selection.start)) + " / " + DurationText.formatted(selection.duration))
-                    .font(.headline.monospacedDigit())
-                    .accessibilityLabel(model.uiText("Oynatma süresi", "Playback time"))
-                    .accessibilityValue(DurationText.formatted(max(0, playhead - selection.start)) + " / " + DurationText.formatted(selection.duration))
-                HStack(spacing: 24) {
-                    Toggle(isOn: $loopPlayback) {
-                        Label("editor.loop", systemImage: "repeat")
-                    }
-                    .toggleStyle(.button)
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityIdentifier("studio.loop")
-                    Button { togglePlayback(project) } label: {
-                        Image(systemName: model.container.playback.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.title2.weight(.semibold))
-                            .frame(width: 60, height: 60)
-                            .foregroundStyle(RingifyTheme.Studio.surface)
-                            .background(Color.primary, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(model.uiText(model.container.playback.isPlaying ? "Duraklat" : "Oynat", model.container.playback.isPlaying ? "Pause" : "Play"))
-                    .accessibilityIdentifier("studio.playback")
-                    .disabled(!isSelectionValid(project))
-                    Button { stopPlayback() } label: {
-                        Image(systemName: "stop.fill")
-                            .font(.body)
-                            .frame(minWidth: 44, minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(model.uiText("Durdur", "Stop"))
-                    .accessibilityIdentifier("studio.stop")
-                }
-                Button {
-                    if persistSelection() {
-                        router.push(.effects)
-                    }
-                } label: {
-                    Label("editor.continue", systemImage: "slider.horizontal.3")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(RingifyTheme.Studio.action)
-                .disabled(!isSelectionValid(project))
-                .accessibilityIdentifier("studio.continue")
+    private var zoomControl: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "minus.magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            Slider(value: $zoom, in: StudioZoomRules.range)
+                .frame(minHeight: 44)
+                .accessibilityLabel("editor.zoom")
+                .accessibilityIdentifier("studio.zoom")
+            Image(systemName: "plus.magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+        }
+    }
+
+    // MARK: - Reset, markers, suggestions
+
+    // ViewThatFits compares single-line widths, so the row only appears when all
+    // three titles fit whole. Otherwise they stack and may wrap.
+    private func supportActions(_ project: RingtoneProject) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 0) {
+                resetAction(project, fillsWidth: false).fixedSize()
+                Spacer(minLength: 8)
+                markersAction(project, fillsWidth: false).fixedSize()
+                Spacer(minLength: 8)
+                suggestionsAction(fillsWidth: false).fixedSize()
+            }
+            VStack(spacing: 8) {
+                resetAction(project, fillsWidth: true)
+                markersAction(project, fillsWidth: true)
+                suggestionsAction(fillsWidth: true)
             }
         }
     }
 
-    private func editingTools(_ project: RingtoneProject) -> some View {
-        VStack(spacing: 8) {
-            HStack {
-                Label(model.uiText("Kes", "Trim"), systemImage: "scissors").font(.subheadline.weight(.semibold))
-                Spacer()
-                Button("editor.reset", systemImage: "arrow.counterclockwise") { resetSelection(project) }
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityIdentifier("studio.reset")
-            }
-            HStack(spacing: 12) {
-                Image(systemName: "minus.magnifyingglass").accessibilityHidden(true)
-                Slider(value: $zoom, in: StudioZoomRules.range)
-                    .frame(minHeight: 44)
-                    .accessibilityLabel("editor.zoom")
-                    .accessibilityIdentifier("studio.zoom")
-                Image(systemName: "plus.magnifyingglass").accessibilityHidden(true)
+    private func resetAction(_ project: RingtoneProject, fillsWidth: Bool) -> some View {
+        supportButton(Text("editor.reset"), fillsWidth: fillsWidth) { resetSelection(project) }
+            .accessibilityIdentifier("studio.reset")
+    }
+
+    private func markersAction(_ project: RingtoneProject, fillsWidth: Bool) -> some View {
+        supportButton(Text(model.uiText("İşaretler · \(project.markers.count)", "Markers · \(project.markers.count)")),
+            fillsWidth: fillsWidth) { showMarkers = true }
+            .accessibilityIdentifier("studio.markers")
+    }
+
+    private func suggestionsAction(fillsWidth: Bool) -> some View {
+        supportButton(Text(model.uiText("Öneriler", "Suggestions")), fillsWidth: fillsWidth) { showSuggestions = true }
+            .accessibilityIdentifier("studio.suggestions")
+    }
+
+    private func supportButton(_ title: Text, fillsWidth: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            title
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: fillsWidth ? .infinity : nil)
+        }
+        .ringifySecondaryAction()
+    }
+
+    private var markersSheet: some View {
+        panelSheet(title: model.uiText("İşaretler", "Markers")) {
+            if let project = model.currentProject {
+                AudioProjectMarkersPanel(project: project, currentTime: { playhead }) { marker in
+                    guard loadedProjectID == project.id, model.currentProject?.id == project.id else { return }
+                    do {
+                        selection = try AudioMarkers.selection(for: marker, sourceDuration: project.sourceDuration, preferredDuration: selection.duration)
+                        commitSelection(for: project.id)
+                    } catch { model.present(error) }
+                }
             }
         }
-        .modifier(StudioSurface())
     }
+
+    private var suggestionsSheet: some View {
+        panelSheet(title: model.uiText("Öneriler", "Suggestions")) {
+            if let project = model.currentProject {
+                AudioSegmentSuggestionsPanel(project: project, service: model.container.segments) { next in
+                    guard loadedProjectID == project.id, model.currentProject?.id == project.id else { return }
+                    selection = next
+                    commitSelection(for: project.id)
+                }
+            }
+        }
+    }
+
+    private func panelSheet<Panel: View>(title: String, @ViewBuilder panel: () -> Panel) -> some View {
+        let content = panel()
+        return NavigationStack {
+            content
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("common.done") { closePanels() }
+                    }
+                }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func closePanels() {
+        showMarkers = false
+        showSuggestions = false
+    }
+
+    // MARK: - Transport
+
+    // Three equal zones keep play on the screen's center line whatever the time
+    // text needs. The periods above and here poll because playback is not observable.
+    private func transportBar(_ project: RingtoneProject) -> some View {
+        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+            HStack(spacing: 0) {
+                playbackTime
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                playButton(project, diameter: 56)
+                    .frame(maxWidth: .infinity)
+                HStack(spacing: 8) {
+                    loopButton(diameter: 44)
+                    stopButton(diameter: 44)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+    }
+
+    private func inlinePlaybackControls(_ project: RingtoneProject) -> some View {
+        VStack(spacing: 12) {
+            TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+                VStack(spacing: 12) {
+                    playbackTime
+                        .font(.headline.monospacedDigit())
+                        .multilineTextAlignment(.center)
+                    HStack(spacing: 24) {
+                        loopButton(diameter: min(80, inlineControlDiameter))
+                        playButton(project, diameter: min(96, inlinePlayDiameter))
+                        stopButton(diameter: min(80, inlineControlDiameter))
+                    }
+                }
+            }
+            continueButton(project)
+        }
+    }
+
+    private var playbackTime: some View {
+        Text(DurationText.formatted(max(0, playhead - selection.start)) + " / " + DurationText.formatted(selection.duration))
+            .accessibilityLabel(model.uiText("Oynatma süresi", "Playback time"))
+            .accessibilityValue(DurationText.formatted(max(0, playhead - selection.start)) + " / " + DurationText.formatted(selection.duration))
+    }
+
+    private func playButton(_ project: RingtoneProject, diameter: CGFloat) -> some View {
+        RingifyCircleButton(
+            title: model.uiText(model.container.playback.isPlaying ? "Duraklat" : "Oynat", model.container.playback.isPlaying ? "Pause" : "Play"),
+            systemImage: model.container.playback.isPlaying ? "pause.fill" : "play.fill",
+            emphasis: .prominent,
+            diameter: diameter
+        ) { togglePlayback(project) }
+        .accessibilityIdentifier("studio.playback")
+        .disabled(!isSelectionValid(project))
+    }
+
+    private func loopButton(diameter: CGFloat) -> some View {
+        RingifyCircleButton(
+            title: model.localized("editor.loop"),
+            systemImage: "repeat",
+            diameter: diameter,
+            isSelected: loopPlayback
+        ) { loopPlayback.toggle() }
+        .accessibilityIdentifier("studio.loop")
+    }
+
+    private func stopButton(diameter: CGFloat) -> some View {
+        RingifyCircleButton(title: model.uiText("Durdur", "Stop"), systemImage: "stop.fill", diameter: diameter) { stopPlayback() }
+            .accessibilityIdentifier("studio.stop")
+    }
+
+    private func continueButton(_ project: RingtoneProject) -> some View {
+        RingifyPrimaryButton(title: "editor.continue", systemImage: "slider.horizontal.3", isDisabled: !isSelectionValid(project)) {
+            if persistSelection() {
+                router.push(.effects)
+            }
+        }
+        .accessibilityIdentifier("studio.continue")
+    }
+
+    // MARK: - Editing logic
 
     private var playhead: TimeInterval {
         guard hasLoadedPlayback else { return selection.start }
@@ -402,13 +514,6 @@ struct AudioEditorView: View {
         let effects = model.currentProject?.effects ?? .neutral
         if history.current.selection != selection { editingFeedback.toggle() }
         history.commit(EditorSnapshot(selection: selection, effects: effects))
-    }
-}
-
-private struct StudioSurface: ViewModifier {
-    func body(content: Content) -> some View {
-        content.padding(14)
-            .background(RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius))
     }
 }
 
@@ -566,5 +671,13 @@ private struct EditorWaveformSelectionView: View {
                 dragEndSelection = nil
                 onEditingEnded()
             }
+    }
+}
+
+
+private struct StudioSurface: ViewModifier {
+    func body(content: Content) -> some View {
+        content.padding(14)
+            .background(RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius))
     }
 }
