@@ -8,30 +8,44 @@ extension AppModel {
     }
 }
 
+/// A plain tinted symbol, a title and an optional trailing value. The enclosing
+/// NavigationLink draws the chevron, so a row without one simply shows information.
 struct SettingsNavigationRow: View {
-    @Environment(\.ringifyVisualStyle) private var visualStyle
     let title: String
     let icon: String
     var value: String? = nil
     var tint: Color? = nil
-    private var resolvedTint: Color { tint ?? (visualStyle == .studio ? RingifyTheme.Studio.accent : RingifyTheme.accent) }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.body.weight(.medium))
-                .foregroundStyle(resolvedTint)
-                .frame(width: 30, height: 30)
-                .background(resolvedTint.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
-                .accessibilityHidden(true)
-            Text(title).foregroundStyle(.primary)
+        HStack(spacing: 8) {
+            Label {
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                symbol
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             if let value {
-                Spacer(minLength: 8)
-                Text(value).foregroundStyle(.secondary)
+                Text(value)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.trailing)
             }
         }
         .frame(minHeight: 44)
+        .contentShape(Rectangle())
+    }
+
+    @ViewBuilder private var symbol: some View {
+        if let tint {
+            Image(systemName: icon)
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: icon)
+                .foregroundStyle(.tint)
+                .accessibilityHidden(true)
+        }
     }
 }
 
