@@ -216,6 +216,53 @@ struct RingifyRow: View {
     }
 }
 
+/// A project as a row: real waveform thumbnail, name, and duration with status.
+struct RingifyProjectLabel: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let project: RingtoneProject
+    /// Optional extra line, such as the project's collections.
+    var detail: String? = nil
+
+    private var summary: String {
+        let status = project.status == .exported
+            ? model.uiText("Zil sesi", "Ringtone")
+            : model.uiText("Taslak", "Draft")
+        return DurationText.formatted(project.selection.duration) + " · " + status
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            RingifyWaveformThumbnail(samples: project.waveformSamples)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(project.name)
+                    .foregroundStyle(.primary)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
+                Text(summary)
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                if let detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if project.library.favorite {
+                Image(systemName: "star.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.yellow)
+                    .accessibilityLabel(model.uiText("Favori", "Favorite"))
+            }
+        }
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct RingifyEmptyState: View {
     let icon: String
     let title: LocalizedStringKey
