@@ -484,6 +484,48 @@ private struct LibraryChipHitArea: ViewModifier {
     }
 }
 
+/// Compact grid cell: real waveform thumbnail, name, and duration with status.
+private struct LibraryGridProjectLabel: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let project: RingtoneProject
+
+    private var summary: String {
+        let status = project.status == .exported
+            ? model.uiText("Zil sesi", "Ringtone")
+            : model.uiText("Taslak", "Draft")
+        return DurationText.formatted(project.selection.duration) + " · " + status
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                RingifyWaveformThumbnail(samples: project.waveformSamples)
+                Spacer(minLength: 0)
+                if project.library.favorite {
+                    Image(systemName: "star.fill")
+                        .font(.footnote)
+                        .foregroundStyle(.yellow)
+                        .accessibilityLabel(model.uiText("Favori", "Favorite"))
+                }
+            }
+            Text(project.name)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
+                .multilineTextAlignment(.leading)
+            Text(summary)
+                .font(.footnote)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
 private struct LibraryProjectDetailView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var purchases: PurchaseManager
