@@ -84,18 +84,22 @@ struct RingifyTermsView: View {
 
     var body: some View {
         List {
-            Section(model.uiText("Kullanım", "Use")) {
+            Section {
                 Text(model.uiText(
                     "Yalnızca kullanma iznin olan sesleri ve videoları içe aktar. Kaynak dosyan değiştirilmez; düzenlemeler Ringify'ın yerel kopyası üzerinde yapılır.",
                     "Import audio and video you have permission to use. Your source file is unchanged; edits use Ringify's local copy."))
+            } header: {
+                Text(model.uiText("Kullanım", "Use")).textCase(nil)
             }
-            Section(model.uiText("App Store satın alımları", "App Store purchases")) {
+            Section {
                 Text("premium.terms").foregroundStyle(.secondary)
                 if let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
                     Link(destination: terms) {
                         Label("premium.eula", systemImage: "arrow.up.right.square").frame(minHeight: 44)
                     }
                 }
+            } header: {
+                Text(model.uiText("App Store satın alımları", "App Store purchases")).textCase(nil)
             }
             Section {
                 NavigationLink { RingifyPrivacyView() } label: {
