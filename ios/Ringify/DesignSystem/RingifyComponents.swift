@@ -45,6 +45,29 @@ private struct RingifySecondaryActionStyle: ViewModifier {
             .controlSize(.large)
     }
 }
+
+private struct RingifyBottomBarModifier<Bar: View>: ViewModifier {
+    let bar: Bar
+
+    private var container: some View {
+        VStack(spacing: 8) { bar }
+            .padding(.horizontal, RingifyTheme.horizontalPadding)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
+    }
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.safeAreaBar(edge: .bottom, spacing: 0) { container }
+        } else {
+            content.safeAreaInset(edge: .bottom, spacing: 0) {
+                container
+                    .background(.bar)
+                    .overlay(alignment: .top) { Divider() }
+            }
+        }
+    }
+}
 import Foundation
 import SwiftUI
 
