@@ -70,7 +70,7 @@
 
 "recorder.title" = "Voice Recorder";
 "recorder.level" = "Audio level";
-"recorder.idle" = "Tap the microphone to begin";
+"recorder.idle" = "Tap the button to start recording";
 "recorder.recording" = "Recording";
 "recorder.paused" = "Recording paused";
 "recorder.ready" = "Your recording is ready to edit";
