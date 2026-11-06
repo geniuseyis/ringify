@@ -544,63 +544,11 @@ private struct LibraryProjectDetailView: View {
         Group {
             if let project {
                 List {
-                    Section {
-                        VStack(spacing: 12) {
-                            Image(systemName: project.status == .exported ? "bell.fill" : "waveform")
-                                .font(.largeTitle).foregroundStyle(RingifyTheme.accent)
-                                .frame(width: 72, height: 72)
-                                .background(RingifyTheme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 20))
-                            Text(project.name).font(.title2.bold()).multilineTextAlignment(.center)
-                            Text(project.status == .exported ? model.uiText("Hazır zil sesi", "Ready ringtone") : model.uiText("Taslak proje", "Draft project"))
-                                .font(.subheadline).foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity).padding(.vertical, 12)
-                    }
-                    Section {
-                        Button {
-                            if model.loadProject(project) { showPreview = true }
-                        } label: {
-                            Label("preview.title", systemImage: "play.circle").frame(minHeight: 44)
-                        }
-                        Button {
-                            if model.loadProject(project) { showEditor = true }
-                        } label: {
-                            Label("preview.reedit", systemImage: "scissors").frame(minHeight: 44)
-                        }
-                        if let exportedURL = project.exportedURL {
-                            ShareLink(item: exportedURL) { Label("library.share", systemImage: "square.and.arrow.up").frame(minHeight: 44) }
-                        }
-                    }
-                    Section(model.uiText("Proje bilgileri", "Project information")) {
-                        NavigationLink { LibraryExportHistoryView(projectID: projectID) } label: {
-                            Label(model.uiText("Dışa aktarma geçmişi", "Export history"), systemImage: "clock.arrow.circlepath")
-                        }.frame(minHeight: 44)
-                        LabeledContent(model.uiText("Seçim", "Selection"), value: DurationText.formatted(project.selection.duration))
-                        LabeledContent(model.uiText("Kaynak", "Source"), value: project.sourceFilename)
-                        LabeledContent(model.uiText("Son düzenleme", "Last edited")) { Text(project.updatedAt, style: .date) }
-                    }
-                    Section(model.uiText("Düzen", "Organization")) {
-                        if project.library.favorite || purchases.isPro {
-                            Button(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"), systemImage: "star") {
-                                Task { await model.updateProjectLibrary(projectIDs: [projectID], change: .favorite(!project.library.favorite)) }
-                            }.frame(minHeight: 44).disabled(model.isLibraryWorking)
-                        } else {
-                            NavigationLink { PremiumView() } label: {
-                                Label(model.uiText("Favoriye ekle · Pro", "Add favorite · Pro"), systemImage: "star")
-                                    .frame(minHeight: 44)
-                            }
-                        }
-                        Button(model.uiText("Koleksiyonlar", "Collections"), systemImage: "folder") { showCollections = true }
-                            .frame(minHeight: 44).disabled(model.isLibraryWorking)
-                    }
-                    Section {
-                        Button(model.uiText("Çoğalt", "Duplicate"), systemImage: "plus.square.on.square") {
-                            Task { await model.duplicateProject(id: projectID) }
-                        }.frame(minHeight: 44).disabled(model.isLibraryWorking || model.isWorking)
-                        Button("library.rename", systemImage: "pencil") { projectToRename = project }.frame(minHeight: 44)
-                        Button("library.delete", systemImage: "trash", role: .destructive) { showDeleteConfirmation = true }
-                            .frame(minHeight: 44).disabled(isDeleting || model.isWorking)
-                    }
+                    summarySection(project)
+                    actionsSection(project)
+                    informationSection(project)
+                    organizationSection(project)
+                    manageSection(project)
                 }
                 .listStyle(.insetGrouped)
             } else {
@@ -625,6 +573,82 @@ private struct LibraryProjectDetailView: View {
                 }
             }
             Button("common.cancel", role: .cancel) {}
+        }
+    }
+
+    private func summarySection(_ project: RingtoneProject) -> some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                NativeSelectionWaveform(project: project, height: 64)
+                Text(project.name)
+                    .font(.title2.bold())
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(project.status == .exported ? model.uiText("Hazır zil sesi", "Ready ringtone") : model.uiText("Taslak proje", "Draft project"))
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 8)
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private func actionsSection(_ project: RingtoneProject) -> some View {
+        Section {
+            Button {
+                if model.loadProject(project) { showPreview = true }
+            } label: {
+                Label("preview.title", systemImage: "play.circle").frame(minHeight: 44)
+            }
+            Button {
+                if model.loadProject(project) { showEditor = true }
+            } label: {
+                Label("preview.reedit", systemImage: "scissors").frame(minHeight: 44)
+            }
+            if let exportedURL = project.exportedURL {
+                ShareLink(item: exportedURL) { Label("library.share", systemImage: "square.and.arrow.up").frame(minHeight: 44) }
+            }
+        }
+    }
+
+    private func informationSection(_ project: RingtoneProject) -> some View {
+        Section {
+            NavigationLink { LibraryExportHistoryView(projectID: projectID) } label: {
+                Label(model.uiText("Dışa aktarma geçmişi", "Export history"), systemImage: "clock.arrow.circlepath")
+            }.frame(minHeight: 44)
+            LabeledContent(model.uiText("Seçim", "Selection"), value: DurationText.formatted(project.selection.duration))
+            LabeledContent(model.uiText("Kaynak", "Source"), value: project.sourceFilename)
+            LabeledContent(model.uiText("Son düzenleme", "Last edited")) { Text(project.updatedAt, style: .date) }
+        } header: {
+            Text(model.uiText("Proje bilgileri", "Project information")).textCase(nil)
+        }
+    }
+
+    private func organizationSection(_ project: RingtoneProject) -> some View {
+        Section {
+            if project.library.favorite || purchases.isPro {
+                Button(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"), systemImage: "star") {
+                    Task { await model.updateProjectLibrary(projectIDs: [projectID], change: .favorite(!project.library.favorite)) }
+                }.frame(minHeight: 44).disabled(model.isLibraryWorking)
+            } else {
+                NavigationLink { PremiumView() } label: {
+                    Label(model.uiText("Favoriye ekle · Pro", "Add favorite · Pro"), systemImage: "star")
+                        .frame(minHeight: 44)
+                }
+            }
+            Button(model.uiText("Koleksiyonlar", "Collections"), systemImage: "folder") { showCollections = true }
+                .frame(minHeight: 44).disabled(model.isLibraryWorking)
+        } header: {
+            Text(model.uiText("Düzen", "Organization")).textCase(nil)
+        }
+    }
+
+    private func manageSection(_ project: RingtoneProject) -> some View {
+        Section {
+            Button(model.uiText("Çoğalt", "Duplicate"), systemImage: "plus.square.on.square") {
+                Task { await model.duplicateProject(id: projectID) }
+            }.frame(minHeight: 44).disabled(model.isLibraryWorking || model.isWorking)
+            Button("library.rename", systemImage: "pencil") { projectToRename = project }.frame(minHeight: 44)
+            Button("library.delete", systemImage: "trash", role: .destructive) { showDeleteConfirmation = true }
+                .frame(minHeight: 44).disabled(isDeleting || model.isWorking)
         }
     }
 
@@ -669,66 +693,5 @@ private struct RenameProjectSheet: View {
             .interactiveDismissDisabled(isSaving)
         }
         .presentationDetents([.medium, .large])
-    }
-}
-
-
-private struct LibraryProjectLabel: View {
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.ringifyVisualStyle) private var visualStyle
-    let project: RingtoneProject
-    var compact = false
-
-    private var thumbnail: [Float] {
-        let values = project.waveformSamples
-        let count = min(24, values.count)
-        guard count > 0 else { return [] }
-        return (0..<count).map { index in
-            values[(index * values.count / count)..<((index + 1) * values.count / count)]
-                .reduce(Float.zero) { peak, value in value.isFinite ? max(peak, abs(value)) : peak }
-        }
-    }
-
-    var body: some View {
-        let layout = compact
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-            : AnyLayout(HStackLayout(spacing: 12))
-        return layout {
-            Group {
-                if thumbnail.isEmpty {
-                    Image(systemName: project.status == .exported ? "bell.fill" : "waveform")
-                        .font(.title3).foregroundStyle(visualStyle.accent)
-                } else {
-                    WaveformView(samples: thumbnail, tint: visualStyle.accent).padding(6)
-                }
-            }
-                .frame(width: 44, height: 44)
-                .background(visualStyle.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(project.name).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                    .lineLimit(2)
-                if project.library.favorite {
-                    Label(model.uiText("Favori", "Favorite"), systemImage: "star.fill")
-                        .font(.caption).foregroundStyle(RingifyTheme.accent)
-                }
-                if !project.library.collectionIDs.isEmpty {
-                    Text(model.collections.filter { project.library.collectionIDs.contains($0.id) }.map(\.name).joined(separator: ", "))
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                }
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 5) { metadata }
-                    VStack(alignment: .leading, spacing: 3) { metadata }
-                }
-                .font(.caption).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 3)
-    }
-
-    @ViewBuilder private var metadata: some View {
-        Text(DurationText.formatted(project.selection.duration))
-        Text(project.status == .exported ? model.uiText("Zil sesi", "Ringtone") : model.uiText("Taslak", "Draft"))
     }
 }
