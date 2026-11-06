@@ -53,7 +53,7 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $router.selectedTab) {
             navigationRoot(for: .home) { HomeView() }
-                .tabItem { Label("tab.home", systemImage: "house.fill") }
+                .tabItem { Label("tab.home", systemImage: "house") }
                 .tag(AppTab.home)
 
             navigationRoot(for: .studio) { AudioEditorView() }
@@ -65,10 +65,9 @@ struct MainTabView: View {
                 .tag(AppTab.library)
 
             navigationRoot(for: .settings) { SettingsView() }
-                .tabItem { Label("tab.settings", systemImage: "gearshape.fill") }
+                .tabItem { Label("tab.settings", systemImage: "gearshape") }
                 .tag(AppTab.settings)
         }
-        .tint(RingifyTheme.Studio.accent)
     }
 
     private func navigationRoot<Content: View>(for tab: AppTab, @ViewBuilder content: () -> Content) -> some View {
