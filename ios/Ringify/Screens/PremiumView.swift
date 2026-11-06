@@ -8,8 +8,11 @@ struct PremiumView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.scenePhase) private var scenePhase
+    @ScaledMetric private var benefitIconWidth: CGFloat = 28
     @State private var selected: ProPlan = .yearly
     @State private var showManage = false
+    /// True when the project limit sheet opens this screen, so people see why it appeared.
+    var showsProjectLimitNotice = false
 
     private var selectedProduct: Product? { purchases.product(for: selected) }
     private var selectedPrice: String { selectedProduct?.displayPrice ?? model.localized("premium.store.unavailable") }
@@ -23,22 +26,17 @@ struct PremiumView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                hero
+                if showsProjectLimitNotice { projectLimitNotice }
+                header
                 benefits
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("premium.plans.choose").font(.title3.bold())
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top),
-                        count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
-                        ForEach(ProPlan.allCases) { plan in planButton(plan) }
-                    }
-                }
-                purchaseAction
+                plans
                 detailsLinks
             }
-            .padding(RingifyTheme.horizontalPadding)
+            .padding(.horizontal, RingifyTheme.horizontalPadding)
+            .padding(.vertical, 16)
         }
-        .background(RingifyTheme.Studio.background)
-        .ringifyStudioAppearance()
+        .background(RingifyTheme.background)
+        .ringifyBottomBar { purchaseBar }
         .navigationTitle("premium.navigationTitle")
         .navigationBarTitleDisplayMode(.inline)
         .manageSubscriptionsSheet(isPresented: $showManage)
@@ -56,26 +54,40 @@ struct PremiumView: View {
         }
     }
 
-    private var hero: some View {
-        VStack(spacing: 10) {
+    private var projectLimitNotice: some View {
+        RingifyRow(Text("premium.limit.title").font(.headline), systemImage: "lock.fill")
+            .padding(.horizontal, RingifyTheme.horizontalPadding)
+            .padding(.vertical, 4)
+            .ringifyCard(padding: 0)
+    }
+
+    private var header: some View {
+        VStack(spacing: 8) {
             Image(systemName: "crown.fill")
-                .font(.system(size: 34, weight: .medium)).foregroundStyle(RingifyTheme.Studio.wave)
+                .font(.largeTitle)
+                .foregroundStyle(.tint)
                 .accessibilityHidden(true)
-            Text("Ringify Pro").font(.largeTitle.bold())
-            Text("premium.plans.intro").font(.subheadline).multilineTextAlignment(.center)
-            if purchases.isPro {
-                Label(LocalizedStringKey(purchases.hasLifetime ? "premium.lifetime.active" : "premium.active"),
-                    systemImage: "checkmark.seal.fill")
-                    .font(.footnote.weight(.semibold))
-                    .padding(.horizontal, 12).padding(.vertical, 7)
-                    .background(.white.opacity(0.15), in: Capsule())
-            }
+            Text("Ringify Pro")
+                .font(.title.bold())
+                .accessibilityAddTraits(.isHeader)
+            Text("premium.plans.intro")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            if purchases.isPro { activeStatus }
         }
-        .foregroundStyle(.white)
+        .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 20).padding(.vertical, 28)
-        .background(RingifyTheme.Studio.canvas, in: RoundedRectangle(cornerRadius: 26))
-        .overlay { RoundedRectangle(cornerRadius: 26).strokeBorder(RingifyTheme.Studio.canvasBorder) }
+    }
+
+    private var activeStatus: some View {
+        Label {
+            Text(LocalizedStringKey(purchases.hasLifetime ? "premium.lifetime.active" : "premium.active"))
+        } icon: {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(RingifyTheme.success)
+                .accessibilityHidden(true)
+        }
+        .font(.footnote.weight(.semibold))
     }
 
     private var benefits: some View {
@@ -84,98 +96,157 @@ struct PremiumView: View {
             benefit("square.stack", title: model.uiText("3 kayıtlı proje için alan", "Room for 3 saved projects"))
             benefit("checkmark.seal", title: model.uiText("Her planda aynı Pro kapsamı", "The same Pro features in every plan"))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .ringifyCard()
     }
 
     private func benefit(_ icon: String, title: String) -> some View {
         Label {
-            Text(title).font(.subheadline)
+            Text(title)
         } icon: {
-            Image(systemName: icon).foregroundStyle(RingifyTheme.Studio.accent).frame(width: 24)
+            Image(systemName: icon)
+                .foregroundStyle(.tint)
+                .frame(width: benefitIconWidth)
+                .accessibilityHidden(true)
         }
+    }
+
+    private var plans: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("premium.plans.choose")
+                .font(.title3.bold())
+                .accessibilityAddTraits(.isHeader)
+            ForEach(ProPlan.allCases) { plan in planButton(plan) }
+            chargeDisclosure
+        }
+    }
+
+    private var planShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: RingifyTheme.cardRadius, style: .continuous)
     }
 
     private func planButton(_ plan: ProPlan) -> some View {
-        Button { selected = plan } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    Text(model.localized("premium.plan.\(plan.rawValue)")).font(.headline)
-                    Spacer(minLength: 4)
-                    Image(systemName: selected == plan ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(selected == plan ? RingifyTheme.Studio.accent : Color.secondary)
-                        .accessibilityHidden(true)
-                }
-                Text(purchases.product(for: plan)?.displayPrice ?? model.localized("premium.store.unavailable"))
-                    .font(.title3.bold()).fixedSize(horizontal: false, vertical: true)
-                Text(model.localized("premium.period.\(plan.rawValue)"))
-                    .font(.caption).foregroundStyle(.secondary)
+        let isSelected = selected == plan
+        return Button { selected = plan } label: {
+            HStack(spacing: 12) {
+                planDetails(plan)
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? RingifyTheme.accent : Color.secondary)
+                    .accessibilityHidden(true)
             }
-            .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
-            .padding(14)
-            .background(selected == plan ? RingifyTheme.Studio.soft : RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: 18))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(
-                selected == plan ? RingifyTheme.Studio.accent : Color.secondary.opacity(0.22), lineWidth: selected == plan ? 2 : 1))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .ringifyCard()
+            .overlay {
+                if isSelected {
+                    planShape.strokeBorder(RingifyTheme.accent, lineWidth: 2)
+                }
+            }
+            .contentShape(planShape)
         }
         .buttonStyle(.plain)
-        .accessibilityAddTraits(selected == plan ? [.isSelected] : [])
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
-    private var purchaseAction: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(model.localized("premium.plan.\(selected.rawValue)") + " · " + selectedPrice).font(.headline)
+    private func planDetails(_ plan: ProPlan) -> some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+        return layout {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.localized("premium.plan.\(plan.rawValue)"))
+                    .font(.headline)
+                Text(model.localized("premium.period.\(plan.rawValue)"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(purchases.product(for: plan)?.displayPrice ?? model.localized("premium.store.unavailable"))
+                .font(.headline)
+                .monospacedDigit()
+                .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .trailing)
+        }
+    }
+
+    private var chargeDisclosure: some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text(model.localized("premium.billing.\(selected.rawValue)"))
-                .font(.footnote).foregroundStyle(.secondary)
             if selected == .lifetime && purchases.isPro && !purchases.hasLifetime {
-                Text("premium.lifetime.existingSubscription").font(.footnote).foregroundStyle(.secondary)
+                Text("premium.lifetime.existingSubscription")
             }
-            RingifyPrimaryButton(title: actionTitle, systemImage: "crown.fill",
-                isLoading: purchases.isBusy,
-                isDisabled: purchases.hasLifetime || purchases.pendingPlan != nil || purchases.pendingSlot != nil ||
-                    (!manageCurrentSubscription && selectedProduct == nil)) {
-                if manageCurrentSubscription { showManage = true }
-                else { Task { await purchases.purchase(selected) } }
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder private var purchaseBar: some View {
+        Text(model.localized("premium.plan.\(selected.rawValue)") + " · " + selectedPrice)
+            .font(.subheadline)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+        RingifyPrimaryButton(title: actionTitle, systemImage: "crown.fill",
+            isLoading: purchases.isBusy,
+            isDisabled: purchases.hasLifetime || purchases.pendingPlan != nil || purchases.pendingSlot != nil ||
+                (!manageCurrentSubscription && selectedProduct == nil)) {
+            if manageCurrentSubscription { showManage = true }
+            else { Task { await purchases.purchase(selected) } }
+        }
+        PurchaseFeedbackView()
+        if selectedProduct == nil && !purchases.isBusy {
+            Button { Task { await purchases.loadProducts() } } label: {
+                Text("premium.reload")
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
             }
-            PurchaseFeedbackView()
-            if selectedProduct == nil && !purchases.isBusy {
-                Button("premium.reload") { Task { await purchases.loadProducts() } }
-                    .frame(minHeight: 44)
-            }
+            .buttonStyle(.borderless)
         }
     }
 
     private var detailsLinks: some View {
-        VStack(spacing: 0) {
-            NavigationLink { ProjectCapacityView() } label: {
-                detailRow(model.uiText("Proje kapasitesi ve ek yuvalar", "Project capacity and extra slots"), icon: "square.stack.3d.up")
+        VStack(spacing: 12) {
+            linkCard {
+                NavigationLink { PurchaseSupportView() } label: {
+                    detailRow(model.uiText("Ödeme ve satın alımları geri yükleme", "Billing and restore purchases"), icon: "arrow.clockwise")
+                }
+                Divider()
+                NavigationLink { ProComparisonView() } label: {
+                    detailRow(model.uiText("Normal ve Pro'yu karşılaştır", "Compare Normal and Pro"), icon: "list.bullet.rectangle")
+                }
+                Divider()
+                NavigationLink { ProFAQView() } label: {
+                    detailRow(model.uiText("Sık sorulan sorular", "Frequently asked questions"), icon: "questionmark.circle")
+                }
+                Divider()
+                NavigationLink { ProjectCapacityView() } label: {
+                    detailRow(model.uiText("Proje kapasitesi ve ek yuvalar", "Project capacity and extra slots"), icon: "square.stack.3d.up")
+                }
             }
-            Divider()
-            NavigationLink { ProComparisonView() } label: {
-                detailRow(model.uiText("Normal ve Pro'yu karşılaştır", "Compare Normal and Pro"), icon: "list.bullet.rectangle")
-            }
-            Divider()
-            NavigationLink { ProFAQView() } label: {
-                detailRow(model.uiText("Sık sorulan sorular", "Frequently asked questions"), icon: "questionmark.circle")
-            }
-            Divider()
-            NavigationLink { PurchaseSupportView() } label: {
-                detailRow(model.uiText("Ödeme ve satın alımları geri yükleme", "Billing and restore purchases"), icon: "arrow.clockwise")
-            }
-            Divider()
-            NavigationLink { RingifyTermsView() } label: {
-                detailRow(model.uiText("Koşullar ve gizlilik", "Terms and privacy"), icon: "hand.raised")
+            linkCard {
+                NavigationLink { RingifyTermsView() } label: {
+                    detailRow(model.uiText("Kullanım koşulları", "Terms of use"), icon: "doc.text")
+                }
+                Divider()
+                NavigationLink { RingifyPrivacyView() } label: {
+                    detailRow(model.localized("settings.privacy"), icon: "hand.raised")
+                }
             }
         }
-        .padding(.horizontal, 14)
-        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
-        .buttonStyle(.plain)
+    }
+
+    private func linkCard<Rows: View>(@ViewBuilder _ rows: () -> Rows) -> some View {
+        VStack(spacing: 0) { rows() }
+            .padding(.horizontal, RingifyTheme.horizontalPadding)
+            .ringifyCard(padding: 0)
+            .buttonStyle(.plain)
     }
 
     private func detailRow(_ title: String, icon: String) -> some View {
-        HStack {
-            SettingsNavigationRow(title: title, icon: icon)
-            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                .accessibilityHidden(true)
-        }
-        .padding(.vertical, 5)
+        RingifyRow(Text(title), systemImage: icon, showsChevron: true)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
     }
 }
 
