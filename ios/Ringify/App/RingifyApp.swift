@@ -27,8 +27,6 @@ struct RingifyApp: App {
                 .environmentObject(router)
                 .environmentObject(model.container.purchases)
                 .environment(\.locale, Locale(identifier: model.settings.language.rawValue))
-                .preferredColorScheme(model.preferredColorScheme)
-                .tint(RingifyTheme.accent)
                 .task {
                     #if DEBUG
                     await UITestSupport.prepareFixtureIfNeeded(model)
