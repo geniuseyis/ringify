@@ -354,6 +354,28 @@ struct WaveformView: View {
     }
 }
 
+/// Small real-waveform image for project rows. Falls back to a symbol when no
+/// peaks are stored; it never draws invented audio.
+struct RingifyWaveformThumbnail: View {
+    let samples: [Float]
+    var size: CGFloat = 44
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10, style: .continuous).fill(RingifyTheme.subtleFill)
+            if samples.isEmpty {
+                Image(systemName: "waveform").foregroundStyle(.tint)
+            } else {
+                WaveformView(samples: samples)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 9)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
 struct DurationText: View {
     let seconds: TimeInterval
 
