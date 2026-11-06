@@ -160,6 +160,62 @@ private struct RingifyCircleFill: ViewModifier {
     }
 }
 
+// MARK: - Rows
+
+/// Standard row for Lists and Forms: tinted symbol, title, optional subtitle,
+/// optional trailing value and optional chevron. Use the chevron only when the
+/// row navigates; a row that opens a system picker or runs an action has none.
+struct RingifyRow: View {
+    private let title: Text
+    private let subtitle: Text?
+    private let systemImage: String
+    private let value: Text?
+    private let showsChevron: Bool
+    private let iconTint: Color?
+
+    init(_ title: Text, subtitle: Text? = nil, systemImage: String, value: Text? = nil,
+         showsChevron: Bool = false, iconTint: Color? = nil) {
+        self.title = title
+        self.subtitle = subtitle
+        self.systemImage = systemImage
+        self.value = value
+        self.showsChevron = showsChevron
+        self.iconTint = iconTint
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    title.foregroundStyle(.primary)
+                    if let subtitle {
+                        subtitle.font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                if let iconTint {
+                    Image(systemName: systemImage).foregroundStyle(iconTint)
+                } else {
+                    Image(systemName: systemImage).foregroundStyle(.tint)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if let value {
+                value.foregroundStyle(.secondary).multilineTextAlignment(.trailing)
+            }
+            if showsChevron {
+                Image(systemName: "chevron.forward")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
+        }
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+    }
+}
+
 struct RingifyEmptyState: View {
     let icon: String
     let title: LocalizedStringKey
