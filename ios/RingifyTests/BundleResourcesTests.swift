@@ -10,6 +10,8 @@ import XCTest
         let microphone = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") as? String)
         XCTAssertFalse(microphone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "LSRequiresIPhoneOS") as? Bool, true)
+        // Standard encryption only; skips the export compliance question on every upload.
+        XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "ITSAppUsesNonExemptEncryption") as? Bool, false)
         XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String], ["UIInterfaceOrientationPortrait"])
         let scene = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "UIApplicationSceneManifest") as? [String: Any])
         XCTAssertEqual(scene["UIApplicationSupportsMultipleScenes"] as? Bool, false)
