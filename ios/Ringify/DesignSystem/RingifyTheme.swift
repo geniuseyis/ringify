@@ -7,11 +7,13 @@ import UIKit
 // they mirror design/tokens.json.appleNative. Asset and static colors need no
 // UIColor provider closure, which is what crashed on SwiftUI's AsyncRenderer.
 enum RingifyTheme {
-    /// AccentColor asset: adaptive brand violet, kept for small highlights only:
-    /// links, selection, waveforms and the tab bar. Primary actions are monochrome.
-    /// The app relies on the global asset, so do not pass this to `.tint(_:)`:
-    /// an explicit tint turns neutral bordered buttons into lilac pills.
+    /// AccentColor asset: monochrome system tint (near-black in Light, near-white
+    /// in Dark). Lists, links, toggles and the tab bar follow it, so the app reads
+    /// black and white by default.
     static let accent = Color.accentColor
+    /// BrandViolet asset: the only violet in the app. Reserved for the waveform and
+    /// its selection, the Home glow and the Pro mark. Do not use it for controls.
+    static let violet = Color("BrandViolet")
     /// ActionFill asset: near-black in Light, near-white in Dark (Vercel-style
     /// monochrome primary actions). Always pair it with `onAction`.
     static let action = Color("ActionFill")

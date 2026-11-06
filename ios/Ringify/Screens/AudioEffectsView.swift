@@ -134,7 +134,7 @@ struct AudioEffectsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Label("effects.normalize", systemImage: "waveform.path.ecg")
                 if !purchases.isPro {
-                    Text("Ringify Pro").font(.caption).foregroundStyle(.tint)
+                    Text("Ringify Pro").font(.caption).foregroundStyle(RingifyTheme.violet)
                 }
             }
         }

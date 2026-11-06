@@ -373,7 +373,7 @@ enum WaveformBars {
 /// keeps its shape instead of merging into a solid block.
 struct WaveformView: View {
     let samples: [Float]
-    var tint: Color = RingifyTheme.accent
+    var tint: Color = RingifyTheme.violet
     var dimmedTint: Color = Color(uiColor: .tertiaryLabel)
     var selection: ClosedRange<Double> = 0...1
     var barWidth: CGFloat = 2

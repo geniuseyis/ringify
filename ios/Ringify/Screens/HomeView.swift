@@ -104,7 +104,7 @@ struct HomeView: View {
                     .foregroundStyle(.white.opacity(0.05))
                 // The one place violet is large: a soft glow, never a fill.
                 RadialGradient(
-                    colors: [RingifyTheme.accent.opacity(0.42), .clear],
+                    colors: [RingifyTheme.violet.opacity(0.42), .clear],
                     center: .topTrailing,
                     startRadius: 0,
                     endRadius: 260

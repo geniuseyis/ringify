@@ -179,7 +179,7 @@ struct AudioEditorView: View {
         VStack(alignment: typeSize.isAccessibilitySize ? .leading : .center, spacing: 4) {
             Text(title).font(.caption).foregroundStyle(.secondary)
             Text(DurationText.formatted(seconds)).font(.headline.monospacedDigit())
-                .foregroundStyle(emphasized ? RingifyTheme.accent : Color.primary)
+                .foregroundStyle(emphasized ? RingifyTheme.violet : Color.primary)
         }
         .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .center)
         .frame(maxWidth: .infinity, alignment: typeSize.isAccessibilitySize ? .leading : .center)
@@ -595,7 +595,7 @@ private struct EditorWaveformSelectionView: View {
                     .allowsHitTesting(false)
                 WaveformView(
                     samples: samples,
-                    tint: RingifyTheme.accent,
+                    tint: RingifyTheme.violet,
                     dimmedTint: Color(uiColor: .tertiaryLabel),
                     selection: (start / safeDuration)...(end / safeDuration)
                 )
@@ -672,12 +672,12 @@ private struct EditorWaveformSelectionView: View {
     /// Photos-style frame: tinted inside, solid along the top and bottom edges.
     private var selectionFrame: some View {
         Rectangle()
-            .fill(RingifyTheme.accent.opacity(0.10))
+            .fill(RingifyTheme.violet.opacity(0.10))
             .overlay(alignment: .top) {
-                Rectangle().fill(RingifyTheme.accent).frame(height: EditorWaveformMetrics.frameEdge)
+                Rectangle().fill(Color.primary).frame(height: EditorWaveformMetrics.frameEdge)
             }
             .overlay(alignment: .bottom) {
-                Rectangle().fill(RingifyTheme.accent).frame(height: EditorWaveformMetrics.frameEdge)
+                Rectangle().fill(Color.primary).frame(height: EditorWaveformMetrics.frameEdge)
             }
     }
 
@@ -687,13 +687,14 @@ private struct EditorWaveformSelectionView: View {
             ? UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: radius, style: .continuous)
             : UnevenRoundedRectangle(bottomTrailingRadius: radius, topTrailingRadius: radius, style: .continuous)
         return shape
-            .fill(RingifyTheme.accent)
+            // Monochrome handles: black in Light, white in Dark, like the selection frame.
+            .fill(Color.primary)
             .overlay {
                 Image(systemName: boundary == .start ? "chevron.compact.left" : "chevron.compact.right")
                     .resizable()
                     .scaledToFit()
                     .fontWeight(.bold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(uiColor: .systemBackground))
                     .frame(width: 7, height: 20)
             }
             .frame(width: EditorWaveformMetrics.handleWidth)

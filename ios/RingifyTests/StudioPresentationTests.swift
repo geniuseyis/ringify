@@ -77,6 +77,15 @@ private enum BackgroundPaletteResolution {
         }
         XCTAssertNotEqual(luminance(accent, style: .light), luminance(accent, style: .dark), accuracy: 0.01)
     }
+
+    func testBrandVioletIsReadableOnGroupedBackgrounds() throws {
+        let violet = try XCTUnwrap(UIColor(named: "BrandViolet", in: .main, compatibleWith: nil))
+        for appearance in [UIUserInterfaceStyle.light, .dark] {
+            for background in [UIColor.systemGroupedBackground, .secondarySystemGroupedBackground] {
+                XCTAssertGreaterThanOrEqual(contrast(violet, background, style: appearance), 4.5)
+            }
+        }
+    }
     func testHelpSearchUsesTurkishCaseFoldingAndFormatKeywords() {
         let locale = Locale(identifier: "tr_TR")
         XCTAssertTrue(RingifyHelpTopic.permissions.matches(query: "  MİKROFON ", localizedTitle: "Mikrofon ve izinler", locale: locale))

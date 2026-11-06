@@ -65,7 +65,7 @@ struct PremiumView: View {
         VStack(spacing: 8) {
             Image(systemName: "crown.fill")
                 .font(.largeTitle)
-                .foregroundStyle(.tint)
+                .foregroundStyle(RingifyTheme.violet)
                 .accessibilityHidden(true)
             Text("Ringify Pro")
                 .font(.title.bold())
@@ -296,7 +296,7 @@ private struct ProComparisonView: View {
 
     private func planSummary(_ title: String, count: Int, pro: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.headline).foregroundStyle(pro ? RingifyTheme.accent : Color.primary)
+            Text(title).font(.headline).foregroundStyle(pro ? RingifyTheme.violet : Color.primary)
             Text(model.uiText("\(count) kayıtlı proje", count == 1 ? "1 saved project" : "\(count) saved projects")).font(.subheadline)
             Text(pro ? model.localized("premium.compare.normalize") : model.uiText("Temel düzenleme", "Core editing"))
                 .font(.footnote).foregroundStyle(.secondary)
