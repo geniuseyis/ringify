@@ -22,7 +22,7 @@ tamamen cihaz üzerinde çalışan, çevrimdışı öncelikli bir ses stüdyosu.
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square&logo=swift&logoColor=white)
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-native-0A84FF?style=flat-square)
 ![Strict concurrency](https://img.shields.io/badge/strict%20concurrency-complete-7C5CFF?style=flat-square)
-![Testler](https://img.shields.io/badge/testler-135%20başarılı-22C55E?style=flat-square)
+![Testler](https://img.shields.io/badge/testler-136%20başarılı-22C55E?style=flat-square)
 ![Diller](https://img.shields.io/badge/diller-TR%20·%20EN-71717A?style=flat-square)
 
 **[Ekranlar](#ekranlar)** &nbsp;·&nbsp; **[Mimari](#mimari)** &nbsp;·&nbsp; **[Başlarken](#başlarken)** &nbsp;·&nbsp; **[Test ve CI](#test-ve-ci)** &nbsp;·&nbsp; **[Yol haritası](#yol-haritası)**
@@ -202,7 +202,14 @@ CI, **Actions → Native validation (manual)** üzerinden isteğe bağlı çalı
 | `ui` | Birim testleri, Release derlemesi, uçtan uca arayüz akışı ve 40 ekran görüntüsü |
 
 > [!TIP]
-> **Son `ui` koşusu:** Release derlemesi başarılı · **135 / 135** birim testi · arayüz akışı başarılı
+> **Son `ui` koşusu:** Release derlemesi başarılı · **136 / 136** birim testi · arayüz akışı başarılı
+
+Dağıtım için iki ek manuel iş akışı vardır:
+
+| İş akışı | Amaç |
+| :-- | :-- |
+| **TestFlight upload** | App Store Connect API anahtarıyla otomatik imzalar, Release arşivini TestFlight'a yükler |
+| **Unsigned device build** | Kişisel test için imzasız `.ipa` üretir (kendi Apple ID'nle yeniden imzalanır) |
 
 <br>
 
@@ -230,7 +237,7 @@ Tasarım sözleşmesinin tamamı: [`docs/NATIVE_APPLE_DESIGN.md`](docs/NATIVE_AP
 
 - [x] Native SwiftUI uygulaması ve `RingifyCore` alan paketi
 - [x] Apple HIG yeniden tasarımı, açık ve koyu tema
-- [x] macOS CI: Release derlemesi, 135 birim testi, uçtan uca arayüz akışı
+- [x] macOS CI: Release derlemesi, 136 birim testi, uçtan uca arayüz akışı
 - [ ] Fiziksel iPhone ve VoiceOver kabul testi
 - [ ] TestFlight dağıtımı ve StoreKit sandbox satın alma testi
 - [ ] App Store yayını
