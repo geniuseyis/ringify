@@ -58,18 +58,12 @@ tamamen cihaz üzerinde çalışan, çevrimdışı öncelikli bir ses stüdyosu.
 
 ## Ekranlar
 
-<table>
-  <tr>
-    <td width="33%"><img src="docs/screenshots/feature-import.png" alt="Her kaynaktan başla"></td>
-    <td width="33%"><img src="docs/screenshots/feature-studio.png" alt="Hassas kesim"></td>
-    <td width="33%"><img src="docs/screenshots/feature-effects.png" alt="Efektler"></td>
-  </tr>
-  <tr>
-    <td width="33%"><img src="docs/screenshots/feature-record.png" alt="Ses kaydı"></td>
-    <td width="33%"><img src="docs/screenshots/feature-export.png" alt="Önizleme ve dışa aktarma"></td>
-    <td width="33%"><img src="docs/screenshots/feature-library.png" alt="Kütüphane"></td>
-  </tr>
-</table>
+<p align="center"><img src="docs/screenshots/01-import.png" width="100%" alt="İçe aktar: her kaynaktan başla"></p>
+<p align="center"><img src="docs/screenshots/02-record.png" width="100%" alt="Kayıt: kendi sesin, kendi zil sesin"></p>
+<p align="center"><img src="docs/screenshots/03-studio.png" width="100%" alt="Stüdyo: saniyenin onda biri hassasiyetinde kes"></p>
+<p align="center"><img src="docs/screenshots/04-effects.png" width="100%" alt="Efektler: sesini stüdyoda şekillendir"></p>
+<p align="center"><img src="docs/screenshots/05-export.png" width="100%" alt="Teslim: dinle, dışa aktar, zil sesi yap"></p>
+<p align="center"><img src="docs/screenshots/06-library.png" width="100%" alt="Kütüphane: her şey yerli yerinde"></p>
 
 <p align="center"><sub>Telefon ekranları, uygulamanın CI üzerinde iPhone Simulator'dan alınmış gerçek açık ve koyu tema görüntüleridir.</sub></p>
 
