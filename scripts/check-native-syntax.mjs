@@ -1,6 +1,6 @@
 // Syntax only: no linking, Apple SDK type checking, simulator or app execution.
 import {spawnSync} from 'node:child_process';
-import {readFile,readdir,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,readdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,resolve} from 'node:path';
 const root=resolve(import.meta.dirname,'..');
@@ -22,6 +22,7 @@ const report={
  files:hashes,stdout:result.stdout??'',stderr:result.stderr??'',
  nativeFeatureStatus:'IMPLEMENTED_NOT_TESTED',nativeBuild:'NOT_TESTED',nativeTests:'NOT_TESTED'
 };
+await mkdir(join(root,'design/review'),{recursive:true});
 await writeFile(join(root,'design/review/native-syntax.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({parserPassed:report.passed,files:files.length,exitCode:report.exitCode,nativeBuild:report.nativeBuild,nativeTests:report.nativeTests}));
 if(!report.passed){process.stderr.write(report.stderr||report.error||'Swift parser did not complete.');process.exitCode=1}

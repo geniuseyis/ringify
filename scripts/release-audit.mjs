@@ -1,4 +1,4 @@
-import {readFile,readdir,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,readdir,writeFile} from 'node:fs/promises';
 import {join,resolve,relative} from 'node:path';
 const root=resolve(import.meta.dirname,'..'),checks=[];
 function check(name,passed,evidence){checks.push({name,passed:!!passed,evidence});}
@@ -31,6 +31,7 @@ const coreFiles=paths.filter(path=>path.includes('RingifyCore')&&path.endsWith('
 check('Core has no Apple UI/media/persistence/payment imports',imports.every(text=>!/^import (SwiftUI|UIKit|AVFoundation|StoreKit|SwiftData)\b/m.test(text)));
 check('No web demo entitlement grant',!(await read('preview/src/App.tsx')).includes('hasVerifiedPro=true'));
 const report={scope:'Static source/configuration controls only. Not native compilation, runtime security or App Store acceptance.',checks,releaseReady:false,blocked:['Core manifest build: stdlib.h/SwiftShims toolchain headers','macOS/Xcode/device/StoreKit acceptance','Native DSP/Library/screen runtime and visual parity not accepted','Twenty permanent-slot products: App Store Connect setup and purchase/refund/restore acceptance','Published privacy/support URLs and App Store Connect metadata']};
+await mkdir(join(root,'design/review'),{recursive:true});
 await writeFile(join(root,'design/review/release-audit.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({checks:checks.length,passed:checks.filter(row=>row.passed).length,releaseReady:false}));
 if(checks.some(row=>!row.passed))process.exitCode=1;
