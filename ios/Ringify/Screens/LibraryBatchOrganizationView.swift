@@ -11,16 +11,22 @@ struct LibraryBatchOrganizationView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(model.uiText("\(projectIDs.count) proje seçili", "\(projectIDs.count) projects selected")) {
+                Section {
                     action(model.uiText("Favorilere ekle", "Add favorites"), icon: "star", change: .favorite(true))
                     action(model.uiText("Favorilerden çıkar", "Remove favorites"), icon: "star.slash", change: .favorite(false))
+                } header: {
+                    Text(model.uiText("\(projectIDs.count) proje seçili", "\(projectIDs.count) projects selected")).textCase(nil)
                 }
                 if !model.collections.isEmpty {
-                    Section(model.uiText("Koleksiyona ekle", "Add to collection")) {
+                    Section {
                         ForEach(model.collections) { group in action(group.name, icon: "folder.badge.plus", change: .addToCollection(group.id)) }
+                    } header: {
+                        Text(model.uiText("Koleksiyona ekle", "Add to collection")).textCase(nil)
                     }
-                    Section(model.uiText("Koleksiyondan çıkar", "Remove from collection")) {
+                    Section {
                         ForEach(model.collections) { group in action(group.name, icon: "folder.badge.minus", change: .removeFromCollection(group.id)) }
+                    } header: {
+                        Text(model.uiText("Koleksiyondan çıkar", "Remove from collection")).textCase(nil)
                     }
                 }
                 if model.isLibraryWorking { ProgressView("common.processing") }
