@@ -25,17 +25,21 @@ struct LibraryOrganizationView: View {
 
     var body: some View {
         Form {
-            Section(model.uiText("Göster", "Show")) {
+            Section {
                 Picker(model.uiText("Durum", "Status"), selection: $preferences.status) {
                     ForEach(LibraryStatusFilter.allCases) { Text($0.title(model)).tag($0) }
                 }
                 Toggle(model.uiText("Yalnız favoriler", "Favorites only"), isOn: $preferences.favoritesOnly)
                 LibraryCollectionFilterPicker(selection: $preferences.collection)
+            } header: {
+                Text(model.uiText("Göster", "Show")).textCase(nil)
             }
-            Section(model.uiText("Sıralama", "Sort order")) {
+            Section {
                 Picker(model.uiText("Sırala", "Sort"), selection: $preferences.sort) {
                     ForEach(LibrarySortOrder.allCases) { Text($0.title(model)).tag($0) }
                 }.pickerStyle(.inline)
+            } header: {
+                Text(model.uiText("Sıralama", "Sort order")).textCase(nil)
             }
             Section {
                 NavigationLink { LibraryExportHistoryView() } label: {
