@@ -537,19 +537,34 @@ private struct EditorTimelineRuler: View {
     let inset: CGFloat
     let intervals: Int
 
+    private var total: TimeInterval { max(0, duration.isFinite ? duration : 0) }
+
+    // Labels show whole seconds, so a source shorter than the interval count
+    // would repeat them. At most one label per second.
+    private var tickCount: Int { max(1, Int(min(Double(intervals), total))) }
+
     var body: some View {
         GeometryReader { proxy in
             let width = max(1, proxy.size.width - inset * 2)
-            ForEach(0...intervals, id: \.self) { tick in
-                let fraction = Double(tick) / Double(intervals)
-                Text(DurationText.formatted(max(0, duration.isFinite ? duration : 0) * fraction))
+            ForEach(0...tickCount, id: \.self) { tick in
+                let fraction = Double(tick) / Double(tickCount)
+                let isEdge = tick == 0 || tick == tickCount
+                // The edge labels share the lane's frame and align to its ends,
+                // so neither one can leave the card.
+                Text(DurationText.ruler(total * fraction))
                     .font(.caption2.monospacedDigit())
-                    .foregroundStyle(RingifyTheme.Studio.canvasSecondary)
+                    .foregroundStyle(.secondary)
                     .fixedSize()
-                    .position(x: inset + width * CGFloat(fraction), y: 12)
+                    .frame(width: width, alignment: labelAlignment(tick))
+                    .position(x: inset + width * CGFloat(isEdge ? 0.5 : fraction), y: proxy.size.height / 2)
             }
         }
         .accessibilityHidden(true)
+    }
+
+    private func labelAlignment(_ tick: Int) -> Alignment {
+        if tick == 0 { return .leading }
+        return tick == tickCount ? .trailing : .center
     }
 }
 
