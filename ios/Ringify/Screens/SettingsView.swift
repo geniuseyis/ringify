@@ -173,7 +173,8 @@ private struct AppearanceSettingsView: View {
                 Text(model.uiText("Sistem seçeneği iPhone'un görünümünü izler.", "System follows your iPhone's appearance."))
             }
         }
-        .ringifyStudioAppearance()
+        // An inline Picker may show its label as a section header; keep it unforced.
+        .textCase(nil)
         .navigationTitle("settings.appearance")
         .navigationBarTitleDisplayMode(.inline)
     }
