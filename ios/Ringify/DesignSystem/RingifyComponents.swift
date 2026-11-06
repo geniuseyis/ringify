@@ -104,6 +104,40 @@ struct RingifyPrimaryButton: View {
     }
 }
 
+/// Round transport control with an exact diameter. Liquid Glass on iOS 26, a
+/// solid or material fill before it. Always at least a 44 pt target.
+struct RingifyCircleButton: View {
+    enum Emphasis: Sendable { case prominent, standard }
+
+    let title: String
+    let systemImage: String
+    var emphasis: Emphasis = .standard
+    var diameter: CGFloat = 44
+    var isSelected = false
+    let action: () -> Void
+    @Environment(\.isEnabled) private var isEnabled
+
+    private var symbolColor: Color {
+        if emphasis == .prominent { return .white }
+        return isSelected ? RingifyTheme.accent : .primary
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(emphasis == .prominent ? .title2.weight(.semibold) : .body.weight(.semibold))
+                .foregroundStyle(symbolColor)
+                .frame(width: max(44, diameter), height: max(44, diameter))
+                .modifier(RingifyCircleFill(emphasis: emphasis))
+                .contentShape(Circle())
+                .opacity(isEnabled ? 1 : 0.45)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+}
+
 struct RingifyEmptyState: View {
     let icon: String
     let title: LocalizedStringKey
