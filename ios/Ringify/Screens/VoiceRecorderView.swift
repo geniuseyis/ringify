@@ -27,16 +27,17 @@ struct VoiceRecorderView: View {
         // Poll the whole presentation so transport/toolbar match actual state.
         TimelineView(.periodic(from: .now, by: 0.08)) { context in
             ScrollView {
-                VStack(spacing: 24) {
-                    statusRow
-                    timer
-                    levelHistory
+                VStack(spacing: 20) {
+                    recorderCard
                     if !markers.isEmpty {
                         markerList
                     }
                     if requestingPermission {
                         ProgressView(model.uiText("Mikrofon izni bekleniyor…", "Waiting for microphone permission…"))
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if isIdle {
+                        tip
                     }
                 }
                 .padding(RingifyTheme.horizontalPadding)
@@ -123,17 +124,48 @@ struct VoiceRecorderView: View {
     private var isActive: Bool { savedURL == nil && (recorder.isRecording || recorder.isPaused) }
     private var isIdle: Bool { savedURL == nil && !recorder.isRecording && !recorder.isPaused }
 
+    /// The original single-card recorder: status, microphone rings, level history and timer.
+    private var recorderCard: some View {
+        VStack(spacing: 20) {
+            statusRow
+            RecorderRings(
+                level: recorder.isRecording ? (levels.last ?? 0) : 0,
+                state: savedURL != nil ? .ready : (recorder.isRecording ? .recording : (recorder.isPaused ? .paused : .idle))
+            )
+            .frame(width: 184, height: 184)
+            levelHistory
+            timer
+        }
+        .frame(maxWidth: .infinity)
+        .ringifyOutlinedCard(padding: 20, radius: 28)
+    }
+
+    private var tip: some View {
+        Label {
+            Text(model.uiText("Kayıt sırasında işaret ekle; Stüdyo'da o ana tek dokunuşla dön.",
+                              "Add markers while recording, then jump back to them in Studio."))
+        } icon: {
+            Image(systemName: "bookmark")
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private var statusRow: some View {
         HStack(spacing: 8) {
             if recorder.isRecording {
                 Circle().fill(RingifyTheme.record).frame(width: 8, height: 8)
                     .accessibilityHidden(true)
             }
-            Text(statusKey).font(.subheadline).foregroundStyle(.secondary)
+            Text(statusKey).font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(RingifyTheme.subtleFill, in: Capsule())
     }
 
     private var timer: some View {
@@ -155,9 +187,8 @@ struct VoiceRecorderView: View {
 
     private var levelHistory: some View {
         RecorderLevelHistory(levels: levels)
-            .frame(height: 88)
+            .frame(height: 56)
             .frame(maxWidth: .infinity)
-            .ringifyCard()
             .accessibilityElement()
             .accessibilityLabel("recorder.level")
             .accessibilityValue(currentPower.map { String(format: "%.1f dBFS", $0) } ?? model.uiText("Ölçüm yok", "No measurement"))
@@ -178,7 +209,7 @@ struct VoiceRecorderView: View {
                 }.disabled(isPreparing)
             }
         }
-        .ringifyCard()
+        .ringifyOutlinedCard()
     }
 
     private var statusKey: LocalizedStringKey {
@@ -360,7 +391,7 @@ private struct RecorderLevelHistory: View {
             guard size.width > 0, size.height > 0 else { return }
             guard !levels.isEmpty else {
                 let line = CGRect(x: 0, y: size.height / 2 - 0.5, width: size.width, height: 1)
-                context.fill(Path(line), with: .color(Color.secondary))
+                context.fill(Path(line), with: .color(Color(uiColor: .separator)))
                 return
             }
             let step = barWidth + barGap
@@ -371,8 +402,55 @@ private struct RecorderLevelHistory: View {
                                   y: (size.height - height) / 2,
                                   width: barWidth,
                                   height: height)
-                context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(RingifyTheme.accent))
+                context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(.primary))
             }
         }
+    }
+}
+
+/// Concentric microphone rings from the original recorder. Neutral at rest; while
+/// recording the rings turn red and the outer ring follows the latest measured level.
+private struct RecorderRings: View {
+    enum Phase { case idle, recording, paused, ready }
+
+    let level: Double
+    let state: Phase
+    @Environment(.accessibilityReduceMotion) private var reduceMotion
+
+    private var tint: Color {
+        switch state {
+        case .recording: return RingifyTheme.record
+        case .ready: return RingifyTheme.success
+        case .idle, .paused: return .primary
+        }
+    }
+
+    private var symbol: String {
+        switch state {
+        case .ready: return "checkmark"
+        case .paused: return "pause.fill"
+        case .idle, .recording: return "mic.fill"
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(tint.opacity(state == .recording ? 0.25 : 0.12), lineWidth: 1)
+                .scaleEffect(reduceMotion ? 1 : 0.9 + 0.1 * CGFloat(level))
+            Circle()
+                .strokeBorder(tint.opacity(state == .recording ? 0.4 : 0.18), lineWidth: 1)
+                .padding(24)
+            Circle()
+                .fill(state == .recording ? tint.opacity(0.14) : RingifyTheme.subtleFill)
+                .padding(48)
+            Image(systemName: symbol)
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(tint)
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: level)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: state)
+        .accessibilityHidden(true)
     }
 }
