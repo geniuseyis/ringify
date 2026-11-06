@@ -1,4 +1,26 @@
 import Foundation
+import RingifyCore
+import SwiftUI
+
+// MARK: - Actions
+
+extension View {
+    /// The single most important action on a screen. Apply to `Button`, `ShareLink` or `PhotosPicker`.
+    func ringifyPrimaryAction() -> some View { modifier(RingifyPrimaryActionStyle()) }
+
+    /// A supporting action beside the primary one: neutral fill with an accent label.
+    func ringifySecondaryAction() -> some View { modifier(RingifySecondaryActionStyle()) }
+
+    /// Pins a screen's main controls above the home indicator or tab bar, so they
+    /// stay reachable however long the content is. Content scrolls beneath it.
+    func ringifyBottomBar<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
+        modifier(RingifyBottomBarModifier(bar: bar()))
+    }
+
+    /// Grouped surface for custom content outside a List, such as the waveform editor.
+    func ringifyCard(padding: CGFloat = 16) -> some View { modifier(RingifyCardModifier(padding: padding)) }
+}
+import Foundation
 import SwiftUI
 
 struct RingifyPrimaryButton: View {
