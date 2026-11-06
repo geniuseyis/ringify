@@ -74,7 +74,7 @@ struct LibraryCollectionAssignmentView: View {
         NavigationStack {
             List {
                 if let project {
-                    Section(project.name) {
+                    Section {
                         ForEach(model.collections) { collection in
                             let included = project.library.collectionIDs.contains(collection.id)
                             Toggle(collection.name, isOn: Binding(get: { included }, set: { selected in
@@ -94,6 +94,8 @@ struct LibraryCollectionAssignmentView: View {
                                 Task { await model.updateProjectLibrary(projectIDs: [projectID], change: .clearCollections) }
                             }.frame(minHeight: 44).disabled(model.isLibraryWorking)
                         }
+                    } header: {
+                        Text(verbatim: project.name).textCase(nil)
                     }
                     if purchases.isPro {
                         Button(model.uiText("Yeni Koleksiyon", "New Collection"), systemImage: "folder.badge.plus") { showEditor = true }
