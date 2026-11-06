@@ -263,6 +263,8 @@ struct RingifyProjectLabel: View {
     }
 }
 
+// MARK: - States
+
 struct RingifyEmptyState: View {
     let icon: String
     let title: LocalizedStringKey
@@ -278,8 +280,7 @@ struct RingifyEmptyState: View {
         } actions: {
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(.borderedProminent)
-                    .tint(RingifyTheme.accent)
+                    .ringifyPrimaryAction()
             }
         }
     }
