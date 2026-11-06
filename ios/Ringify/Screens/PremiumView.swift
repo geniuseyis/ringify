@@ -342,52 +342,71 @@ struct PurchaseSupportView: View {
 
     var body: some View {
         List {
-            Section(model.uiText("Satın alma durumu", "Purchase status")) {
-                LabeledContent(model.uiText("Erişim", "Access"), value: purchases.isPro ? "Ringify Pro" : "Ringify Normal")
-                if purchases.hasLifetime {
-                    Label("premium.lifetime.active", systemImage: "checkmark.seal.fill").foregroundStyle(RingifyTheme.success)
-                }
-                ForEach(ProPlan.allCases.filter { purchases.verifiedPlans.contains($0) }) { plan in
-                    LabeledContent(model.uiText("Doğrulanan plan", "Verified plan"), value: model.localized("premium.plan.\(plan.rawValue)"))
-                }
-                PurchaseFeedbackView()
-            }
-            Section {
-                Button {
-                    Task { await purchases.restorePurchases() }
-                } label: {
-                    Label("premium.restore", systemImage: "arrow.clockwise").frame(minHeight: 44)
-                }
-                .disabled(purchases.isBusy)
-                if purchases.isBusy { ProgressView("common.processing") }
-            } footer: {
-                Text(model.uiText("Satın alırken kullandığın Apple Hesabıyla App Store'a giriş yap. Geri yükleme yeni bir ödeme başlatmaz.",
-                    "Sign in to the App Store with the Apple Account used for your purchase. Restoring does not start a new payment."))
-            }
-            Section(model.uiText("Abonelik ve ödeme", "Subscription and billing")) {
-                Button { showManage = true } label: {
-                    Label("premium.manage", systemImage: "creditcard").frame(minHeight: 44)
-                }
-                Text("premium.terms").font(.footnote).foregroundStyle(.secondary)
-                Text(model.uiText("Yenileme, iptal ve ödeme bilgilerini Apple'ın abonelik ekranında kontrol edebilirsin.",
-                    "Review renewal, cancellation and billing details in Apple's subscription screen."))
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
-            Section {
-                NavigationLink { RingifyTermsView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Kullanım koşulları", "Terms of use"), icon: "doc.text")
-                }
-                NavigationLink { RingifyPrivacyView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.privacy"), icon: "hand.raised")
-                }
-            }
+            statusSection
+            restoreSection
+            billingSection
+            legalSection
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(model.uiText("Satın Alımlar", "Purchases"))
         .navigationBarTitleDisplayMode(.inline)
         .manageSubscriptionsSheet(isPresented: $showManage)
         .task { await purchases.refreshEntitlements() }
+    }
+
+    private var statusSection: some View {
+        Section {
+            LabeledContent(model.uiText("Erişim", "Access"), value: purchases.isPro ? "Ringify Pro" : "Ringify Normal")
+            if purchases.hasLifetime {
+                RingifyRow(Text("premium.lifetime.active"), systemImage: "checkmark.seal.fill", iconTint: RingifyTheme.success)
+            }
+            ForEach(ProPlan.allCases.filter { purchases.verifiedPlans.contains($0) }) { plan in
+                LabeledContent(model.uiText("Doğrulanan plan", "Verified plan"), value: model.localized("premium.plan.\(plan.rawValue)"))
+            }
+            PurchaseFeedbackView()
+        } header: {
+            Text(model.uiText("Satın alma durumu", "Purchase status")).textCase(nil)
+        }
+    }
+
+    private var restoreSection: some View {
+        Section {
+            Button {
+                Task { await purchases.restorePurchases() }
+            } label: {
+                Label("premium.restore", systemImage: "arrow.clockwise").frame(minHeight: 44)
+            }
+            .disabled(purchases.isBusy)
+            if purchases.isBusy { ProgressView("common.processing") }
+        } footer: {
+            Text(model.uiText("Satın alırken kullandığın Apple Hesabıyla App Store'a giriş yap. Geri yükleme yeni bir ödeme başlatmaz.",
+                "Sign in to the App Store with the Apple Account used for your purchase. Restoring does not start a new payment."))
+        }
+    }
+
+    private var billingSection: some View {
+        Section {
+            Button { showManage = true } label: {
+                Label("premium.manage", systemImage: "creditcard").frame(minHeight: 44)
+            }
+            Text("premium.terms").font(.footnote).foregroundStyle(.secondary)
+            Text(model.uiText("Yenileme, iptal ve ödeme bilgilerini Apple'ın abonelik ekranında kontrol edebilirsin.",
+                "Review renewal, cancellation and billing details in Apple's subscription screen."))
+                .font(.footnote).foregroundStyle(.secondary)
+        } header: {
+            Text(model.uiText("Abonelik ve ödeme", "Subscription and billing")).textCase(nil)
+        }
+    }
+
+    private var legalSection: some View {
+        Section {
+            NavigationLink { RingifyTermsView() } label: {
+                RingifyRow(Text(model.uiText("Kullanım koşulları", "Terms of use")), systemImage: "doc.text")
+            }
+            NavigationLink { RingifyPrivacyView() } label: {
+                RingifyRow(Text(model.localized("settings.privacy")), systemImage: "hand.raised")
+            }
+        }
     }
 }
 
