@@ -18,7 +18,7 @@ struct LibraryExportHistoryView: View {
             }
             ForEach(records) { record in
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(record.output.url.lastPathComponent).font(.headline).lineLimit(2)
+                    Text(verbatim: record.output.url.lastPathComponent).font(.headline).lineLimit(2)
                     Text(record.name).font(.subheadline).foregroundStyle(.secondary)
                     Text(record.output.createdAt, style: .date).font(.caption).foregroundStyle(.secondary)
                     Text(DurationText.formatted(record.output.duration) + " · " +
@@ -29,14 +29,16 @@ struct LibraryExportHistoryView: View {
                             ShareLink(item: record.output.url) {
                                 Label(model.uiText("Paylaş", "Share"), systemImage: "square.and.arrow.up").frame(minHeight: 44)
                             }
+                            .buttonStyle(.borderless)
                         } else {
                             Label(model.uiText("Dosya bulunamadı", "File not found"), systemImage: "exclamationmark.circle")
                                 .font(.caption).foregroundStyle(RingifyTheme.danger)
                         }
                         Spacer()
                         Button(role: .destructive) { pendingDelete = record; showConfirmation = true } label: {
-                            Image(systemName: "trash").frame(width: 44, height: 44)
+                            Image(systemName: "trash").frame(width: 44, height: 44).contentShape(Rectangle())
                         }
+                        .buttonStyle(.borderless)
                         .accessibilityLabel(model.uiText("\(record.output.url.lastPathComponent) çıktısını sil", "Delete export \(record.output.url.lastPathComponent)"))
                         .disabled(model.isLibraryWorking || model.isWorking)
                     }
