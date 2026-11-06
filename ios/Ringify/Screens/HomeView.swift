@@ -351,8 +351,8 @@ private struct HomeGridPattern: View {
             }
             context.stroke(path, with: .foreground, lineWidth: 0.5)
         }
-        .mask(
+        .mask {
             LinearGradient(colors: [.black, .clear], startPoint: .topTrailing, endPoint: .bottomLeading)
-        )
+        }
     }
 }

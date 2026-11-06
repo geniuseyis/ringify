@@ -91,7 +91,7 @@ private struct RingifyOutlinedCardModifier: ViewModifier {
 
 /// Press feedback for custom cards and tiles: a slight dim and scale, no tint.
 struct RingifyPressStyle: ButtonStyle {
-    @Environment(.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

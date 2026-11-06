@@ -415,7 +415,7 @@ private struct RecorderRings: View {
 
     let level: Double
     let state: Phase
-    @Environment(.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var tint: Color {
         switch state {
