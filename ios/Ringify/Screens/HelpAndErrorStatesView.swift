@@ -367,17 +367,23 @@ private struct IssueDetailView: View {
     var body: some View {
         List {
             Section {
-                Label(model.localized("issue.\(issue.rawValue).title"), systemImage: issueIcon(issue))
-                    .font(.headline).foregroundStyle(issueColor(issue))
+                Label {
+                    Text(model.localized("issue.\(issue.rawValue).title")).font(.headline)
+                } icon: {
+                    Image(systemName: issueIcon(issue))
+                        .foregroundStyle(issueColor(issue))
+                        .accessibilityHidden(true)
+                }
                 Text(model.localized("issue.\(issue.rawValue).message")).foregroundStyle(.secondary)
             }
-            Section(model.uiText("Ne yapabilirsin?", "What can you do?")) {
+            Section {
                 Text(model.localized("issue.\(issue.rawValue).action")).foregroundStyle(.secondary)
                 recoveryAction
+            } header: {
+                Text(model.uiText("Ne yapabilirsin?", "What can you do?")).textCase(nil)
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(model.localized("issue.\(issue.rawValue).title"))
         .navigationBarTitleDisplayMode(.inline)
     }
