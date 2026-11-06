@@ -76,10 +76,12 @@ struct AudioConversionView: View {
             }
             .ringifyPrimaryAction()
             .accessibilityIdentifier("conversion.share")
-        } else if !viewModel.isWorking {
+        } else {
+            // Keeps the bar populated while converting so the inset never collapses to an empty strip.
             RingifyPrimaryButton(
-                title: "conversion.start",
+                title: viewModel.isWorking ? "conversion.working" : "conversion.start",
                 systemImage: "arrow.left.arrow.right",
+                isLoading: viewModel.isWorking,
                 isDisabled: viewModel.sourceURL == nil || viewModel.filename.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ) { viewModel.start() }
             .accessibilityIdentifier("conversion.start")
