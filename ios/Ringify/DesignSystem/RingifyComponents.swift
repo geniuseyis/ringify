@@ -78,11 +78,8 @@ private struct RingifyCardModifier: ViewModifier {
             .background(RingifyTheme.surface, in: RoundedRectangle(cornerRadius: RingifyTheme.cardRadius, style: .continuous))
     }
 }
-import Foundation
-import SwiftUI
 
 struct RingifyPrimaryButton: View {
-    @Environment(\.ringifyVisualStyle) private var visualStyle
     let title: LocalizedStringKey
     var systemImage: String?
     var isLoading = false
@@ -91,28 +88,19 @@ struct RingifyPrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 if isLoading {
                     ProgressView().tint(.white)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                 }
-                Text(title).fontWeight(.semibold)
+                Text(title)
             }
+            .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
-            .frame(minHeight: 52)
-            .foregroundStyle(.white)
-            .background {
-                if visualStyle == .studio {
-                    RoundedRectangle(cornerRadius: 16).fill(RingifyTheme.Studio.action)
-                } else {
-                    RoundedRectangle(cornerRadius: 16).fill(RingifyTheme.brandGradient)
-                }
-            }
         }
+        .ringifyPrimaryAction()
         .disabled(isDisabled || isLoading)
-        .opacity(isDisabled ? 0.5 : 1)
-        .accessibilityAddTraits(.isButton)
     }
 }
 
