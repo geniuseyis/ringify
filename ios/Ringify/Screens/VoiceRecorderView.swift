@@ -6,8 +6,7 @@ struct VoiceRecorderView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var router: AppRouter
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 64
     @State private var savedURL: URL?
     @State private var isPreparing = false
     @State private var showDiscardConfirmation = false
@@ -16,79 +15,35 @@ struct VoiceRecorderView: View {
     @State private var discardAndLeave = false
     @State private var requestingPermission = false
     @State private var markers: [AudioMarker] = []
+    /// Measured input levels, oldest first, normalized to 0...1. Only real readings.
+    @State private var levels: [Double] = []
+
+    private static let maximumLevels = 120
 
     private var recorder: any VoiceRecordingService { model.container.recorder }
 
     var body: some View {
         // The service exposes live properties rather than ObservableObject.
         // Poll the whole presentation so transport/toolbar match actual state.
-        TimelineView(.periodic(from: .now, by: 0.08)) { _ in
+        TimelineView(.periodic(from: .now, by: 0.08)) { context in
             ScrollView {
-                VStack(spacing: 26) {
-                    VStack(spacing: 22) {
-                        HStack(spacing: 8) {
-                            Circle().fill(recorder.isRecording ? Color.red : Color.secondary).frame(width: 6, height: 6)
-                                .accessibilityHidden(true)
-                            Text(statusKey).font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
-                        }
-                        .fixedSize(horizontal: false, vertical: true)
-                        microphoneMeter
-                        Text(DurationText.formatted(savedURL == nil ? recorder.currentTime : savedDuration))
-                            .font(typeSize.isAccessibilitySize ? .title2.monospacedDigit() : .largeTitle.monospacedDigit())
-                            .accessibilityLabel(model.uiText("Kayıt süresi", "Recording duration"))
-                            .accessibilityValue(DurationText.formatted(savedURL == nil ? recorder.currentTime : savedDuration))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(20)
-                    .background(RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius))
-                    controls
-                        .disabled(isPreparing || requestingPermission)
-                    if savedURL == nil && (recorder.isRecording || recorder.isPaused) {
-                        Button(model.uiText("İşaret Ekle", "Add Marker"), systemImage: "bookmark") {
-                            let time = recorder.currentTime
-                            guard time.isFinite, time >= 0, markers.count < AudioMarkers.maximumCount else { return }
-                            markers.append(AudioMarker(time: time, label: model.uiText("İşaret \(markers.count + 1)", "Marker \(markers.count + 1)")))
-                        }
-                        .frame(minHeight: 44).disabled(isPreparing || markers.count >= AudioMarkers.maximumCount)
-                        .sensoryFeedback(.selection, trigger: markers.count)
-                    }
+                VStack(spacing: 24) {
+                    statusRow
+                    timer
+                    levelHistory
                     if !markers.isEmpty {
-                        DisclosureGroup(model.uiText("\(markers.count) işaret", "\(markers.count) markers")) {
-                            ForEach(markers) { marker in
-                                HStack {
-                                    Text(marker.label)
-                                    Spacer()
-                                    Text(DurationText.formatted(marker.time)).monospacedDigit()
-                                    Button(role: .destructive) { markers.removeAll { $0.id == marker.id } } label: {
-                                        Image(systemName: "trash").frame(width: 44, height: 44)
-                                    }.accessibilityLabel(model.uiText("\(marker.label) işaretini sil", "Delete \(marker.label)"))
-                                }.disabled(isPreparing)
-                            }
-                        }.modifier(NativeContentCard())
+                        markerList
                     }
                     if requestingPermission {
                         ProgressView(model.uiText("Mikrofon izni bekleniyor…", "Waiting for microphone permission…"))
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    if savedURL != nil {
-                        Button(action: useRecording) {
-                            HStack(spacing: 10) {
-                                if isPreparing { ProgressView().tint(.white) }
-                                Text("recorder.use").font(.headline)
-                            }
-                            .frame(maxWidth: .infinity, minHeight: 52)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(RingifyTheme.Studio.action)
-                        .disabled(isPreparing)
-                        .accessibilityIdentifier("recorder.use")
-                    }
                 }
                 .padding(RingifyTheme.horizontalPadding)
             }
-            .background(RingifyTheme.Studio.background)
-            .ringifyStudioAppearance()
-        .navigationTitle("recorder.title")
+            .background(RingifyTheme.background)
+            .ringifyBottomBar { bottomBar }
+            .navigationTitle("recorder.title")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -122,8 +77,13 @@ struct VoiceRecorderView: View {
             .onChange(of: recorder.isRecording || recorder.isPaused) { _, active in
                 if active { requestingPermission = false }
             }
+            .onChange(of: context.date) { _, _ in appendLevel() }
+            // Idle again after a discard or a used recording: the next recording
+            // starts from an empty history.
+            .onChange(of: isIdle) { _, idle in
+                if idle { levels = [] }
+            }
         }
-        .tint(RingifyTheme.Studio.accent)
         .onAppear {
             // An imported recording has already been copied into project storage
             // and its scratch URL consumed. Returning must not offer that URL.
@@ -158,39 +118,67 @@ struct VoiceRecorderView: View {
         }
     }
 
-    private var microphoneMeter: some View {
-        let rawPower = recorder.isRecording ? Double(recorder.averagePower) : -80
-        let power = rawPower.isFinite ? rawPower : -80
-        let normalized = recorder.isRecording ? max(0, min(1, (power + 60) / 60)) : 0
-        return VStack(spacing: 20) {
-            ZStack {
-                Circle()
-                    .stroke(RingifyTheme.Studio.accent.opacity(0.18), lineWidth: 1)
-                    .frame(width: typeSize.isAccessibilitySize ? 130 : 180, height: typeSize.isAccessibilitySize ? 130 : 180)
-                    .scaleEffect(reduceMotion ? 1 : 0.95 + normalized * 0.05)
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: normalized)
-                Image(systemName: savedURL != nil ? "checkmark" : recorder.isPaused ? "pause.fill" : "mic")
-                    .font(.system(size: 40, weight: .medium))
-                    .foregroundStyle(savedURL != nil ? RingifyTheme.success : RingifyTheme.Studio.accent)
-                    .frame(width: 88, height: 88)
-                    .background(RingifyTheme.Studio.accent.opacity(0.10), in: Circle())
+    // MARK: - Content
+
+    private var isActive: Bool { savedURL == nil && (recorder.isRecording || recorder.isPaused) }
+    private var isIdle: Bool { savedURL == nil && !recorder.isRecording && !recorder.isPaused }
+
+    private var statusRow: some View {
+        HStack(spacing: 8) {
+            if recorder.isRecording {
+                Circle().fill(RingifyTheme.record).frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
             }
-            .accessibilityHidden(true)
-            VStack(spacing: 8) {
-                ProgressView(value: normalized)
-                    .tint(RingifyTheme.Studio.accent)
-                    .accessibilityLabel("recorder.level")
-                    .accessibilityValue(recorder.isRecording ? String(format: "%.1f dBFS", power) : model.uiText("Ölçüm yok", "No measurement"))
+            Text(statusKey).font(.subheadline).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var timer: some View {
+        Text(DurationText.formatted(savedURL == nil ? recorder.currentTime : savedDuration))
+            .font(.system(size: timerSize, weight: .light).monospacedDigit())
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel(model.uiText("Kayıt süresi", "Recording duration"))
+            .accessibilityValue(DurationText.formatted(savedURL == nil ? recorder.currentTime : savedDuration))
+    }
+
+    /// Current input power in dBFS, or nil when nothing is being measured.
+    private var currentPower: Double? {
+        guard recorder.isRecording else { return nil }
+        let rawPower = Double(recorder.averagePower)
+        return rawPower.isFinite ? rawPower : -80
+    }
+
+    private var levelHistory: some View {
+        RecorderLevelHistory(levels: levels)
+            .frame(height: 88)
+            .frame(maxWidth: .infinity)
+            .ringifyCard()
+            .accessibilityElement()
+            .accessibilityLabel("recorder.level")
+            .accessibilityValue(currentPower.map { String(format: "%.1f dBFS", $0) } ?? model.uiText("Ölçüm yok", "No measurement"))
+    }
+
+    private var markerList: some View {
+        DisclosureGroup(model.uiText("\(markers.count) işaret", "\(markers.count) markers")) {
+            ForEach(markers) { marker in
                 HStack {
-                    Text("recorder.level")
+                    Text(marker.label)
                     Spacer()
-                    Text(recorder.isRecording ? String(format: "%.1f dBFS", power) : "—")
-                }
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
+                    Text(DurationText.formatted(marker.time)).monospacedDigit()
+                    Button(role: .destructive) { markers.removeAll { $0.id == marker.id } } label: {
+                        Image(systemName: "trash").frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel(model.uiText("\(marker.label) işaretini sil", "Delete \(marker.label)"))
+                }.disabled(isPreparing)
             }
         }
+        .ringifyCard()
     }
 
     private var statusKey: LocalizedStringKey {
@@ -200,67 +188,94 @@ struct VoiceRecorderView: View {
         return "recorder.idle"
     }
 
-    @ViewBuilder private var controls: some View {
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 18))
-            : AnyLayout(HStackLayout(spacing: 22))
-        layout {
-            if savedURL == nil {
-                if recorder.isRecording {
-                    Button { model.container.recorder.pause() } label: {
-                        controlLabel(model.uiText("Duraklat", "Pause"), icon: "pause.fill", color: RingifyTheme.Studio.action)
-                    }
-                    .accessibilityIdentifier("recorder.pause")
-                    Button(action: finishRecording) {
-                        controlLabel(model.uiText("Kaydı bitir", "Finish recording"), icon: "stop.fill", color: .red)
-                    }
-                    .accessibilityIdentifier("recorder.stop")
-                } else if recorder.isPaused {
-                    Button {
-                        do { try model.container.recorder.resume() } catch { model.present(error) }
-                    } label: {
-                        controlLabel(model.uiText("Devam et", "Resume"), icon: "play.fill", color: RingifyTheme.Studio.action)
-                    }
-                    .accessibilityIdentifier("recorder.resume")
-                    Button(action: finishRecording) {
-                        controlLabel(model.uiText("Kaydı bitir", "Finish recording"), icon: "stop.fill", color: .red)
-                    }
-                    .accessibilityIdentifier("recorder.stop")
-                } else {
-                    Button(action: beginRecording) {
-                        controlLabel(model.uiText("Kaydı başlat", "Start recording"), icon: "mic.fill", color: .red)
-                    }
-                    .accessibilityIdentifier("recorder.start")
-                }
-            } else if let savedURL {
-                Button {
-                    do {
-                        try model.container.playback.load(url: savedURL)
-                        if model.container.playback.isPlaying {
-                            model.container.playback.pause()
-                        } else {
-                            try model.container.playback.play(selection: nil, loop: false)
-                        }
-                    } catch { model.present(error) }
-                } label: {
-                    controlLabel(model.uiText(model.container.playback.isPlaying ? "Duraklat" : "Kaydı dinle", model.container.playback.isPlaying ? "Pause" : "Listen back"), icon: model.container.playback.isPlaying ? "pause.fill" : "play.fill", color: RingifyTheme.Studio.action)
-                }
-                .accessibilityIdentifier("recorder.preview")
-            }
+    private func appendLevel() {
+        guard let power = currentPower else { return }
+        levels.append(max(0, min(1, (power + 60) / 60)))
+        if levels.count > Self.maximumLevels {
+            levels.removeFirst(levels.count - Self.maximumLevels)
         }
-        .buttonStyle(.plain)
     }
 
-    private func controlLabel(_ title: String, icon: String, color: Color) -> some View {
-        VStack(spacing: 10) {
-            Circle().fill(color).frame(width: 64, height: 64)
-                .overlay(Image(systemName: icon).font(.system(size: 23, weight: .semibold)).foregroundStyle(.white))
-                .accessibilityHidden(true)
-            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+    // MARK: - Controls
+
+    @ViewBuilder private var bottomBar: some View {
+        if let savedURL {
+            previewButton(savedURL)
+                .disabled(isPreparing || requestingPermission)
+            RingifyPrimaryButton(title: "recorder.use", isLoading: isPreparing) { useRecording() }
+                .accessibilityIdentifier("recorder.use")
+        } else {
+            transport
+                .disabled(isPreparing || requestingPermission)
         }
-        .frame(minWidth: 64, minHeight: 88)
+    }
+
+    /// Three equal zones so the record button stays centered.
+    private var transport: some View {
+        HStack(spacing: 0) {
+            pauseResumeButton
+                .frame(maxWidth: .infinity)
+            RecorderRecordButton(
+                isActive: isActive,
+                title: isActive
+                    ? model.uiText("Kaydı bitir", "Finish recording")
+                    : model.uiText("Kaydı başlat", "Start recording"),
+                action: { if isActive { finishRecording() } else { beginRecording() } }
+            )
+            .accessibilityIdentifier(isActive ? "recorder.stop" : "recorder.start")
+            markerButton
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    @ViewBuilder private var pauseResumeButton: some View {
+        if savedURL == nil && recorder.isRecording {
+            RingifyCircleButton(title: model.uiText("Duraklat", "Pause"), systemImage: "pause.fill") {
+                model.container.recorder.pause()
+            }
+            .accessibilityIdentifier("recorder.pause")
+        } else if savedURL == nil && recorder.isPaused {
+            RingifyCircleButton(title: model.uiText("Devam et", "Resume"), systemImage: "play.fill") {
+                do { try model.container.recorder.resume() } catch { model.present(error) }
+            }
+            .accessibilityIdentifier("recorder.resume")
+        } else {
+            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder private var markerButton: some View {
+        if isActive {
+            RingifyCircleButton(title: model.uiText("İşaret Ekle", "Add Marker"), systemImage: "bookmark") {
+                let time = recorder.currentTime
+                guard time.isFinite, time >= 0, markers.count < AudioMarkers.maximumCount else { return }
+                markers.append(AudioMarker(time: time, label: model.uiText("İşaret \(markers.count + 1)", "Marker \(markers.count + 1)")))
+            }
+            .disabled(isPreparing || markers.count >= AudioMarkers.maximumCount)
+            .sensoryFeedback(.selection, trigger: markers.count)
+        } else {
+            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+        }
+    }
+
+    private func previewButton(_ savedURL: URL) -> some View {
+        let isPlaying = model.container.playback.isPlaying
+        return RingifyCircleButton(
+            title: model.uiText(isPlaying ? "Duraklat" : "Kaydı dinle", isPlaying ? "Pause" : "Listen back"),
+            systemImage: isPlaying ? "pause.fill" : "play.fill",
+            emphasis: .prominent,
+            diameter: 72
+        ) {
+            do {
+                try model.container.playback.load(url: savedURL)
+                if model.container.playback.isPlaying {
+                    model.container.playback.pause()
+                } else {
+                    try model.container.playback.play(selection: nil, loop: false)
+                }
+            } catch { model.present(error) }
+        }
+        .accessibilityIdentifier("recorder.preview")
     }
 
     private func finishRecording() {
