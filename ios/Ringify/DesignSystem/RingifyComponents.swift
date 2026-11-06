@@ -299,6 +299,27 @@ struct RingifyLoadingView: View {
     }
 }
 
+// MARK: - Waveform
+
+/// Reduces stored peaks to the bars a width can show. It only ever reports
+/// measured peaks: with fewer samples than bars it returns the samples, and it
+/// never interpolates new values.
+enum WaveformBars {
+    static func peaks(_ samples: [Float], maximumBars: Int) -> [Float] {
+        guard maximumBars > 0, !samples.isEmpty else { return [] }
+        guard samples.count > maximumBars else { return samples.map(sanitized) }
+        return (0..<maximumBars).map { bar in
+            let lower = bar * samples.count / maximumBars
+            let upper = (bar + 1) * samples.count / maximumBars
+            return samples[lower..<upper].reduce(Float.zero) { max($0, sanitized($1)) }
+        }
+    }
+
+    private static func sanitized(_ value: Float) -> Float {
+        value.isFinite ? min(1, abs(value)) : 0
+    }
+}
+
 struct WaveformView: View {
     let samples: [Float]
     var tint: Color = RingifyTheme.accent
