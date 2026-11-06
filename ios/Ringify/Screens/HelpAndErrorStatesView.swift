@@ -183,114 +183,151 @@ struct HelpTopicDetailView: View {
             content
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(topic.title(model))
         .navigationBarTitleDisplayMode(.inline)
     }
 
     @ViewBuilder private var content: some View {
         switch topic {
-        case .create:
-            Section(model.uiText("Üç adımda zil sesin", "Your ringtone in three steps")) {
-                instruction("1", title: model.uiText("Sesini ekle", "Add your sound"),
-                    message: model.uiText("Dosyalar'dan ses, Fotoğraflar'dan video seç veya mikrofonla kaydet.",
-                        "Choose audio from Files, video from Photos, or record with the microphone."))
-                instruction("2", title: model.uiText("Bölümünü seç", "Choose your section"),
-                    message: model.uiText("Stüdyo'da 1–29 saniyelik bölümü seç. Ses seviyesini ve fade ayarlarını projene göre düzenle.",
-                        "Select 1–29 seconds in Studio. Adjust volume and fades for your project."))
-                instruction("3", title: model.uiText("Dışa aktar ve kullan", "Export and use"),
-                    message: model.uiText("M4A dosyasını oluştur, paylaş ve iPhone rehberindeki adımları izle.",
-                        "Create an M4A file, share it, and follow the iPhone guide."))
+        case .create: createContent
+        case .setRingtone: setRingtoneContent
+        case .formats: formatsContent
+        case .export: exportContent
+        case .purchases: purchasesContent
+        case .permissions: permissionsContent
+        case .importFiles: importFilesContent
+        case .storage: storageContent
+        }
+    }
+
+    @ViewBuilder private var createContent: some View {
+        Section {
+            instruction("1", title: model.uiText("Sesini ekle", "Add your sound"),
+                message: model.uiText("Dosyalar'dan ses, Fotoğraflar'dan video seç veya mikrofonla kaydet.",
+                    "Choose audio from Files, video from Photos, or record with the microphone."))
+            instruction("2", title: model.uiText("Bölümünü seç", "Choose your section"),
+                message: model.uiText("Stüdyo'da 1–29 saniyelik bölümü seç. Ses seviyesini ve fade ayarlarını projene göre düzenle.",
+                    "Select 1–29 seconds in Studio. Adjust volume and fades for your project."))
+            instruction("3", title: model.uiText("Dışa aktar ve kullan", "Export and use"),
+                message: model.uiText("M4A dosyasını oluştur, paylaş ve iPhone rehberindeki adımları izle.",
+                    "Create an M4A file, share it, and follow the iPhone guide."))
+        } header: {
+            Text(model.uiText("Üç adımda zil sesin", "Your ringtone in three steps")).textCase(nil)
+        }
+        Section { importButton }
+    }
+
+    private var setRingtoneContent: some View {
+        Section {
+            Text("guide.disclaimer").foregroundStyle(.secondary)
+            NavigationLink { RingtoneGuideView() } label: {
+                SettingsNavigationRow(title: model.uiText("Adım adım iPhone rehberi", "Step-by-step iPhone guide"), icon: "iphone")
             }
-            Section { importButton }
-        case .setRingtone:
-            Section {
-                Text("guide.disclaimer").foregroundStyle(.secondary)
-                NavigationLink { RingtoneGuideView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Adım adım iPhone rehberi", "Step-by-step iPhone guide"), icon: "iphone")
+        }
+    }
+
+    @ViewBuilder private var formatsContent: some View {
+        Section {
+            LabeledContent(model.uiText("Ses", "Audio"), value: "M4A, MP3")
+            Text(model.uiText("Diğer ses ve video biçimleri iPhone'un desteklediği codec'lere bağlıdır. Videoda kullanılabilir bir ses izi bulunmalıdır.",
+                "Other audio and video formats depend on codecs supported by your iPhone. Video must contain a usable audio track."))
+                .foregroundStyle(.secondary)
+            Text(model.uiText("Korumalı veya kullanma iznin olmayan medyayı içe aktarma.",
+                "Do not import protected media or media you do not have permission to use."))
+                .font(.footnote).foregroundStyle(.secondary)
+        } header: {
+            Text(model.uiText("İçe aktarma", "Import")).textCase(nil)
+        }
+        Section {
+            LabeledContent(model.uiText("Zil sesi", "Ringtone"), value: "M4A / AAC")
+            Text(model.uiText("Ayrı Ses Dönüştür aracı MP4 veya MP3 dosyalarından WAV veya M4A oluşturur.",
+                "The separate Convert Audio tool creates WAV or M4A from MP4 or MP3 files."))
+                .foregroundStyle(.secondary)
+            NavigationLink { AudioConversionView(service: model.container.conversion) } label: {
+                Label("conversion.title", systemImage: "arrow.triangle.2.circlepath").frame(minHeight: 44)
+            }
+        } header: {
+            Text(model.uiText("Dışa aktarma", "Export")).textCase(nil)
+        }
+    }
+
+    @ViewBuilder private var exportContent: some View {
+        Section {
+            instruction("1", title: model.uiText("Seçim süresi", "Selection length"), message: model.localized("editor.durationRule"))
+            instruction("2", title: model.uiText("Kaynak dosya", "Source file"),
+                message: model.uiText("Projeyi açıp sesi dinle. Kaynak bulunamıyorsa dosyayı yeniden içe aktar.",
+                    "Open the project and preview the sound. If the source is missing, import the file again."))
+            instruction("3", title: model.uiText("Boş alan", "Free space"),
+                message: model.uiText("iPhone'da çalışma kopyası ve çıktı için yeterli boş alan olduğundan emin ol.",
+                    "Make sure your iPhone has free space for a working copy and the export."))
+        } header: {
+            Text(model.uiText("Önce bunları kontrol et", "Check these first")).textCase(nil)
+        }
+        Section {
+            if model.currentProject != nil {
+                NavigationLink { ExportView() } label: {
+                    Label(model.uiText("Dışa aktarma ekranını aç", "Open export"), systemImage: "square.and.arrow.up").frame(minHeight: 44)
                 }
+            } else { importButton }
+            NavigationLink { SettingsStorageView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.storage"), icon: "externaldrive")
             }
-        case .formats:
-            Section(model.uiText("İçe aktarma", "Import")) {
-                LabeledContent(model.uiText("Ses", "Audio"), value: "M4A, MP3")
-                Text(model.uiText("Diğer ses ve video biçimleri iPhone'un desteklediği codec'lere bağlıdır. Videoda kullanılabilir bir ses izi bulunmalıdır.",
-                    "Other audio and video formats depend on codecs supported by your iPhone. Video must contain a usable audio track."))
-                    .foregroundStyle(.secondary)
-                Text(model.uiText("Korumalı veya kullanma iznin olmayan medyayı içe aktarma.",
-                    "Do not import protected media or media you do not have permission to use."))
-                    .font(.footnote).foregroundStyle(.secondary)
+        }
+    }
+
+    private var purchasesContent: some View {
+        Section {
+            Text(model.uiText("Pro görünmüyorsa satın alırken kullandığın Apple Hesabını kontrol et ve satın alımlarını geri yükle. Bekleyen işlemler Apple onayı veya doğrulaması tamamlanınca güncellenir.",
+                "If Pro is missing, check the Apple Account used for the purchase and restore purchases. Pending transactions update after Apple approval or verification."))
+                .foregroundStyle(.secondary)
+            NavigationLink { PurchaseSupportView() } label: {
+                SettingsNavigationRow(title: model.uiText("Satın alımlar ve geri yükleme", "Purchases and restore"), icon: "arrow.clockwise")
             }
-            Section(model.uiText("Dışa aktarma", "Export")) {
-                LabeledContent(model.uiText("Zil sesi", "Ringtone"), value: "M4A / AAC")
-                Text(model.uiText("Ayrı Ses Dönüştür aracı MP4 veya MP3 dosyalarından WAV veya M4A oluşturur.",
-                    "The separate Convert Audio tool creates WAV or M4A from MP4 or MP3 files."))
-                    .foregroundStyle(.secondary)
-                NavigationLink { AudioConversionView(service: model.container.conversion) } label: {
-                    Label("conversion.title", systemImage: "arrow.triangle.2.circlepath").frame(minHeight: 44)
-                }
+        }
+    }
+
+    @ViewBuilder private var permissionsContent: some View {
+        Section {
+            Text(model.uiText("Kayıt yapmak için mikrofon izni gerekir. İzni daha önce reddettiysen iPhone Ayarları'nda Ringify için mikrofonu açabilirsin.",
+                "Recording requires microphone permission. If you previously denied it, enable the microphone for Ringify in iPhone Settings."))
+                .foregroundStyle(.secondary)
+            Button { openSettings() } label: {
+                Label(model.uiText("iPhone Ayarları'nı aç", "Open iPhone Settings"), systemImage: "gearshape").frame(minHeight: 44)
             }
-        case .export:
-            Section(model.uiText("Önce bunları kontrol et", "Check these first")) {
-                instruction("1", title: model.uiText("Seçim süresi", "Selection length"), message: model.localized("editor.durationRule"))
-                instruction("2", title: model.uiText("Kaynak dosya", "Source file"),
-                    message: model.uiText("Projeyi açıp sesi dinle. Kaynak bulunamıyorsa dosyayı yeniden içe aktar.",
-                        "Open the project and preview the sound. If the source is missing, import the file again."))
-                instruction("3", title: model.uiText("Boş alan", "Free space"),
-                    message: model.uiText("iPhone'da çalışma kopyası ve çıktı için yeterli boş alan olduğundan emin ol.",
-                        "Make sure your iPhone has free space for a working copy and the export."))
-            }
-            Section {
-                if model.currentProject != nil {
-                    NavigationLink { ExportView() } label: {
-                        Label(model.uiText("Dışa aktarma ekranını aç", "Open export"), systemImage: "square.and.arrow.up").frame(minHeight: 44)
-                    }
-                } else { importButton }
-                NavigationLink { SettingsStorageView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.storage"), icon: "externaldrive")
-                }
-            }
-        case .purchases:
-            Section {
-                Text(model.uiText("Pro görünmüyorsa satın alırken kullandığın Apple Hesabını kontrol et ve satın alımlarını geri yükle. Bekleyen işlemler Apple onayı veya doğrulaması tamamlanınca güncellenir.",
-                    "If Pro is missing, check the Apple Account used for the purchase and restore purchases. Pending transactions update after Apple approval or verification."))
-                    .foregroundStyle(.secondary)
-                NavigationLink { PurchaseSupportView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Satın alımlar ve geri yükleme", "Purchases and restore"), icon: "arrow.clockwise")
-                }
-            }
-        case .permissions:
-            Section(model.uiText("Mikrofon erişimi", "Microphone access")) {
-                Text(model.uiText("Kayıt yapmak için mikrofon izni gerekir. İzni daha önce reddettiysen iPhone Ayarları'nda Ringify için mikrofonu açabilirsin.",
-                    "Recording requires microphone permission. If you previously denied it, enable the microphone for Ringify in iPhone Settings."))
-                    .foregroundStyle(.secondary)
-                Button { openSettings() } label: {
-                    Label(model.uiText("iPhone Ayarları'nı aç", "Open iPhone Settings"), systemImage: "gearshape").frame(minHeight: 44)
-                }
-            }
-            Section(model.uiText("Dosyalar ve Fotoğraflar", "Files and Photos")) {
-                Text(model.uiText("Sistem seçicisinde erişebildiğin bir dosyayı veya videoyu seç. Bulut dosyasının aygıtına indirilmesini bekle; ardından tekrar dene.",
-                    "Choose a file or video available in the system picker. Wait for a cloud file to download to your device, then retry."))
-                    .foregroundStyle(.secondary)
-                importButton
-            }
-        case .importFiles:
-            Section(model.uiText("Dosya açılmıyorsa", "If a file will not open")) {
-                Text(model.uiText("Dosyanın tam indirildiğini, okunabilir olduğunu ve iOS'un desteklediği bir biçimde olduğunu kontrol et. Video sessizse başka bir kaynak seç.",
-                    "Check that the file is fully downloaded, readable, and in a format supported by iOS. If a video has no audio, choose another source."))
-                    .foregroundStyle(.secondary)
-                Text(model.uiText("Bozuk dosyayı kaynak uygulamasından yeniden dışa aktarabilirsin. Orijinal dosyan Ringify tarafından değiştirilmez.",
-                    "You can export a damaged file again from its source app. Ringify does not modify your original file."))
-                    .foregroundStyle(.secondary)
-                importButton
-            }
-        case .storage:
-            Section {
-                Text(model.uiText("Kütüphane'den artık kullanmadığın projeleri silebilirsin. Silmek proje yuvasını boşaltır. Tüm yerel verileri silmeden önce saklamak istediğin çıktıları Dosyalar'a kaydet.",
-                    "Delete projects you no longer need from Library. Deleting frees a project slot. Save exports you want to keep to Files before deleting all local data."))
-                    .foregroundStyle(.secondary)
-                NavigationLink { SettingsStorageView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.storage.manage"), icon: "externaldrive")
-                }
+        } header: {
+            Text(model.uiText("Mikrofon erişimi", "Microphone access")).textCase(nil)
+        }
+        Section {
+            Text(model.uiText("Sistem seçicisinde erişebildiğin bir dosyayı veya videoyu seç. Bulut dosyasının aygıtına indirilmesini bekle; ardından tekrar dene.",
+                "Choose a file or video available in the system picker. Wait for a cloud file to download to your device, then retry."))
+                .foregroundStyle(.secondary)
+            importButton
+        } header: {
+            Text(model.uiText("Dosyalar ve Fotoğraflar", "Files and Photos")).textCase(nil)
+        }
+    }
+
+    private var importFilesContent: some View {
+        Section {
+            Text(model.uiText("Dosyanın tam indirildiğini, okunabilir olduğunu ve iOS'un desteklediği bir biçimde olduğunu kontrol et. Video sessizse başka bir kaynak seç.",
+                "Check that the file is fully downloaded, readable, and in a format supported by iOS. If a video has no audio, choose another source."))
+                .foregroundStyle(.secondary)
+            Text(model.uiText("Bozuk dosyayı kaynak uygulamasından yeniden dışa aktarabilirsin. Orijinal dosyan Ringify tarafından değiştirilmez.",
+                "You can export a damaged file again from its source app. Ringify does not modify your original file."))
+                .foregroundStyle(.secondary)
+            importButton
+        } header: {
+            Text(model.uiText("Dosya açılmıyorsa", "If a file will not open")).textCase(nil)
+        }
+    }
+
+    private var storageContent: some View {
+        Section {
+            Text(model.uiText("Kütüphane'den artık kullanmadığın projeleri silebilirsin. Silmek proje yuvasını boşaltır. Tüm yerel verileri silmeden önce saklamak istediğin çıktıları Dosyalar'a kaydet.",
+                "Delete projects you no longer need from Library. Deleting frees a project slot. Save exports you want to keep to Files before deleting all local data."))
+                .foregroundStyle(.secondary)
+            NavigationLink { SettingsStorageView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.storage.manage"), icon: "externaldrive")
             }
         }
     }
@@ -302,17 +339,18 @@ struct HelpTopicDetailView: View {
     }
 
     private func instruction(_ number: String, title: String, message: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(number).font(.caption.bold()).foregroundStyle(RingifyTheme.Studio.accent)
-                .frame(width: 26, height: 26)
-                .background(RingifyTheme.Studio.accent.opacity(0.10), in: Circle())
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 5) {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.headline)
                 Text(message).font(.subheadline).foregroundStyle(.secondary)
             }
+            .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: "\(number).circle.fill")
+                .foregroundStyle(.tint)
+                .accessibilityHidden(true)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 2)
     }
 
     private func openSettings() {
