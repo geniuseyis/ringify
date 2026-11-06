@@ -1,6 +1,65 @@
 import RingifyCore
 import SwiftUI
 
+/// Title and value in one row. Wraps by itself at large Dynamic Type sizes.
+struct NativeMetadataRow: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        LabeledContent(title) {
+            Text(value)
+                .monospacedDigit()
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// These are the actual stored source peaks. Highlighting and cursor positions
+// use source time; this does not claim to visualize newly rendered effect PCM.
+struct NativeSelectionWaveform: View {
+    let project: RingtoneProject
+    var elapsed: TimeInterval = 0
+    @Environment(\.ringifyVisualStyle) private var style
+    private var wave: Color { style == .studio ? RingifyTheme.Studio.wave : RingifyTheme.AppleV2.wave }
+
+    var selectionRange: ClosedRange<Double> {
+        let duration = project.sourceDuration.isFinite && project.sourceDuration > 0 ? project.sourceDuration : 1
+        let start = min(1, max(0, project.selection.start.isFinite ? project.selection.start / duration : 0))
+        let end = min(1, max(start, project.selection.end.isFinite ? project.selection.end / duration : start))
+        return start...end
+    }
+
+    var cursorFraction: Double {
+        let duration = project.sourceDuration.isFinite && project.sourceDuration > 0 ? project.sourceDuration : 1
+        return min(selectionRange.upperBound, max(selectionRange.lowerBound, selectionRange.lowerBound + (elapsed.isFinite ? max(0, elapsed) : 0) / duration))
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(wave.opacity(0.10))
+                    .frame(width: proxy.size.width * CGFloat(selectionRange.upperBound - selectionRange.lowerBound))
+                    .offset(x: proxy.size.width * CGFloat(selectionRange.lowerBound))
+                WaveformView(samples: project.waveformSamples, tint: wave,
+                    dimmedTint: style == .studio ? RingifyTheme.Studio.outsideWave : Color.secondary.opacity(0.22), selection: selectionRange)
+                Rectangle().fill(style == .studio ? RingifyTheme.Studio.canvasText : Color.primary)
+                    .frame(width: 2)
+                    .offset(x: min(max(0, proxy.size.width - 2), proxy.size.width * CGFloat(cursorFraction)))
+            }
+            .clipped()
+        }
+        .frame(height: 110)
+        .background(style == .studio ? RingifyTheme.Studio.canvas : Color.clear, in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityHidden(true)
+    }
+}
+
+import RingifyCore
+import SwiftUI
+
 struct NativeContentCard: ViewModifier {
     var padding: CGFloat = 16
     @Environment(\.ringifyVisualStyle) private var style
@@ -67,29 +126,6 @@ struct NativePrimaryAction: View {
     }
 }
 
-struct NativeMetadataRow: View {
-    let title: String
-    let value: String
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    var body: some View {
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 16))
-        layout {
-            Text(title).foregroundStyle(.secondary)
-            if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
-            Text(value)
-                .fontWeight(.medium)
-                .multilineTextAlignment(typeSize.isAccessibilitySize ? .leading : .trailing)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .font(.subheadline)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-}
-
 struct NativeProjectIdentity: View {
     let project: RingtoneProject
     @Environment(\.ringifyVisualStyle) private var style
@@ -112,45 +148,5 @@ struct NativeProjectIdentity: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-// These are the actual stored source peaks. Highlighting and cursor positions
-// use source time; this does not claim to visualize newly rendered effect PCM.
-struct NativeSelectionWaveform: View {
-    let project: RingtoneProject
-    var elapsed: TimeInterval = 0
-    @Environment(\.ringifyVisualStyle) private var style
-    private var wave: Color { style == .studio ? RingifyTheme.Studio.wave : RingifyTheme.AppleV2.wave }
-
-    var selectionRange: ClosedRange<Double> {
-        let duration = project.sourceDuration.isFinite && project.sourceDuration > 0 ? project.sourceDuration : 1
-        let start = min(1, max(0, project.selection.start.isFinite ? project.selection.start / duration : 0))
-        let end = min(1, max(start, project.selection.end.isFinite ? project.selection.end / duration : start))
-        return start...end
-    }
-
-    var cursorFraction: Double {
-        let duration = project.sourceDuration.isFinite && project.sourceDuration > 0 ? project.sourceDuration : 1
-        return min(selectionRange.upperBound, max(selectionRange.lowerBound, selectionRange.lowerBound + (elapsed.isFinite ? max(0, elapsed) : 0) / duration))
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Rectangle().fill(wave.opacity(0.10))
-                    .frame(width: proxy.size.width * CGFloat(selectionRange.upperBound - selectionRange.lowerBound))
-                    .offset(x: proxy.size.width * CGFloat(selectionRange.lowerBound))
-                WaveformView(samples: project.waveformSamples, tint: wave,
-                    dimmedTint: style == .studio ? RingifyTheme.Studio.outsideWave : Color.secondary.opacity(0.22), selection: selectionRange)
-                Rectangle().fill(style == .studio ? RingifyTheme.Studio.canvasText : Color.primary)
-                    .frame(width: 2)
-                    .offset(x: min(max(0, proxy.size.width - 2), proxy.size.width * CGFloat(cursorFraction)))
-            }
-            .clipped()
-        }
-        .frame(height: 110)
-        .background(style == .studio ? RingifyTheme.Studio.canvas : Color.clear, in: RoundedRectangle(cornerRadius: 14))
-        .accessibilityHidden(true)
     }
 }
