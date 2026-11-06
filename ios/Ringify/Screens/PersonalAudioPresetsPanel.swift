@@ -20,30 +20,22 @@ struct PersonalAudioPresetsPanel: View {
     @State private var applyTask: Task<Void, Never>?
     @State private var generation = UUID()
 
+    // The DisclosureGroup is the single root, so the lifecycle modifiers below
+    // attach once; its children are direct List rows with native separators.
     var body: some View {
         DisclosureGroup(model.uiText("Kişisel Ses Ayarları", "Personal Audio Presets")) {
-            VStack(alignment: .leading, spacing: 12) {
-                Button(model.uiText("Mevcut ayarları kaydet", "Save current settings"), systemImage: "plus.circle") {
-                    editor = PresetEditorRequest(preset: nil)
-                }.frame(minHeight: 44).disabled(model.isPresetWorking || applying)
-                if loadFailed {
-                    Button(model.uiText("Tekrar Dene", "Try Again")) { Task { loadFailed = !(await model.reloadAudioPresets()) } }
-                        .frame(minHeight: 44)
-                }
-                ForEach(model.audioPresets) { preset in
-                    HStack {
-                        Button(preset.name) { apply(preset) }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                        Menu {
-                            Button(model.uiText("Yeniden Adlandır", "Rename"), systemImage: "pencil") { editor = PresetEditorRequest(preset: preset) }
-                            Button(model.uiText("Sil", "Delete"), systemImage: "trash", role: .destructive) { pendingDelete = preset; showDelete = true }
-                        } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }
-                        .accessibilityLabel(model.uiText("\(preset.name) seçenekleri", "Options for \(preset.name)"))
-                    }.disabled(model.isPresetWorking || applying)
-                }
-                if applying || model.isPresetWorking { ProgressView("common.processing") }
-            }.padding(.top, 12)
+            Button(model.uiText("Mevcut ayarları kaydet", "Save current settings"), systemImage: "plus.circle") {
+                editor = PresetEditorRequest(preset: nil)
+            }.frame(minHeight: 44).disabled(model.isPresetWorking || applying)
+            if loadFailed {
+                Button(model.uiText("Tekrar Dene", "Try Again")) { Task { loadFailed = !(await model.reloadAudioPresets()) } }
+                    .frame(minHeight: 44)
+            }
+            ForEach(model.audioPresets) { preset in
+                presetRow(preset)
+            }
+            if applying || model.isPresetWorking { ProgressView("common.processing") }
         }
-        .modifier(NativeContentCard())
         .task { loadFailed = !(await model.reloadAudioPresets()) }
         .onDisappear { generation = UUID(); applyTask?.cancel(); applying = false }
         .onChange(of: project.id) { _, _ in generation = UUID(); applyTask?.cancel(); applying = false }
@@ -61,6 +53,29 @@ struct PersonalAudioPresetsPanel: View {
             }
             Button("common.cancel", role: .cancel) { pendingDelete = nil }
         }
+    }
+
+    // Two controls in one row: each carries its own explicit style.
+    private func presetRow(_ preset: UserAudioPreset) -> some View {
+        HStack {
+            Button { apply(preset) } label: {
+                Text(preset.name)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            Menu {
+                Button(model.uiText("Yeniden Adlandır", "Rename"), systemImage: "pencil") { editor = PresetEditorRequest(preset: preset) }
+                Button(model.uiText("Sil", "Delete"), systemImage: "trash", role: .destructive) { pendingDelete = preset; showDelete = true }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .menuStyle(.button)
+            .buttonStyle(.borderless)
+            .accessibilityLabel(model.uiText("\(preset.name) seçenekleri", "Options for \(preset.name)"))
+        }.disabled(model.isPresetWorking || applying)
     }
 
     private func apply(_ preset: UserAudioPreset) {
