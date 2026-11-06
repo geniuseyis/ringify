@@ -59,14 +59,18 @@ struct RingifyPrivacyView: View {
                     .font(.headline)
                 Text("settings.privacy.summary").foregroundStyle(.secondary)
             }
-            Section(model.uiText("Satın alımlar", "Purchases")) {
+            Section {
                 Text("premium.privacy.body").foregroundStyle(.secondary)
+            } header: {
+                Text(model.uiText("Satın alımlar", "Purchases")).textCase(nil)
             }
-            Section(model.uiText("İzinler", "Permissions")) {
+            Section {
                 Text(model.uiText(
                     "Mikrofon izni kayıt başlatıldığında istenir. Fotoğraflar ve Dosyalar için sistem seçicilerini kullanırsın.",
                     "Microphone permission is requested when you start recording. Photos and Files use the system pickers."))
                     .foregroundStyle(.secondary)
+            } header: {
+                Text(model.uiText("İzinler", "Permissions")).textCase(nil)
             }
         }
         .listStyle(.insetGrouped)
