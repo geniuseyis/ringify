@@ -319,21 +319,19 @@ private struct ProFAQView: View {
             }
             Section {
                 NavigationLink { PurchaseSupportView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Ödeme ve geri yükleme yardımı", "Billing and restore help"), icon: "creditcard")
+                    RingifyRow(Text(model.uiText("Ödeme ve geri yükleme yardımı", "Billing and restore help")), systemImage: "creditcard")
                 }
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(model.uiText("Pro Hakkında Sorular", "Pro Questions"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private func faq(_ question: String, answer: String) -> some View {
         DisclosureGroup(question) {
-            Text(answer).font(.subheadline).foregroundStyle(.secondary).padding(.vertical, 8)
+            Text(answer).font(.subheadline).foregroundStyle(.secondary)
         }
-        .padding(.vertical, 5)
     }
 }
 
