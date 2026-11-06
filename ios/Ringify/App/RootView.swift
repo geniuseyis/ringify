@@ -18,6 +18,7 @@ struct RootView: View {
                 MainTabView()
             }
         }
+        .preferredColorScheme(isLaunching ? .dark : model.preferredColorScheme)
         .task {
             guard isLaunching else { return }
             #if DEBUG
@@ -35,15 +36,11 @@ struct RootView: View {
         }
         .sheet(isPresented: $model.requiresProForProjectLimit) {
             NavigationStack {
-                PremiumView()
-                    .safeAreaInset(edge: .top) {
-                        HStack {
-                            Text("premium.limit.title").font(.headline)
-                            Spacer()
+                PremiumView(showsProjectLimitNotice: true)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
                             Button("common.done") { model.requiresProForProjectLimit = false }
                         }
-                        .padding()
-                        .background(.bar)
                     }
             }
         }
