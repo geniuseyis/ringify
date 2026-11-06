@@ -203,12 +203,14 @@ private struct ExportPreferencesView: View {
 
     var body: some View {
         List {
-            Section(model.uiText("Zil sesi çıktısı", "Ringtone output")) {
+            Section {
                 LabeledContent("settings.export.format", value: "M4A / AAC")
                 LabeledContent(model.uiText("Seçim süresi", "Selection length"), value: model.uiText("1–29 saniye", "1–29 seconds"))
                 Text(model.uiText("Dosya adını her dışa aktarmada seçersin. Ses seviyesi ve fade ayarları projeye özeldir.",
                     "Choose a file name for each export. Volume and fades are set for each project."))
                     .foregroundStyle(.secondary)
+            } header: {
+                Text(model.uiText("Zil sesi çıktısı", "Ringtone output")).textCase(nil)
             }
             Section {
                 NavigationLink { AudioConversionView(service: model.container.conversion) } label: {
@@ -220,7 +222,6 @@ private struct ExportPreferencesView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle("settings.export")
         .navigationBarTitleDisplayMode(.inline)
     }
