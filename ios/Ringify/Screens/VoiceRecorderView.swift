@@ -320,3 +320,30 @@ struct VoiceRecorderView: View {
         }
     }
 }
+
+/// Voice Memos style record control: an outer ring with a red disc that becomes
+/// a rounded square while recording.
+private struct RecorderRecordButton: View {
+    let isActive: Bool
+    let title: String
+    let action: () -> Void
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle().strokeBorder(Color.primary, lineWidth: 3)
+                RoundedRectangle(cornerRadius: isActive ? 6 : 30, style: .circular)
+                    .fill(RingifyTheme.record)
+                    .frame(width: isActive ? 28 : 60, height: isActive ? 28 : 60)
+            }
+            .frame(width: 72, height: 72)
+            .contentShape(Circle())
+            .opacity(isEnabled ? 1 : 0.45)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: isActive)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+    }
+}
