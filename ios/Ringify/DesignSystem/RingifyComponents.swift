@@ -20,6 +20,22 @@ extension View {
     /// Grouped surface for custom content outside a List, such as the waveform editor.
     func ringifyCard(padding: CGFloat = 16) -> some View { modifier(RingifyCardModifier(padding: padding)) }
 }
+
+private struct RingifyPrimaryActionStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        Group {
+            if #available(iOS 26, *) {
+                content.buttonStyle(.glassProminent)
+            } else {
+                content.buttonStyle(.borderedProminent)
+            }
+        }
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .font(.headline)
+        .tint(RingifyTheme.action)
+    }
+}
 import Foundation
 import SwiftUI
 
