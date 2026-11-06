@@ -257,43 +257,46 @@ private struct ProComparisonView: View {
     var body: some View {
         List {
             Section {
-                HStack(alignment: .top, spacing: 14) {
-                    planSummary("Normal", count: ProAccessPolicy.normalProjectLimit, pro: false)
-                    planSummary("Pro", count: ProAccessPolicy.proProjectLimit, pro: true)
-                }
+                planSummary("Normal", count: ProAccessPolicy.normalProjectLimit, pro: false)
+                planSummary("Pro", count: ProAccessPolicy.proProjectLimit, pro: true)
             }
-            Section(model.uiText("Pro ile gelenler", "Included with Pro")) {
+            Section {
                 Label("premium.compare.normalize", systemImage: "slider.horizontal.3")
                 Label(model.uiText("3 kayıtlı proje", "3 saved projects"), systemImage: "square.stack")
                 Label("premium.compare.analysis", systemImage: "waveform.path")
+            } header: {
+                Text(model.uiText("Pro ile gelenler", "Included with Pro")).textCase(nil)
             }
-            Section(model.uiText("Her iki planda", "In both plans")) {
+            Section {
                 ForEach(sharedFeatures, id: \.self) { key in
                     Label(model.localized("premium.compare.\(key)"), systemImage: "checkmark")
                 }
+            } header: {
+                Text(model.uiText("Her iki planda", "In both plans")).textCase(nil)
             }
-            Section(model.uiText("Proje alanı", "Project capacity")) {
+            Section {
                 Text("premium.legacy.preserved").foregroundStyle(.secondary)
                 Text(model.uiText(
                     "Bir projeyi silmek yuvasını yeniden kullanılabilir yapar. Pro sona ererse kayıtların ve satın alınan yuvaların korunur; yeni proje oluşturma Normal sınırını izler. Pro etkinken ayrı kalıcı ürünlerle en fazla 20 ek yuva alınabilir.",
                     "Deleting a project frees capacity. If Pro ends, projects and purchased slots are preserved; new projects follow the Normal limit. While Pro is active, up to 20 extra slots can be purchased as separate permanent products."))
                     .font(.footnote).foregroundStyle(.secondary)
+            } header: {
+                Text(model.uiText("Proje alanı", "Project capacity")).textCase(nil)
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle(model.uiText("Normal ve Pro", "Normal and Pro"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private func planSummary(_ title: String, count: Int, pro: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.headline).foregroundStyle(pro ? RingifyTheme.Studio.accent : Color.primary)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.headline).foregroundStyle(pro ? RingifyTheme.accent : Color.primary)
             Text(model.uiText("\(count) kayıtlı proje", count == 1 ? "1 saved project" : "\(count) saved projects")).font(.subheadline)
             Text(pro ? model.localized("premium.compare.normalize") : model.uiText("Temel düzenleme", "Core editing"))
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.footnote).foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }
 
