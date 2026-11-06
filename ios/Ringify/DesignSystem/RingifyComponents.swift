@@ -36,6 +36,15 @@ private struct RingifyPrimaryActionStyle: ViewModifier {
         .tint(RingifyTheme.action)
     }
 }
+
+private struct RingifySecondaryActionStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.large)
+    }
+}
 import Foundation
 import SwiftUI
 
