@@ -186,6 +186,11 @@ struct PremiumView: View {
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
+            // The iOS 26 bar has no fill, so the price summary gets its own material
+            // to stay readable over the plan cards scrolling underneath.
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(.regularMaterial, in: Capsule())
         RingifyPrimaryButton(title: actionTitle, systemImage: "crown.fill",
             isLoading: purchases.isBusy,
             isDisabled: purchases.hasLifetime || purchases.pendingPlan != nil || purchases.pendingSlot != nil ||
