@@ -17,6 +17,8 @@ struct AudioComparisonPanel: View {
 
     private var input: AudioComparisonInput { AudioComparisonInput(project: project, effects: effects) }
 
+    // One List row. Its buttons carry explicit styles, so a tap on the row
+    // fires only the control under the finger.
     var body: some View {
         VStack(spacing: 14) {
             Group {
@@ -30,7 +32,9 @@ struct AudioComparisonPanel: View {
                     NativeSelectionWaveform(project: project, elapsed: comparison.elapsed)
                     if comparison.isRendering {
                         ProgressView("effects.rendering")
-                        Button(model.uiText("İptal", "Cancel")) { comparison.clear() }.frame(minHeight: 44)
+                        Button(model.uiText("İptal", "Cancel")) { comparison.clear() }
+                            .buttonStyle(.borderless)
+                            .frame(minHeight: 44)
                     } else {
                         Button { comparison.togglePlayback() } label: {
                             Label(comparison.playback.isPlaying ? LocalizedStringKey("common.pause") : LocalizedStringKey("effects.preview"),
@@ -44,10 +48,12 @@ struct AudioComparisonPanel: View {
                 }
             }
             if let failure = comparison.failure {
-                Text(failure).font(.footnote).foregroundStyle(RingifyTheme.danger).accessibilityIdentifier("effects.comparison.error")
+                Text(failure).font(.footnote).foregroundStyle(RingifyTheme.danger)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("effects.comparison.error")
             }
         }
-        .modifier(NativeContentCard())
+        .padding(.vertical, 6)
         .onAppear { comparison.updateInput(input) }
         .onChange(of: input) { _, next in comparison.updateInput(next) }
         .onDisappear { comparison.clear() }
