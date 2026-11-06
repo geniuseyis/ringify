@@ -281,7 +281,7 @@ struct LibraryView: View {
                             Label(project.library.favorite ? model.uiText("Favoriden çıkar", "Remove favorite") : model.uiText("Favoriye ekle", "Add favorite"),
                                 systemImage: project.library.favorite ? "star.slash" : "star")
                         }
-                        .tint(RingifyTheme.action).disabled(model.isLibraryWorking)
+                        .tint(.orange).disabled(model.isLibraryWorking)
                     }
                 }
         }

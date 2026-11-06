@@ -31,10 +31,9 @@ private enum BackgroundPaletteResolution {
             XCTAssertTrue(channels.allSatisfy { $0.isFinite && (0...1).contains($0) })
             XCTAssertEqual(channels.last, 1)
         }
-        // Grouped backgrounds follow the system appearance; the action fill is fixed.
+        // Grouped backgrounds follow the system appearance.
         XCTAssertNotEqual(result.1[0], result.1[3])
         XCTAssertNotEqual(result.1[1], result.1[4])
-        XCTAssertEqual(result.1[2], result.1[5])
     }
 
     private func luminance(_ color: UIColor, style: UIUserInterfaceStyle) -> Double {
@@ -52,9 +51,21 @@ private enum BackgroundPaletteResolution {
         let x = luminance(a, style: style), y = luminance(b, style: style)
         return (max(x, y) + 0.05) / (min(x, y) + 0.05)
     }
-    func testWhiteLabelOnActionFillMeetsContrastInBothAppearances() {
+    func testMonochromeActionLabelMeetsContrastAndActionFlipsWithAppearance() throws {
+        let fill = try XCTUnwrap(UIColor(named: "ActionFill", in: .main, compatibleWith: nil))
+        let label = try XCTUnwrap(UIColor(named: "ActionLabel", in: .main, compatibleWith: nil))
         for appearance in [UIUserInterfaceStyle.light, .dark] {
-            XCTAssertGreaterThanOrEqual(contrast(.white, UIColor(RingifyTheme.action), style: appearance), 4.5)
+            XCTAssertGreaterThanOrEqual(contrast(label, fill, style: appearance), 7)
+            // The fill must also stand out from the page it sits on.
+            XCTAssertGreaterThanOrEqual(contrast(fill, .systemGroupedBackground, style: appearance), 7)
+        }
+        XCTAssertLessThan(luminance(fill, style: .light), luminance(fill, style: .dark))
+    }
+
+    func testHeroCanvasKeepsWhiteTextReadableInBothAppearances() throws {
+        let canvas = try XCTUnwrap(UIColor(named: "HeroCanvas", in: .main, compatibleWith: nil))
+        for appearance in [UIUserInterfaceStyle.light, .dark] {
+            XCTAssertGreaterThanOrEqual(contrast(.white, canvas, style: appearance), 7)
         }
     }
     func testAccentAssetIsReadableOnGroupedBackgroundsAndAdaptsToAppearance() throws {

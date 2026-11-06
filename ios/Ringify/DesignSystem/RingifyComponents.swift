@@ -19,6 +19,11 @@ extension View {
 
     /// Grouped surface for custom content outside a List, such as the waveform editor.
     func ringifyCard(padding: CGFloat = 16) -> some View { modifier(RingifyCardModifier(padding: padding)) }
+
+    /// Surface with a hairline border, for tiles and cards on scrolling pages.
+    func ringifyOutlinedCard(padding: CGFloat = 16, radius: CGFloat = 20) -> some View {
+        modifier(RingifyOutlinedCardModifier(padding: padding, radius: radius))
+    }
 }
 
 private struct RingifyPrimaryActionStyle: ViewModifier {
@@ -34,6 +39,7 @@ private struct RingifyPrimaryActionStyle: ViewModifier {
         .controlSize(.large)
         .font(.headline)
         .tint(RingifyTheme.action)
+        .foregroundStyle(RingifyTheme.onAction)
     }
 }
 
@@ -69,6 +75,47 @@ private struct RingifyBottomBarModifier<Bar: View>: ViewModifier {
     }
 }
 
+private struct RingifyOutlinedCardModifier: ViewModifier {
+    let padding: CGFloat
+    let radius: CGFloat
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        content
+            .padding(padding)
+            .background(RingifyTheme.surface, in: shape)
+            .overlay { shape.strokeBorder(RingifyTheme.hairline.opacity(0.6), lineWidth: 0.5) }
+            .contentShape(shape)
+    }
+}
+
+/// Press feedback for custom cards and tiles: a slight dim and scale, no tint.
+struct RingifyPressStyle: ButtonStyle {
+    @Environment(.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.75 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+/// Monochrome symbol in a rounded square, the icon of tiles and source cards.
+struct RingifyIconTile: View {
+    let systemImage: String
+    var size: CGFloat = 40
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: size * 0.45, weight: .semibold))
+            .foregroundStyle(.primary)
+            .frame(width: size, height: size)
+            .background(RingifyTheme.subtleFill, in: RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
 private struct RingifyCardModifier: ViewModifier {
     let padding: CGFloat
 
@@ -90,12 +137,13 @@ struct RingifyPrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if isLoading {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(RingifyTheme.onAction)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                 }
                 Text(title)
             }
+            .foregroundStyle(RingifyTheme.onAction)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
         }
@@ -118,7 +166,7 @@ struct RingifyCircleButton: View {
     @Environment(\.isEnabled) private var isEnabled
 
     private var symbolColor: Color {
-        if emphasis == .prominent { return .white }
+        if emphasis == .prominent { return RingifyTheme.onAction }
         return isSelected ? RingifyTheme.accent : .primary
     }
 
@@ -197,7 +245,8 @@ struct RingifyRow: View {
                 if let iconTint {
                     Image(systemName: systemImage).foregroundStyle(iconTint)
                 } else {
-                    Image(systemName: systemImage).foregroundStyle(.tint)
+                    // Monochrome symbols; violet is reserved for small highlights.
+                    Image(systemName: systemImage).foregroundStyle(.primary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
