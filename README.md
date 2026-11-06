@@ -1,164 +1,240 @@
+<div align="center">
+
+<img src="docs/screenshots/app-icon.png" width="112" alt="Ringify app icon">
+
 # Ringify
 
-03.11.2026 güncel durum: webde **390 test ve üretim derlemesi başarılı**. Swift kaynaklarında **116 dosyalık sözdizimi kontrolü** geçti; native SDK/derleme/cihaz testleri henüz doğrulanmadı. [Güncel ilerleme](PROGRESS.md) ve [son kaynak paketi](docs/NATIVE_COMPARISON_AND_SLOTS.md) esas alınır. Depoya ilk aktarım dört güne bölünmektedir; ara commit'ler ve ilk günün dosya kümesi tam uygulama teslimi değildir. [Aktarım planı](docs/GITHUB_DELIVERY_PLAN.md).
+**Turn any moment into your ringtone.**
+An offline-first iPhone ringtone studio: import a video, a song or a voice memo, cut the perfect 1–29 second clip, shape the sound and set it as your ringtone. Everything runs on device.
 
-Ringify, kullanıcının sahip olduğu ses veya video dosyasından 1–29 saniyelik bir bölüm seçip yerel olarak düzenlemesini ve iPhone zil sesi akışına hazırlamasını amaçlayan, çevrimdışı öncelikli bir iPhone uygulamasıdır. Ana vaat: **“Kendi video veya sesinden saniyeler içinde kişiselleştirilmiş iPhone zil sesi oluştur.”**
+![iOS 17+](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)
+![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
+![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0A84FF)
+![Strict concurrency](https://img.shields.io/badge/concurrency-complete-34C759)
+![Tests](https://img.shields.io/badge/unit%20tests-135%20passing-34C759)
+![Languages](https://img.shields.io/badge/localized-TR%20%7C%20EN-8E8E93)
 
-Bu depo iki ayrı teslimatı birlikte taşır:
+<br>
 
-- `ios/`: macOS ve Xcode üzerinde derlenmek üzere tasarlanan gerçek Swift 6 / SwiftUI uygulaması.
-- `preview/`: Windows’ta çalışabilen React + TypeScript etkileşimli ürün önizlemesi. Bu önizleme iOS uygulamasının yerine geçmez.
-- `packages/RingifyCore/`: platformdan bağımsız modeller, iş kuralları ve doğrulamalar için Swift paketi.
-- `design/`: iki istemcinin paylaşacağı tasarım tokenlarının kaynak dosyası.
+<img src="docs/screenshots/home.png" width="200" alt="Home">&nbsp;
+<img src="docs/screenshots/studio.png" width="200" alt="Audio Studio">&nbsp;
+<img src="docs/screenshots/effects.png" width="200" alt="Effects">&nbsp;
+<img src="docs/screenshots/library.png" width="200" alt="Library">
 
-## Durum sözlüğü
+</div>
 
-Tüm özellik tablolarında yalnızca aşağıdaki ürün durumları kullanılır:
+---
 
-| Durum | Anlamı |
+## Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Getting started](#getting-started)
+- [Testing and CI](#testing-and-ci)
+- [Design](#design)
+- [Privacy](#privacy)
+- [Status](#status)
+
+## Features
+
+### Capture
+- **Import from anywhere:** videos from Photos via the system picker (no full library access), audio and video from Files.
+- **Voice recorder:** live input-level history, pause and resume, and markers dropped while recording that carry over to the editor.
+- **Audio converter:** MP4 / MP3 to WAV or M4A, up to 512 MB and 30 minutes, without touching the source file.
+
+### Edit
+- **Waveform studio:** precise trim handles with 44 pt targets, pinch and slider zoom, undo and redo, loop playback.
+- **Markers and smart segments:** jump to saved moments, or let Ringify suggest the strongest 15, 20 and 29 second sections.
+- **Effects:** volume, fade in and out, 3-band EQ, high-pass and low-pass filters, mono or stereo, limiter and seamless loop crossfade.
+- **Before/after comparison and analysis:** A/B the original against the processed sound and inspect the signal.
+- **Personal presets:** save a sound and apply it to the next project in one tap.
+
+### Deliver
+- **Ringtone preview and export:** validated AAC M4A output with duration and size summary, shared to Files or any app.
+- **Set as ringtone guide:** step-by-step flows for iOS 26+ and for the GarageBand method.
+- **Library:** search, Favorites, Collections, sorting, list or grid layout, batch organisation and export history.
+
+### Platform
+- **Ringify Pro** with StoreKit 2: weekly, monthly, yearly and lifetime plans, plus extra project slots.
+- **Light and Dark mode**, Dynamic Type, VoiceOver labels and actions, Reduce Motion support.
+- **Turkish and English** localisation.
+- **iOS 26 Liquid Glass** where available, with a native iOS 17 fallback.
+
+## Screenshots
+
+<table>
+  <tr>
+    <th>Import</th>
+    <th>Record</th>
+    <th>Convert</th>
+    <th>Preview</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/import.png" width="200" alt="Import sources"></td>
+    <td><img src="docs/screenshots/recorder.png" width="200" alt="Voice recorder"></td>
+    <td><img src="docs/screenshots/conversion.png" width="200" alt="Audio converter"></td>
+    <td><img src="docs/screenshots/preview.png" width="200" alt="Ringtone preview"></td>
+  </tr>
+  <tr>
+    <th>Export</th>
+    <th>Set as ringtone</th>
+    <th>Ringify Pro</th>
+    <th>Settings</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/export.png" width="200" alt="Export result"></td>
+    <td><img src="docs/screenshots/guide.png" width="200" alt="Ringtone guide"></td>
+    <td><img src="docs/screenshots/pro.png" width="200" alt="Ringify Pro"></td>
+    <td><img src="docs/screenshots/settings.png" width="200" alt="Settings"></td>
+  </tr>
+</table>
+
+### Dark mode
+
+<p>
+  <img src="docs/screenshots/splash.png" width="160" alt="Launch screen">&nbsp;
+  <img src="docs/screenshots/home-dark.png" width="160" alt="Home in Dark mode">&nbsp;
+  <img src="docs/screenshots/studio-dark.png" width="160" alt="Studio in Dark mode">&nbsp;
+  <img src="docs/screenshots/effects-dark.png" width="160" alt="Effects in Dark mode">&nbsp;
+  <img src="docs/screenshots/library-dark.png" width="160" alt="Library in Dark mode">
+</p>
+
+> Screenshots are unedited XCUITest captures from the iPhone Simulator (390 × 844 pt), taken by the CI pipeline on a real audio fixture.
+
+## Architecture
+
+Ringify separates platform code from product rules. The app target owns UI and system frameworks; the `RingifyCore` Swift package holds the domain logic and builds and tests on macOS without a simulator.
+
+```mermaid
+flowchart TD
+    UI["SwiftUI screens<br/>DesignSystem components"] --> VM["AppModel · AppRouter<br/>feature view models"]
+    VM --> SVC["Services<br/>AVFoundation · SwiftData · StoreKit 2 · PhotosUI"]
+    VM --> CORE["RingifyCore (Swift package)<br/>models · rules · use cases · DSP math"]
+    SVC --> CORE
+```
+
+| Layer | Responsibility |
 | --- | --- |
-| `IMPLEMENTED_AND_TESTED` | Uygulama tamamlandı ve ilgili ortamda test başarıyla çalıştırıldı. |
-| `IMPLEMENTED_NOT_TESTED` | Kaynak kod mevcut; ilgili platform testi henüz çalıştırılmadı. |
-| `DEMO_ONLY` | Yalnızca web önizlemesinde örnek/simülasyon olarak bulunuyor; yerel iOS işlevi sayılmaz. |
-| `NOT_IMPLEMENTED` | İşlev henüz uygulanmadı. |
-| `BLOCKED_BY_MACOS` | Uygulama veya doğrulama için macOS, Xcode, iOS Simulator ya da gerçek iPhone gerekiyor. |
+| **Screens / DesignSystem** | SwiftUI views, shared components (`RingifyPrimaryButton`, `RingifyRow`, outlined cards), semantic colors and tokens. |
+| **App** | `AppModel` state, `AppRouter` navigation, dependency container. |
+| **Services** | Media import and extraction, waveform, trim, effects rendering, AAC export, conversion, recording, playback, SwiftData persistence, purchases. |
+| **RingifyCore** | Ringtone rules (1–29 s), editor history, gain envelopes, loop crossfade, segment suggestions, signal analysis, library models, Pro access policy. |
 
-`NOT_TESTED`, test planında kullanılan bir **test sonucu** ifadesidir; yukarıdaki özellik durum sözlüğüne yeni bir durum eklemez.
+Swift 6 language mode with **complete strict concurrency** is enabled for every target.
 
-Güncel ayrıntılar için [Özellik Matrisi](docs/FEATURE_MATRIX.md) ve [Teknik Sınırlamalar](docs/TECHNICAL_LIMITATIONS.md) belgelerine bakın.
+## Tech stack
 
-## İlk teslimin tarihsel özeti
+| Area | Technology |
+| --- | --- |
+| Language | Swift 6 |
+| UI | SwiftUI, SF Symbols, Liquid Glass (iOS 26) |
+| Audio | AVFoundation, AVAudioEngine, AVAssetExportSession |
+| Persistence | SwiftData, sandboxed app directories |
+| Purchases | StoreKit 2 with a local `.storekit` configuration |
+| Project | XcodeGen (`ios/project.yml`) |
+| Tests | XCTest (unit, integration, UI) |
+| CI | GitHub Actions on macOS runners |
+| Web preview | React, TypeScript, Vite, Vitest |
 
-1. **Oluşturulan yapı:** Kök belgeler, `docs/` ürün/teknik paketi, ortak tasarım tokenları, `preview/`, `packages/RingifyCore/` ve `ios/` kaynak ağaçları bulunuyor.
-2. **Windows komutları:** Önizleme için `npm.cmd install`, `npm.cmd run dev`, `npm.cmd run test` ve `npm.cmd run build` kullanılır.
-3. **Yerel adres:** Geliştirme sunucusu `http://127.0.0.1:5173/` adresinde başlatıldı; HTTP 200 ve sayfa başlığı doğrulandı. Sonraki çalıştırmada port doluysa Vite farklı adres seçebilir.
-4. **Ekran kapsamı:** 14 ekranın web ve SwiftUI kaynak karşılıkları bulunuyor. Native ekranların kaynakta bulunması Xcode’da derlendiği anlamına gelmez.
-5. **Gerçek işlev kaynakları:** Web production build ve 4 dosyada 7/7 otomatik test geçti; Home → Import, tema değişimi, kurtarılabilir decode hatası, klavyeyle waveform sınırları, WAV encoder ve format yardımcıları doğrulandı. Native import/audio/export/storage/purchase kaynakları Mac’te test edilmedi.
-6. **Demo/simülasyon:** Web localStorage kütüphanesi, Pro bayrağı, StoreKit temsili, native Share Sheet ve zil sesi rehberi iOS sahipliği/işlevi sayılmaz; ilgili satırlar `DEMO_ONLY` olarak ayrılır.
-7. **Uygulanmayanlar:** Yetkisiz platform indirme, üretim uzak host entegrasyonu, üçüncü taraf uygulamadan sistem ayarını programatik değiştirme ve üretim App Store kurulumu yoktur.
-8. **Test sonucu:** `npm.cmd run build` ve `npm.cmd run test` `PASS`; 7/7 test geçti. Mevcut Windows’ta Swift/iOS testleri `NOT_TESTED`; macOS/Xcode gerektiren kabul `BLOCKED_BY_MACOS`.
-9. **Mac/Xcode kapıları:** Swift 6 compile, XcodeGen üretimi, AVFoundation codec/export, SwiftData migration, StoreKit sandbox, VoiceOver ve gerçek cihaz izin/audio session akışları doğrulanmalıdır.
-10. **App Store öncesi:** Signing, App Store Connect/IAP, üretim Privacy/Support/Terms URL’leri, gerçek cihaz görselleri, TestFlight, erişilebilirlik ve review checklist tamamlanmalıdır.
+## Project structure
 
-## Teknolojiler
-
-- iOS: Swift 6, SwiftUI, Swift Concurrency, AVFoundation, PhotosUI, SwiftData ve StoreKit 2.
-- Çekirdek: Swift Package Manager ile `RingifyCore`.
-- Windows önizleme: React, TypeScript, Vite, Lucide ve desteklenen yerlerde Web Audio API.
-- Tasarım: semantik sistem renkleri, Dynamic Type yaklaşımı, SF Symbols (yalnız iOS), Lucide (web) ve paylaşılmış tokenlar.
-- Mimari: MVVM + Domain + Service Layer; protokol tabanlı bağımlılık enjeksiyonu.
-
-## Windows’ta çalıştırma
-
-Bu çalışma alanında 31 Ekim 2026 tarihinde yapılan araç kontrolünde Node.js `v24.11.1` ve npm `11.6.2` bulundu; `swift`, `xcodebuild` ve `xcodegen` bulunamadı. Dolayısıyla bu Windows makinesinde iOS derlemesi, Swift testi, Simulator testi veya gerçek iPhone testi yapıldığı iddia edilmez. Kurulum sırasında jsdom 30’un bazı geçişli paketleri Node engine uyarısı verdi; build ve test yine geçti. Yeni kurulum için Node `^24.15` veya `^22.22.2` önerilir.
-
-PowerShell betik çalıştırma ilkesi `npm.ps1` dosyasını engelleyebildiği için aşağıdaki örnekler `npm.cmd` kullanır:
-
-```powershell
-cd .\preview
-npm.cmd install
-npm.cmd run dev
+```text
+.
+├── ios/
+│   ├── project.yml             # XcodeGen project definition
+│   ├── Ringify/
+│   │   ├── App/                # entry point, AppModel, navigation
+│   │   ├── Screens/            # feature screens
+│   │   ├── DesignSystem/       # theme, components, editor rules
+│   │   ├── ViewModels/         # feature view models
+│   │   ├── Services/           # AVFoundation, SwiftData, StoreKit
+│   │   └── Resources/          # assets, localisation, StoreKit config
+│   ├── RingifyTests/           # unit and integration tests
+│   └── RingifyUITests/         # end-to-end UI flow and screenshots
+├── packages/RingifyCore/       # platform-independent domain package
+├── preview/                    # React interactive preview for Windows
+├── shared/                     # product catalogue shared by app and preview
+├── design/                     # design tokens and brand source
+├── scripts/                    # CI and validation helpers
+└── .github/workflows/          # manual macOS validation pipelines
 ```
 
-Bu teslimatta Vite `http://127.0.0.1:5173/` adresinde HTTP 200 ile doğrulandı. Yeni çalıştırmada terminalin bildirdiği adresi açın; port doluysa Vite farklı bir port seçebilir.
+## Getting started
 
-Üretim derlemesi ve web testleri:
+### Requirements
 
-```powershell
-cd .\preview
-npm.cmd run build
-npm.cmd run test
+- macOS with **Xcode 16** or newer (iOS 17 SDK minimum; iOS 26 SDK for Liquid Glass)
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+
+### Run the app
+
+```bash
+brew install xcodegen
+cd ios
+xcodegen generate
+open Ringify.xcodeproj
 ```
 
-Doğrulanmış Windows sonucu:
+Select the **Ringify** scheme and an iPhone simulator, then run. The scheme uses `Ringify.storekit`, so purchases work locally without App Store Connect.
 
-- `npm.cmd install`: tamamlandı; 105 paket denetlendi, 0 güvenlik açığı.
-- `npm.cmd run build`: `PASS`; Vite 8.3.5, 2062 modül, `dist/` üretildi.
-- `npm.cmd run test`: `PASS`; 4 test dosyası, 7/7 test, yaklaşık 2,30 saniye.
-- Headless Edge smoke: splash ve onboarding görsel olarak açıldı; incelenen görüntülerde taşma görülmedi.
+### Core package
 
-Önizlemedeki dosya seçimi, tarayıcının desteklediği ses biçimleriyle sınırlıdır. Tarayıcıda gerçek M4A/AAC zil sesi dışa aktarımı veya iOS Share Sheet taklit edilmez; bu tür eylemler açıkça demo ya da iOS’a özgü olarak etiketlenmelidir.
-
-## Swift testleri
-
-Swift 6 araç zinciri bulunan bir ortamda:
-
-```powershell
-cd .\packages\RingifyCore
-swift test
+```bash
+swift test --package-path packages/RingifyCore
 ```
 
-Bu komut mevcut Windows makinesinde `swift` yüklü olmadığı için çalıştırılamaz. Paket kaynaklarının bulunması testlerin geçtiği anlamına gelmez. Ayrıntılı senaryolar [Test Planı](docs/TEST_PLAN.md) içindedir.
+### Web preview (optional)
 
-## macOS ve Xcode kurulumu
+A browser-based interactive preview for working on Windows. It is not a replacement for the native app.
 
-1. Güncel macOS üzerinde Xcode ve Command Line Tools’u kurun.
-2. Depoyu Mac’e kopyalayın; `packages/RingifyCore` içinde önce `swift test` çalıştırın.
-3. Depoda `project.yml` bulunuyorsa [XcodeGen](https://github.com/yonaskolb/XcodeGen) kurup depo kökünde `xcodegen generate` çalıştırın ve üretilen `.xcodeproj` dosyasını açın.
-4. `project.yml` yoksa Xcode’da iOS App hedefi oluşturun; `ios/Ringify` kaynaklarını hedefe ekleyin ve `RingifyCore` paketini yerel paket bağımlılığı olarak bağlayın.
-5. Bundle identifier, signing team, `NSMicrophoneUsageDescription`, desteklenen belge türleri, StoreKit konfigürasyonu ve deployment target değerlerini doğrulayın.
-6. Bir iOS 17+ Simulator üzerinde derleyin; cihaz ve sürüm koşullu iOS 26 davranışları için availability kontrollerini gözden geçirin.
+```bash
+cd preview
+npm ci
+npm run dev      # http://127.0.0.1:5173
+npm test
+```
 
-Kesin dosya/hedef düzeni için [Mimari](docs/ARCHITECTURE.md) belgesini izleyin.
+## Testing and CI
 
-## Gerçek iPhone’da doğrulama
+| Suite | Scope |
+| --- | --- |
+| `RingifyCoreTests` | Ringtone rules, editor history, DSP math, segment suggestions, analysis parity fixtures |
+| `RingifyTests` | Services with real audio (MP3, AAC, MP4 → WAV / M4A), SwiftData disk and migration, StoreKit test sessions, presentation and contrast checks |
+| `RingifyUITests` | Full user journey from onboarding to export, capturing every screen in Light and Dark mode |
 
-1. Geliştirici imzalama ayarlarıyla uygulamayı fiziksel iPhone’a kurun.
-2. Fotoğraflar, Dosyalar ve mikrofon kaynaklarını ayrı ayrı deneyin; yalnız gerektiğinde izin istendiğini kontrol edin.
-3. Ses içermeyen video, bozuk dosya, desteklenmeyen codec ve yetersiz depolama yollarını çalıştırın.
-4. 1 saniye ve 29 saniye sınırlarında kesme, oynatma, fade, ses seviyesi, iptal ve arka plan davranışını kontrol edin.
-5. M4A/AAC çıktısının gerçekten oluştuğunu, boş olmadığını, oynatılabildiğini ve süresinin seçime uyduğunu doğrulayın.
-6. StoreKit Configuration ve sandbox hesabıyla satın alma, iptal, hata ve geri yükleme yollarını sınayın.
-7. VoiceOver, Dynamic Type, koyu/açık tema, Increase Contrast ve Reduce Motion ile tüm ana akışı tamamlayın.
+CI runs on demand through **Actions → Native validation (manual)**:
 
-### iOS 26 zil sesi akışı uyarısı
+| Scope | What runs |
+| --- | --- |
+| `core` | Builds and tests `RingifyCore` |
+| `ios` | Generates the project and runs the unit and integration tests |
+| `ui` | Unit tests, Release build and the end-to-end UI flow, uploading 40 screenshots as an artifact |
 
-Bazı güncel App Store ürün açıklamaları iOS 26 Share Sheet içinde “Use as Ringtone” seçeneğini bildiriyor. Apple’ın herkese açık destek belgesi ise doğrulanabilir genel yöntem olarak hâlâ [GarageBand ile özel zil sesi oluşturma](https://support.apple.com/en-us/120692) akışını anlatıyor. Üçüncü taraf bir uygulamanın sistem zil sesini sessizce veya doğrudan değiştirebildiği varsayılmaz.
+Latest `ui` run: Release build passed, **135 / 135** unit tests and the UI flow passed.
 
-- Özellik durumu: `BLOCKED_BY_MACOS`
-- Gerçek cihaz test sonucu: `NOT_TESTED`
+## Design
 
-Ringify çıktıyı paylaşır, iOS’un sunduğu eylemleri gösterir ve bulunmayan bir sistem eylemini vaat etmez. iOS 26 doğrudan akışı ancak desteklenen gerçek cihazda görülüp uçtan uca doğrulandıktan sonra tamamlanmış sayılabilir; eski sürümlerde GarageBand rehberi korunur.
+Ringify follows the Apple Human Interface Guidelines with a restrained, monochrome look:
 
-## Ürün kapsamı
+- System grouped backgrounds and semantic colors, so Light, Dark and Increase Contrast work without a custom palette.
+- **Monochrome primary actions:** black in Light mode, white in Dark mode. Violet is reserved for small highlights such as links, selection, waveforms and the active tab.
+- Primary actions sit in a fixed bottom bar; every control meets the 44 pt touch target.
 
-Planlanan ana akış: **İçe aktar → Doğrula → Analiz et → Düzenle → Ön dinle → Dışa aktar → Doğrula → Kaydet/Paylaş**.
+The full design contract lives in [docs/NATIVE_APPLE_DESIGN.md](docs/NATIVE_APPLE_DESIGN.md).
 
-Kapsam:
+## Privacy
 
-- Fotoğraflar’dan video, Dosyalar’dan ses/video ve mikrofon kaydı.
-- Gerçek waveform, 1–29 saniye seçim, oynatma, yakınlaştırma, undo/redo ve sıfırlama.
-- Ses seviyesi, fade-in, fade-out; yalnız güvenilir uygulama varsa normalize.
-- Yerel proje kütüphanesi ve M4A/AAC dışa aktarım doğrulaması.
-- Türkçe varsayılan arayüz ve İngilizce yerelleştirme.
-- Tek seferlik, non-consumable Ringify Pro ürünü; fiyat yalnız StoreKit’ten gelir.
-- Hesapsız ve temel işlevlerde çevrimdışı kullanım.
+- All audio processing happens on device; no account, no analytics, no tracking.
+- Photos access goes through the system picker, so only the chosen video is shared with the app.
+- A privacy manifest ships with the app (`PrivacyInfo.xcprivacy`).
 
-Kapsam dışı:
+## Status
 
-- YouTube, TikTok veya Instagram’dan yetkisiz indirme; DRM aşma.
-- Bir üçüncü taraf uygulamasından sistem zil sesini programatik olarak zorla değiştirme.
-- Uygulanmamış AI efektlerini, codec desteğini veya satın alma sonucunu varmış gibi gösterme.
-- İlk sürümde zorunlu sunucu, kullanıcı hesabı, izleme SDK’sı veya ücretli API.
+Ringify is in active development and not yet on the App Store. The native app is verified on the iPhone Simulator; physical-device, VoiceOver and App Store / StoreKit sandbox acceptance are the next milestones.
 
-## Belge dizini
+---
 
-- [Ürün Gereksinimleri](docs/PRD.md)
-- [HIG Tasarım Kararları](docs/HIG_DESIGN_DECISIONS.md)
-- [Rakip Analizi](docs/COMPETITOR_ANALYSIS.md)
-- [Ekran Özellikleri](docs/SCREEN_SPECIFICATIONS.md)
-- [Mimari](docs/ARCHITECTURE.md)
-- [Özellik Matrisi](docs/FEATURE_MATRIX.md)
-- [Teknik Sınırlamalar](docs/TECHNICAL_LIMITATIONS.md)
-- [Test Planı](docs/TEST_PLAN.md)
-- [App Store Kontrol Listesi](docs/APP_STORE_CHECKLIST.md)
-- [Yol Haritası](docs/ROADMAP.md)
-
-## Temel resmî kaynaklar
-
-- [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
-- [HIG JSON ana indeksi](https://developer.apple.com/tutorials/data/design/human-interface-guidelines.json)
-- [Apple App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
-- [Apple SF Symbols](https://developer.apple.com/sf-symbols/)
-- [Apple: GarageBand ile özel zil sesi oluşturma](https://support.apple.com/en-us/120692)
-
+<sub>© 2026 Ringify. All rights reserved.</sub>
