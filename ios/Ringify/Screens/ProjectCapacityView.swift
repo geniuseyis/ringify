@@ -8,14 +8,16 @@ struct ProjectCapacityView: View {
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         List {
-            Section(model.uiText("Proje alanın", "Your project capacity")) {
+            Section {
                 NativeMetadataRow(title: model.uiText("Geçerli sınır", "Current limit"), value: String(purchases.projectLimit))
                 NativeMetadataRow(title: model.uiText("Satın alınan ek yuvalar", "Purchased extra slots"), value: "\(purchases.verifiedSlots.count) / 20")
                 Text(model.uiText("Normal 1, Pro 3 temel proje içerir. Ek yuvalar yalnız Pro etkinken kapasiteye eklenir. Mevcut projeler sınır düşse de silinmez.",
                     "Normal includes 1 project and Pro includes 3. Extra slots add capacity while Pro is active. Existing projects are never deleted when the limit decreases."))
                     .font(.footnote).foregroundStyle(.secondary)
+            } header: {
+                Text(model.uiText("Proje alanın", "Your project capacity")).textCase(nil)
             }
-            Section(model.uiText("Kalıcı ek yuva", "Permanent extra slot")) {
+            Section {
                 if let slot = purchases.nextSlot {
                     if let product = purchases.product(for: slot) {
                         LabeledContent(model.uiText("Yuva \(slot.index)", "Slot \(slot.index)"), value: product.displayPrice)
@@ -33,6 +35,8 @@ struct ProjectCapacityView: View {
                 Text(model.uiText("Her yuva ayrı bir kalıcı satın alımdır; abonelik değildir. Projeyi silince yuva yeniden kullanılabilir. Aynı Apple hesabıyla satın alımları geri yükleyebilirsin.",
                     "Each slot is a separate permanent purchase, not a subscription. Deleting a project frees capacity. Restore purchases with the same Apple account."))
                     .font(.footnote).foregroundStyle(.secondary)
+            } header: {
+                Text(model.uiText("Kalıcı ek yuva", "Permanent extra slot")).textCase(nil)
             }
             Section {
                 switch purchases.slotState {
