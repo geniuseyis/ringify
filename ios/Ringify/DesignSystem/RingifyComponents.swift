@@ -320,36 +320,38 @@ enum WaveformBars {
     }
 }
 
+/// Discrete rounded bars, like Voice Memos. Bars never overlap, so real audio
+/// keeps its shape instead of merging into a solid block.
 struct WaveformView: View {
     let samples: [Float]
     var tint: Color = RingifyTheme.accent
-    var dimmedTint: Color = Color.secondary.opacity(0.22)
+    var dimmedTint: Color = Color(uiColor: .tertiaryLabel)
     var selection: ClosedRange<Double> = 0...1
+    var barWidth: CGFloat = 2
+    var barGap: CGFloat = 2
 
     var body: some View {
-        GeometryReader { proxy in
-            Canvas { context, size in
-                let values = samples.isEmpty ? [Float(0)] : samples
-                let width = max(1, size.width / CGFloat(values.count))
-                for (index, rawValue) in values.enumerated() {
-                    let x = CGFloat(index) * width
-                    let normalizedX = Double(index) / Double(max(1, values.count - 1))
-                    let magnitude = rawValue.isFinite ? max(0.03, min(1, CGFloat(abs(rawValue)))) : 0.03
-                    let height = max(3, magnitude * size.height)
-                    let rect = CGRect(
-                        x: x,
-                        y: (size.height - height) / 2,
-                        width: max(1.5, width * 0.58),
-                        height: height
-                    )
-                    let color = selection.contains(normalizedX) ? tint : dimmedTint
-                    context.fill(Path(roundedRect: rect, cornerRadius: width), with: .color(color))
-                }
+        Canvas { context, size in
+            guard size.width > 0, size.height > 0 else { return }
+            let maximumBars = max(1, Int((size.width + barGap) / (barWidth + barGap)))
+            let peaks = WaveformBars.peaks(samples, maximumBars: maximumBars)
+            guard !peaks.isEmpty else { return }
+            let step = size.width / CGFloat(peaks.count)
+            // When zoomed past the stored peaks, widen bars instead of leaving wide gaps.
+            let drawnWidth = max(barWidth, min(step - barGap, barWidth * 2))
+            for (index, peak) in peaks.enumerated() {
+                let height = max(2, CGFloat(peak) * size.height)
+                let rect = CGRect(x: CGFloat(index) * step + (step - drawnWidth) / 2,
+                                  y: (size.height - height) / 2,
+                                  width: drawnWidth,
+                                  height: height)
+                let position = (Double(index) + 0.5) / Double(peaks.count)
+                context.fill(Path(roundedRect: rect, cornerRadius: drawnWidth / 2),
+                             with: .color(selection.contains(position) ? tint : dimmedTint))
             }
-            .accessibilityHidden(true)
         }
+        .accessibilityHidden(true)
     }
-
 }
 
 struct DurationText: View {
