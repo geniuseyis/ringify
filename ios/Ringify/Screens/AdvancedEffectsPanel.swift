@@ -14,72 +14,18 @@ struct AdvancedEffectsPanel: View {
     @State private var retry = 0
     @State private var presetFeedback = 0
 
+    // The root is one view in either branch, so the lifecycle modifiers below
+    // attach once instead of to every List row.
     var body: some View {
         Group {
             if purchases.isPro {
                 DisclosureGroup(model.uiText("Gelişmiş ses araçları", "Advanced audio tools")) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        if metadataFailed {
-                            Text(model.uiText("Kaynak bilgileri okunamadı.", "Could not read source metadata."))
-                                .font(.subheadline).foregroundStyle(.secondary)
-                            Button(model.uiText("Tekrar Dene", "Try Again")) { retry += 1 }.frame(minHeight: 44)
-                        } else if sampleRate == nil {
-                            ProgressView(model.uiText("Kaynak okunuyor…", "Reading source…"))
-                        }
-                        if parameterError {
-                            Text(model.uiText("Bu kaynak için frekanslar geçersiz. Alt kesim üst kesimden küçük ve frekanslar örnekleme hızının yarısından düşük olmalı.",
-                                              "Invalid frequencies for this source. High-pass must be below low-pass and frequencies below half the sample rate."))
-                                .font(.subheadline).foregroundStyle(.red)
-                        }
-                        Picker(model.uiText("Ses karakteri", "Preset"), selection: Binding<StudioAudioPreset?>(
-                            get: { StudioAudioPreset.allCases.first { $0.settings == effects.studio } },
-                            set: { preset in
-                                if let preset {
-                                    let before = effects.studio
-                                    update { $0 = preset.settings }
-                                    if effects.studio == preset.settings, effects.studio != before { presetFeedback += 1 }
-                                }
-                            }
-                        )) {
-                            Text(model.uiText("Özel", "Custom")).tag(StudioAudioPreset?.none)
-                            ForEach(StudioAudioPreset.allCases) { preset in
-                                Text(presetTitle(preset)).tag(Optional(preset))
-                            }
-                        }
-                        .pickerStyle(.menu).frame(minHeight: 44).disabled(sampleRate == nil)
-                        .accessibilityIdentifier("effects.preset")
-                        .sensoryFeedback(.selection, trigger: presetFeedback)
-                        equalizerRow(model.uiText("Bas · 120 Hz", "Bass · 120 Hz"), key: \.lowGainDB, frequency: 120)
-                        equalizerRow(model.uiText("Orta · 1 kHz", "Mid · 1 kHz"), key: \.midGainDB, frequency: 1_000)
-                        equalizerRow(model.uiText("Tiz · 6 kHz", "Treble · 6 kHz"), key: \.highGainDB, frequency: 6_000)
-                        cutoffPicker(highPass: true)
-                        cutoffPicker(highPass: false)
-                        Picker(model.uiText("Kanallar", "Channels"), selection: Binding(get: { effects.studio.channelMode }, set: { next in update { $0.channelMode = next } })) {
-                            Text(model.uiText("Kaynağı koru", "Keep source")).tag(StudioChannelMode.original)
-                            Text("Mono").tag(StudioChannelMode.mono)
-                            Text("Stereo").tag(StudioChannelMode.stereo)
-                        }
-                        .pickerStyle(.menu).frame(minHeight: 44).disabled(sampleRate == nil)
-                        .accessibilityIdentifier("effects.channels")
-                        Toggle(model.uiText("Tepe sınırlayıcı", "Peak limiter"), isOn: Binding(get: { effects.studio.limiterEnabled }, set: { next in update { $0.limiterEnabled = next } }))
-                            .frame(minHeight: 44).disabled(sampleRate == nil)
-                            .accessibilityIdentifier("effects.limiter")
-                        if effects.studio.limiterEnabled {
-                            VStack(alignment: .leading, spacing: 8) {
-                                NativeMetadataRow(title: model.uiText("Tepe tavanı", "Peak ceiling"), value: percent(effects.studio.ceiling))
-                                Slider(value: numericBinding(\.ceiling), in: 0.1...0.99, step: 0.01)
-                                    .frame(minHeight: 44).disabled(sampleRate == nil)
-                                    .accessibilityLabel(model.uiText("Tepe tavanı", "Peak ceiling"))
-                                    .accessibilityValue(percent(effects.studio.ceiling))
-                            }
-                        }
-                        resetButton
-                    }
-                    .padding(.top, 14)
+                    statusRows
+                    toneRows
+                    outputRows
                 }
-                .modifier(NativeContentCard())
             } else {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
                     Button { router.push(.premium) } label: {
                         HStack {
                             Label(model.uiText("EQ, filtreler ve preset’ler", "EQ, filters and presets"), systemImage: "slider.horizontal.3")
@@ -87,11 +33,12 @@ struct AdvancedEffectsPanel: View {
                             Text("Pro").font(.caption.weight(.semibold))
                         }
                         .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.borderless)
                     .accessibilityIdentifier("effects.advanced.unlock")
-                    if !effects.studio.isNeutral { resetButton }
+                    if !effects.studio.isNeutral { resetButton.buttonStyle(.borderless) }
                 }
-                .modifier(NativeContentCard())
             }
         }
         .task(id: [project.sourceURL.absoluteString, String(purchases.isPro), String(retry)]) {
@@ -111,6 +58,70 @@ struct AdvancedEffectsPanel: View {
         .onChange(of: purchases.isPro) { _, active in
             if !active { effects.studio = model.currentProject?.effects.studio ?? .neutral }
         }
+    }
+
+    @ViewBuilder private var statusRows: some View {
+        if metadataFailed {
+            Text(model.uiText("Kaynak bilgileri okunamadı.", "Could not read source metadata."))
+                .font(.subheadline).foregroundStyle(.secondary)
+            Button(model.uiText("Tekrar Dene", "Try Again")) { retry += 1 }.frame(minHeight: 44)
+        } else if sampleRate == nil {
+            ProgressView(model.uiText("Kaynak okunuyor…", "Reading source…"))
+        }
+        if parameterError {
+            Text(model.uiText("Bu kaynak için frekanslar geçersiz. Alt kesim üst kesimden küçük ve frekanslar örnekleme hızının yarısından düşük olmalı.",
+                              "Invalid frequencies for this source. High-pass must be below low-pass and frequencies below half the sample rate."))
+                .font(.subheadline).foregroundStyle(RingifyTheme.danger)
+        }
+    }
+
+    @ViewBuilder private var toneRows: some View {
+        Picker(model.uiText("Ses karakteri", "Preset"), selection: Binding<StudioAudioPreset?>(
+            get: { StudioAudioPreset.allCases.first { $0.settings == effects.studio } },
+            set: { preset in
+                if let preset {
+                    let before = effects.studio
+                    update { $0 = preset.settings }
+                    if effects.studio == preset.settings, effects.studio != before { presetFeedback += 1 }
+                }
+            }
+        )) {
+            Text(model.uiText("Özel", "Custom")).tag(StudioAudioPreset?.none)
+            ForEach(StudioAudioPreset.allCases) { preset in
+                Text(presetTitle(preset)).tag(Optional(preset))
+            }
+        }
+        .pickerStyle(.menu).frame(minHeight: 44).disabled(sampleRate == nil)
+        .accessibilityIdentifier("effects.preset")
+        .sensoryFeedback(.selection, trigger: presetFeedback)
+        equalizerRow(model.uiText("Bas · 120 Hz", "Bass · 120 Hz"), key: \.lowGainDB, frequency: 120)
+        equalizerRow(model.uiText("Orta · 1 kHz", "Mid · 1 kHz"), key: \.midGainDB, frequency: 1_000)
+        equalizerRow(model.uiText("Tiz · 6 kHz", "Treble · 6 kHz"), key: \.highGainDB, frequency: 6_000)
+        cutoffPicker(highPass: true)
+        cutoffPicker(highPass: false)
+    }
+
+    @ViewBuilder private var outputRows: some View {
+        Picker(model.uiText("Kanallar", "Channels"), selection: Binding(get: { effects.studio.channelMode }, set: { next in update { $0.channelMode = next } })) {
+            Text(model.uiText("Kaynağı koru", "Keep source")).tag(StudioChannelMode.original)
+            Text("Mono").tag(StudioChannelMode.mono)
+            Text("Stereo").tag(StudioChannelMode.stereo)
+        }
+        .pickerStyle(.menu).frame(minHeight: 44).disabled(sampleRate == nil)
+        .accessibilityIdentifier("effects.channels")
+        Toggle(model.uiText("Tepe sınırlayıcı", "Peak limiter"), isOn: Binding(get: { effects.studio.limiterEnabled }, set: { next in update { $0.limiterEnabled = next } }))
+            .frame(minHeight: 44).disabled(sampleRate == nil)
+            .accessibilityIdentifier("effects.limiter")
+        if effects.studio.limiterEnabled {
+            VStack(alignment: .leading, spacing: 8) {
+                NativeMetadataRow(title: model.uiText("Tepe tavanı", "Peak ceiling"), value: percent(effects.studio.ceiling))
+                Slider(value: numericBinding(\.ceiling), in: 0.1...0.99, step: 0.01)
+                    .frame(minHeight: 44).disabled(sampleRate == nil)
+                    .accessibilityLabel(model.uiText("Tepe tavanı", "Peak ceiling"))
+                    .accessibilityValue(percent(effects.studio.ceiling))
+            }
+        }
+        resetButton
     }
 
     private var resetButton: some View {
