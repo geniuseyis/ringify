@@ -8,74 +8,98 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            Section(model.uiText("Hesap", "Account")) {
-                NavigationLink { PremiumView() } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: "crown.fill")
-                            .font(.title2).foregroundStyle(RingifyTheme.Studio.accent)
-                            .frame(width: 48, height: 48)
-                            .background(RingifyTheme.Studio.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Ringify Pro").font(.headline)
-                            Text(purchases.hasLifetime ? model.localized("premium.lifetime.active") :
-                                (purchases.isPro ? model.uiText("Pro etkin", "Pro active") : model.uiText("Normal sürüm · 1 proje", "Normal plan · 1 project")))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 5)
-                }
-                NavigationLink { AccountDetailView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Hesap ve lisans", "Account and license"), icon: "checkmark.shield")
-                }
-                NavigationLink { PurchaseSupportView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Satın alımlar ve geri yükleme", "Purchases and restore"), icon: "arrow.clockwise")
-                }
-            }
-            Section(model.uiText("Genel", "General")) {
-                NavigationLink { AppearanceSettingsView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.appearance"), icon: "circle.lefthalf.filled",
-                        value: model.localized("settings.appearance.\(model.settings.appearance.rawValue)"))
-                }
-                NavigationLink { LanguageSettingsView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.language"), icon: "globe",
-                        value: model.settings.language == .turkish ? "Türkçe" : "English")
-                }
-            }
-            Section(model.uiText("Ses ve dosyalar", "Audio and files")) {
-                NavigationLink { ExportPreferencesView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.export"), icon: "waveform", value: "M4A")
-                }
-                NavigationLink { SettingsStorageView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.storage"), icon: "externaldrive",
-                        value: model.uiText("\(model.projects.count) proje", model.projects.count == 1 ? "1 project" : "\(model.projects.count) projects"))
-                }
-            }
-            Section(model.uiText("Gizlilik ve uygulama", "Privacy and app")) {
-                NavigationLink { RingifyPrivacyView() } label: {
-                    SettingsNavigationRow(title: model.localized("settings.privacy"), icon: "hand.raised")
-                }
-                NavigationLink { RingifyTermsView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Kullanım Koşulları", "Terms of Use"), icon: "doc.text")
-                }
-                LabeledContent("settings.version", value: ringifyAppVersion).frame(minHeight: 44)
-            }
-            Section(model.uiText("Yardım ve destek", "Help and support")) {
-                ForEach(RingifyHelpTopic.settingsTopics) { topic in
-                    NavigationLink { HelpTopicDetailView(topic: topic) } label: {
-                        SettingsNavigationRow(title: topic.title(model), icon: topic.icon)
-                    }
-                }
-                NavigationLink { HelpAndErrorStatesView() } label: {
-                    SettingsNavigationRow(title: model.uiText("Destek ve geri bildirim", "Support and feedback"), icon: "lifepreserver")
-                }
-            }
+            accountSection
+            generalSection
+            audioSection
+            privacySection
+            helpSection
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle("settings.title")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             await model.reloadProjects()
             await purchases.refreshEntitlements()
+        }
+    }
+
+    private var proStatus: String {
+        purchases.hasLifetime ? model.localized("premium.lifetime.active") :
+            (purchases.isPro ? model.uiText("Pro etkin", "Pro active") : model.uiText("Normal sürüm · 1 proje", "Normal plan · 1 project"))
+    }
+
+    private var accountSection: some View {
+        Section {
+            NavigationLink { PremiumView() } label: {
+                RingifyRow(Text("Ringify Pro").font(.headline), subtitle: Text(proStatus), systemImage: "crown.fill")
+            }
+            NavigationLink { AccountDetailView() } label: {
+                SettingsNavigationRow(title: model.uiText("Hesap ve lisans", "Account and license"), icon: "checkmark.shield")
+            }
+            NavigationLink { PurchaseSupportView() } label: {
+                SettingsNavigationRow(title: model.uiText("Satın alımlar ve geri yükleme", "Purchases and restore"), icon: "arrow.clockwise")
+            }
+        } header: {
+            Text(model.uiText("Hesap", "Account")).textCase(nil)
+        }
+    }
+
+    private var generalSection: some View {
+        Section {
+            NavigationLink { AppearanceSettingsView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.appearance"), icon: "circle.lefthalf.filled",
+                    value: model.localized("settings.appearance.\(model.settings.appearance.rawValue)"))
+            }
+            NavigationLink { LanguageSettingsView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.language"), icon: "globe",
+                    value: model.settings.language == .turkish ? "Türkçe" : "English")
+            }
+        } header: {
+            Text(model.uiText("Genel", "General")).textCase(nil)
+        }
+    }
+
+    private var audioSection: some View {
+        Section {
+            NavigationLink { ExportPreferencesView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.export"), icon: "waveform", value: "M4A")
+            }
+            NavigationLink { SettingsStorageView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.storage"), icon: "externaldrive",
+                    value: model.uiText("\(model.projects.count) proje", model.projects.count == 1 ? "1 project" : "\(model.projects.count) projects"))
+            }
+        } header: {
+            Text(model.uiText("Ses ve dosyalar", "Audio and files")).textCase(nil)
+        }
+    }
+
+    private var privacySection: some View {
+        Section {
+            NavigationLink { RingifyPrivacyView() } label: {
+                SettingsNavigationRow(title: model.localized("settings.privacy"), icon: "hand.raised")
+            }
+            NavigationLink { RingifyTermsView() } label: {
+                SettingsNavigationRow(title: model.uiText("Kullanım Koşulları", "Terms of Use"), icon: "doc.text")
+            }
+            SettingsNavigationRow(title: model.localized("settings.version"), icon: "info.circle", value: ringifyAppVersion)
+                .accessibilityElement(children: .combine)
+        } header: {
+            Text(model.uiText("Gizlilik ve uygulama", "Privacy and app")).textCase(nil)
+        }
+    }
+
+    private var helpSection: some View {
+        Section {
+            ForEach(RingifyHelpTopic.settingsTopics) { topic in
+                NavigationLink { HelpTopicDetailView(topic: topic) } label: {
+                    SettingsNavigationRow(title: topic.title(model), icon: topic.icon)
+                }
+            }
+            NavigationLink { HelpAndErrorStatesView() } label: {
+                SettingsNavigationRow(title: model.uiText("Destek ve geri bildirim", "Support and feedback"), icon: "lifepreserver")
+            }
+        } header: {
+            Text(model.uiText("Yardım ve destek", "Help and support")).textCase(nil)
         }
     }
 }
