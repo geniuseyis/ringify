@@ -68,6 +68,16 @@ private struct RingifyBottomBarModifier<Bar: View>: ViewModifier {
         }
     }
 }
+
+private struct RingifyCardModifier: ViewModifier {
+    let padding: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background(RingifyTheme.surface, in: RoundedRectangle(cornerRadius: RingifyTheme.cardRadius, style: .continuous))
+    }
+}
 import Foundation
 import SwiftUI
 
