@@ -1,0 +1,83 @@
+name: Native entry capture (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Prepare verified project generator
+        shell: bash
+        env:
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/ringify-capture-xcodegen"
+          mkdir -p "$tools" artifacts
+          xcodebuild -version | tee artifacts/xcode.txt
+          curl --fail --location --retry 2 --max-time 120 \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.zip \
+            --output "$tools/xcodegen.zip"
+          printf '%s  %s\n' "$XCODEGEN_SHA256" "$tools/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$tools/xcodegen.zip" -d "$tools/unpacked"
+          binary="$(find "$tools/unpacked" -type f -name xcodegen -print | sed -n '1p')"
+          test -n "$binary" && test -x "$binary"
+          dirname "$binary" >> "$GITHUB_PATH"
+      - name: Capture settled entry screens on both reference devices
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd ios && xcodegen generate --spec project.yml)
+          git diff --exit-code -- ios/Ringify/Supporting/Info.plist
+          for viewport in 390 393; do
+            if [[ "$viewport" == 390 ]]; then
+              type=com.apple.CoreSimulator.SimDeviceType.iPhone-13
+            else
+              type=com.apple.CoreSimulator.SimDeviceType.iPhone-15
+            fi
+            simulator="$(xcrun simctl create "Ringify capture $viewport" "$type" com.apple.CoreSimulator.SimRuntime.iOS-26-2)"
+            xcrun simctl boot "$simulator"
+            xcodebuild -project ios/Ringify.xcodeproj -scheme RingifyCapture -configuration Debug \
+              -destination "platform=iOS Simulator,id=$simulator" -destination-timeout 180 \
+              -derivedDataPath "$RUNNER_TEMP/RingifyCaptureBuild" \
+              -resultBundlePath "artifacts/Capture-$viewport.xcresult" -parallel-testing-enabled NO \
+              -only-testing:RingifyUITests/NativeScreenshotsTests/testEntryScreensInBothAppearances \
+              -test-timeouts-enabled YES -default-test-execution-time-allowance 120 \
+              -maximum-test-execution-time-allowance 120 CODE_SIGNING_ALLOWED=NO test \
+              2>&1 | tee "artifacts/capture-$viewport.log"
+            runner_data="$(xcrun simctl get_app_container "$simulator" com.ringify.app.uitests.xctrunner data)"
+            test -f "$runner_data/Documents/RingifyUIScreenshots/manifest.json"
+            mkdir -p "artifacts/onboarding/$viewport"
+            cp -R "$runner_data/Documents/RingifyUIScreenshots/." "artifacts/onboarding/$viewport/"
+            xcrun simctl shutdown "$simulator"
+          done
+          xcodebuild -project ios/Ringify.xcodeproj -scheme Ringify -configuration Release \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/RingifyCaptureBuild" \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee artifacts/capture-release.log
+      - name: Preserve real captures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-onboarding-${{ github.run_id }}
+          path: artifacts/onboarding/
+          retention-days: 3
+          if-no-files-found: warn
+      - name: Preserve capture test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-onboarding-evidence-${{ github.run_id }}
+          path: |
+            artifacts/capture-*.log
+            artifacts/xcode.txt
+            artifacts/*.xcresult
+          retention-days: 3
+          if-no-files-found: warn
