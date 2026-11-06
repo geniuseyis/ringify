@@ -474,6 +474,16 @@ struct LibraryView: View {
     }
 }
 
+/// Small capsules stay compact visually but keep a 44 pt tall touch target.
+private struct LibraryChipHitArea: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+            .padding(.vertical, -8)
+    }
+}
+
 private struct LibraryProjectDetailView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var purchases: PurchaseManager
