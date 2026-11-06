@@ -191,7 +191,8 @@ private struct LanguageSettingsView: View {
             }
             .pickerStyle(.inline)
         }
-        .ringifyStudioAppearance()
+        // An inline Picker may show its label as a section header; keep it unforced.
+        .textCase(nil)
         .navigationTitle("settings.language")
         .navigationBarTitleDisplayMode(.inline)
     }
