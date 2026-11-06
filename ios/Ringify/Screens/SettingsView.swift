@@ -234,10 +234,12 @@ struct SettingsStorageView: View {
 
     var body: some View {
         List {
-            Section(model.uiText("Bu iPhone'da", "On this iPhone")) {
+            Section {
                 LabeledContent(model.uiText("Kayıtlı projeler", "Saved projects"), value: "\(model.projects.count)")
                 LabeledContent(model.uiText("Taslaklar", "Drafts"), value: "\(model.projects.filter { $0.status != .exported }.count)")
                 LabeledContent(model.uiText("Hazır zil sesleri", "Ready ringtones"), value: "\(model.projects.filter { $0.status == .exported }.count)")
+            } header: {
+                Text(model.uiText("Bu iPhone'da", "On this iPhone")).textCase(nil)
             }
             Section {
                 Text(model.uiText("Projeler, içe aktarılan medya kopyaları ve zil sesi çıktıları uygulamanın yerel alanında tutulur. Tek bir projeyi Kütüphane'den silebilirsin.",
@@ -254,7 +256,6 @@ struct SettingsStorageView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .ringifyStudioAppearance()
         .navigationTitle("settings.storage")
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.reloadProjects() }
