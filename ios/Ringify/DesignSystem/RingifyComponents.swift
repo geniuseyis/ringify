@@ -291,7 +291,7 @@ struct RingifyLoadingView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            ProgressView().controlSize(.large).tint(RingifyTheme.accent)
+            ProgressView().controlSize(.large)
             Text(title).font(.subheadline).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
