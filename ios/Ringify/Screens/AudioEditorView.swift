@@ -574,7 +574,6 @@ private struct EditorWaveformSelectionView: View {
     @Binding var selection: EditSelection
     let playhead: TimeInterval
     let inset: CGFloat
-    let intervals: Int
     let onEditingEnded: () -> Void
     @State private var dragStartSelection: TimeInterval?
     @State private var dragEndSelection: TimeInterval?
@@ -587,34 +586,40 @@ private struct EditorWaveformSelectionView: View {
             let end = min(safeDuration, max(start, selection.end.isFinite ? selection.end : start))
             let startX = CGFloat(start / safeDuration) * width
             let endX = CGFloat(end / safeDuration) * width
+            let isNarrow = endX - startX < EditorWaveformMetrics.minimumTargetWidth
             ZStack(alignment: .leading) {
-                ForEach(0...intervals, id: \.self) { tick in
-                    Rectangle().fill(Color(uiColor: .separator).opacity(0.35))
-                        .frame(width: 1)
-                        .offset(x: inset + width * CGFloat(tick) / CGFloat(intervals))
-                        .allowsHitTesting(false)
-                }
+                RoundedRectangle(cornerRadius: EditorWaveformMetrics.laneCornerRadius, style: .continuous)
+                    .fill(RingifyTheme.subtleFill)
+                    .frame(width: width)
+                    .offset(x: inset)
+                    .allowsHitTesting(false)
                 WaveformView(
                     samples: samples,
-                    tint: RingifyTheme.Studio.wave,
-                    dimmedTint: RingifyTheme.Studio.outsideWave,
+                    tint: RingifyTheme.accent,
+                    dimmedTint: Color(uiColor: .tertiaryLabel),
                     selection: (start / safeDuration)...(end / safeDuration)
                 )
                 .frame(width: width)
                 .offset(x: inset)
-                Rectangle()
-                    .fill(RingifyTheme.Studio.wave.opacity(0.10))
-                    .overlay(Rectangle().stroke(RingifyTheme.Studio.wave, lineWidth: 1))
+                selectionFrame
                     .frame(width: max(2, endX - startX))
                     .offset(x: inset + startX)
                     .allowsHitTesting(false)
-                Rectangle().fill(RingifyTheme.Studio.canvasText)
+                trimHandle(.start)
+                    .offset(x: inset + startX - EditorWaveformMetrics.handleWidth)
+                trimHandle(.end)
+                    .offset(x: inset + endX)
+                Capsule().fill(Color.primary)
                     .frame(width: 2)
                     .offset(x: inset + CGFloat(min(safeDuration, max(0, playhead.isFinite ? playhead : start)) / safeDuration) * width)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
-                handle
-                    .position(x: inset + startX, y: proxy.size.height * (endX - startX < 44 ? 0.25 : 0.5))
+                // The targets are separate from the handles they serve. When the
+                // selection is narrow each takes one half of the lane, so both stay
+                // grabbable. `.position` must stay before `.gesture`: the drag then
+                // measures in the lane's space, which does not move under the finger.
+                trimTarget(laneHeight: proxy.size.height, isNarrow: isNarrow)
+                    .position(x: inset + startX - EditorWaveformMetrics.handleWidth / 2, y: proxy.size.height * (isNarrow ? 0.25 : 0.5))
                     .gesture(startDrag(width: width))
                     .focusable(interactions: .edit)
                     .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
@@ -627,8 +632,8 @@ private struct EditorWaveformSelectionView: View {
                     .accessibilityAdjustableAction { direction in
                         adjust(.start, by: direction == .increment ? 0.1 : -0.1)
                     }
-                handle
-                    .position(x: inset + endX, y: proxy.size.height * (endX - startX < 44 ? 0.75 : 0.5))
+                trimTarget(laneHeight: proxy.size.height, isNarrow: isNarrow)
+                    .position(x: inset + endX + EditorWaveformMetrics.handleWidth / 2, y: proxy.size.height * (isNarrow ? 0.75 : 0.5))
                     .gesture(endDrag(width: width))
                     .focusable(interactions: .edit)
                     .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
@@ -664,12 +669,41 @@ private struct EditorWaveformSelectionView: View {
         onEditingEnded()
     }
 
-    private var handle: some View {
-        Capsule()
-            .fill(RingifyTheme.Studio.canvas)
-            .overlay(Capsule().strokeBorder(RingifyTheme.Studio.wave, lineWidth: 2))
-            .frame(width: 12, height: 44)
-            .frame(width: 44, height: 86)
+    /// Photos-style frame: tinted inside, solid along the top and bottom edges.
+    private var selectionFrame: some View {
+        Rectangle()
+            .fill(RingifyTheme.accent.opacity(0.10))
+            .overlay(alignment: .top) {
+                Rectangle().fill(RingifyTheme.accent).frame(height: EditorWaveformMetrics.frameEdge)
+            }
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(RingifyTheme.accent).frame(height: EditorWaveformMetrics.frameEdge)
+            }
+    }
+
+    private func trimHandle(_ boundary: StudioTrimRules.Boundary) -> some View {
+        let radius = EditorWaveformMetrics.handleCornerRadius
+        let shape = boundary == .start
+            ? UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: radius, style: .continuous)
+            : UnevenRoundedRectangle(bottomTrailingRadius: radius, topTrailingRadius: radius, style: .continuous)
+        return shape
+            .fill(RingifyTheme.accent)
+            .overlay {
+                Image(systemName: boundary == .start ? "chevron.compact.left" : "chevron.compact.right")
+                    .resizable()
+                    .scaledToFit()
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .frame(width: 7, height: 20)
+            }
+            .frame(width: EditorWaveformMetrics.handleWidth)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    private func trimTarget(laneHeight: CGFloat, isNarrow: Bool) -> some View {
+        Color.clear
+            .frame(width: EditorWaveformMetrics.minimumTargetWidth, height: isNarrow ? laneHeight / 2 : laneHeight)
             .contentShape(Rectangle())
     }
 
@@ -701,13 +735,5 @@ private struct EditorWaveformSelectionView: View {
                 dragEndSelection = nil
                 onEditingEnded()
             }
-    }
-}
-
-
-private struct StudioSurface: ViewModifier {
-    func body(content: Content) -> some View {
-        content.padding(14)
-            .background(RingifyTheme.Studio.surface, in: RoundedRectangle(cornerRadius: RingifyTheme.Studio.cardRadius))
     }
 }
