@@ -25,7 +25,7 @@ tamamen cihaz üzerinde çalışan, çevrimdışı öncelikli bir ses stüdyosu.
 ![Testler](https://img.shields.io/badge/testler-136%20başarılı-22C55E?style=flat-square)
 ![Diller](https://img.shields.io/badge/diller-TR%20·%20EN-71717A?style=flat-square)
 
-**[Ekranlar](#ekranlar)** &nbsp;·&nbsp; **[Mimari](#mimari)** &nbsp;·&nbsp; **[Başlarken](#başlarken)** &nbsp;·&nbsp; **[Test ve CI](#test-ve-ci)** &nbsp;·&nbsp; **[Yol haritası](#yol-haritası)**
+**[Ekranlar](#ekranlar)** &nbsp;·&nbsp; **[Mimari](#mimari)** &nbsp;·&nbsp; **[Testler](#testler)** &nbsp;·&nbsp; **[Gizlilik](#gizlilik)** &nbsp;·&nbsp; **[Yol haritası](#yol-haritası)**
 
 </div>
 
@@ -154,38 +154,7 @@ Tüm hedeflerde Swift 6 dil modu ve **tam katı eşzamanlılık** (strict concur
 
 <br>
 
-## Başlarken
-
-> **Gereksinimler:** Xcode 16+ yüklü bir Mac (Liquid Glass için iOS 26 SDK) ve [XcodeGen](https://github.com/yonaskolb/XcodeGen)
-
-**1 · Projeyi oluştur ve aç**
-
-```bash
-brew install xcodegen
-cd ios && xcodegen generate
-open Ringify.xcodeproj
-```
-
-**Ringify** şemasını ve bir iPhone simülatörünü seçip çalıştır. Şema `Ringify.storekit` dosyasını kullanır; satın almalar App Store Connect olmadan yerelde denenebilir.
-
-**2 · Çekirdek paketin testleri**
-
-```bash
-swift test --package-path packages/RingifyCore
-```
-
-**3 · Web önizleme** <sub>(isteğe bağlı)</sub>
-
-```bash
-cd preview && npm ci && npm run dev    # http://127.0.0.1:5173
-```
-
-> [!NOTE]
-> Web önizleme, Mac olmadan arayüz üzerinde çalışmak içindir; native uygulamanın yerine geçmez.
-
-<br>
-
-## Test ve CI
+## Testler
 
 | Paket | Kapsam |
 | :-- | :-- |
@@ -193,23 +162,7 @@ cd preview && npm ci && npm run dev    # http://127.0.0.1:5173
 | `RingifyTests` | Gerçek sesle servisler (MP3, AAC, MP4 → WAV / M4A), SwiftData disk ve göç, StoreKit test oturumları, sunum ve kontrast kontrolleri |
 | `RingifyUITests` | Tanıtımdan dışa aktarmaya tam kullanıcı yolculuğu; her ekranı açık ve koyu temada yakalar |
 
-CI, **Actions → Native validation (manual)** üzerinden isteğe bağlı çalışır:
-
-| Kapsam | Çalışanlar |
-| :-- | :-- |
-| `core` | `RingifyCore` derlemesi ve testleri |
-| `ios` | Proje üretimi, birim ve entegrasyon testleri |
-| `ui` | Birim testleri, Release derlemesi, uçtan uca arayüz akışı ve 40 ekran görüntüsü |
-
-> [!TIP]
-> **Son `ui` koşusu:** Release derlemesi başarılı · **136 / 136** birim testi · arayüz akışı başarılı
-
-Dağıtım için iki ek manuel iş akışı vardır:
-
-| İş akışı | Amaç |
-| :-- | :-- |
-| **TestFlight upload** | App Store Connect API anahtarıyla otomatik imzalar, Release arşivini TestFlight'a yükler |
-| **Unsigned device build** | Kişisel test için imzasız `.ipa` üretir (kendi Apple ID'nle yeniden imzalanır) |
+Son macOS doğrulamasında Release derlemesi, **136 / 136** birim testi ve uçtan uca arayüz akışı başarıyla geçti.
 
 <br>
 
