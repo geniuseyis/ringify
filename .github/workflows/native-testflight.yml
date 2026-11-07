@@ -136,6 +136,28 @@ jobs:
         shell: bash
         run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8
 
+      # xcodebuild prints its full command line, including the API key ID, issuer ID
+      # and team ID. Actions masks secrets only in the console log, not in uploaded
+      # files, so scrub them before the logs become a downloadable artifact.
+      - name: Redact account identifiers from logs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(artifacts/*.log artifacts/*.txt)
+          for value in "$ASC_KEY_ID" "$ASC_ISSUER_ID" "$APPLE_TEAM_ID"; do
+            [[ -z "$value" ]] && continue
+            for file in "${files[@]}"; do
+              sed -i '' "s/${value}/[redacted]/g" "$file"
+            done
+            if grep -rqF -- "$value" artifacts/; then
+              echo '::error::An account identifier is still present in the logs'
+              rm -rf artifacts
+              exit 1
+            fi
+          done
+
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
