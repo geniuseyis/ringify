@@ -10,6 +10,8 @@ import '../designSystem/support.css'
 import '../designSystem/appleV2Management.css'
 import '../designSystem/uiFreeze.css'
 
+const SUPPORT_EMAIL='ringifydestek@gmail.com'
+
 export {PremiumScreen} from './PaywallScreen'
 
 const problems=[
@@ -35,7 +37,7 @@ export function HelpScreen({language,onBack,onNavigate,initialTopic}:{language:L
     <DetailHeader title={title} language={language} onBack={back}/>
     <div ref={workspace} className="uf-help-workspace">
       {topic?<article className="uf-help-answer"><span className="uf-topic-symbol"><CircleHelp size={28} aria-hidden="true"/></span><p>{tr?topic.answerTr:topic.answerEn}</p>
-        {topic.id==='contact'?<div className="uf-group-list">{helpTopics.filter(item=>['import','microphone','export','purchases','storage'].includes(item.id)).map(item=><button type="button" className="uf-topic-row" key={item.id} onClick={event=>open(item.id,event.currentTarget)}><span>{tr?item.tr:item.en}</span><ChevronRight size={17} aria-hidden="true"/></button>)}</div>:<SecondaryActionButton onClick={()=>onNavigate(topic.route)}>{tr?topic.actionTr:topic.actionEn}<ChevronRight size={18} aria-hidden="true"/></SecondaryActionButton>}
+        {topic.id==='contact'?<div className="uf-group-list">{helpTopics.filter(item=>['import','microphone','export','purchases','storage'].includes(item.id)).map(item=><button type="button" className="uf-topic-row" key={item.id} onClick={event=>open(item.id,event.currentTarget)}><span>{tr?item.tr:item.en}</span><ChevronRight size={17} aria-hidden="true"/></button>)}<a className="uf-topic-row" href={'mailto:'+SUPPORT_EMAIL}><span>{tr?'Bize e-posta gönder':'Email us'} · {SUPPORT_EMAIL}</span><ArrowUpRight size={17} aria-hidden="true"/></a></div>:<SecondaryActionButton onClick={()=>onNavigate(topic.route)}>{tr?topic.actionTr:topic.actionEn}<ChevronRight size={18} aria-hidden="true"/></SecondaryActionButton>}
       </article>:troubleshooting?<section className="c7-problem"><div className="c7-problem-picker" role="group" aria-label={tr?'Sorun giderme':'Troubleshooting'}>{problems.map((item,index)=><button type="button" key={item.key} aria-pressed={problem===index} onClick={()=>setProblem(index)}>{tr?item.tr:item.en}</button>)}</div><div className="c7-problem-detail" aria-live="polite"><span className="c7-row-icon"><ProblemIcon size={25} aria-hidden="true"/></span><h2>{tr?selected.titleTr:selected.titleEn}</h2><p>{tr?selected.textTr:selected.textEn}</p><SecondaryActionButton onClick={()=>onNavigate(selected.route)}>{tr?selected.actionTr:selected.actionEn}<ChevronRight size={18} aria-hidden="true"/></SecondaryActionButton></div></section>:<>
         <label className="c7-search"><Search size={20} aria-hidden="true"/><input type="search" value={query} aria-label={tr?'Yardımda ara':'Search help'} placeholder={tr?'Bir konu ara':'Search a topic'} onChange={event=>setQuery(event.target.value)}/></label>
         <div className="c7-quick-actions">{[{route:'import',icon:Import,tr:'Dosya ekle',en:'Add a file'},{route:'guide',icon:Smartphone,tr:'iPhone rehberi',en:'iPhone guide'},{route:'library',icon:FolderOpen,tr:'Projelerim',en:'My projects'}].map(({route,icon:Icon,tr:turkish,en})=><button type="button" key={route} onClick={()=>onNavigate(route as ScreenId)}><Icon size={23} aria-hidden="true"/><span>{tr?turkish:en}</span><ArrowUpRight size={13} aria-hidden="true"/></button>)}</div>

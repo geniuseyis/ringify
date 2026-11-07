@@ -124,7 +124,7 @@ describe('Help content, search and real recovery navigation', () => {
     const {container,onBack}=renderHelp()
     fireEvent.click(screen.getByRole('button',{name:'Destek ve geri bildirim'}))
     expect(screen.getByText(/Yardım Merkezi’nde/)).toBeInTheDocument()
-    expect(container.querySelector('a[href^="mailto:"]')).toBeNull()
+    expect(container.querySelector('a[href^="mailto:"]')).toHaveAttribute('href','mailto:ringifydestek@gmail.com')
     fireEvent.click(screen.getByRole('button',{name:'Dosya içe aktarma sorunları'}))
     expect(screen.getByRole('heading',{name:'Dosya içe aktarma sorunları'})).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'Geri'}))

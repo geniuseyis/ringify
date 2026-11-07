@@ -2,6 +2,10 @@ import RingifyCore
 import SwiftUI
 import UIKit
 
+enum RingifySupport {
+    static let email = "ringifydestek@gmail.com"
+}
+
 enum RingifyHelpTopic: String, CaseIterable, Identifiable {
     case create, setRingtone, formats, export, purchases, permissions, importFiles, storage
     var id: String { rawValue }
@@ -99,6 +103,7 @@ struct HelpAndErrorStatesView: View {
             topicsSection
             if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && category == .all {
                 troubleshootingSection
+                contactSection
             }
         }
         .listStyle(.insetGrouped)
@@ -137,6 +142,23 @@ struct HelpAndErrorStatesView: View {
             }
         } header: {
             Text(model.uiText("Yardım konuları", "Help topics")).textCase(nil)
+        }
+    }
+
+    private var contactSection: some View {
+        Section {
+            if let mail = URL(string: "mailto:\(RingifySupport.email)") {
+                Link(destination: mail) {
+                    SettingsNavigationRow(title: model.uiText("Bize e-posta gönder", "Email us"), icon: "envelope",
+                        value: RingifySupport.email)
+                }
+                .accessibilityIdentifier("help.contact")
+            }
+        } header: {
+            Text(model.uiText("Hâlâ yardıma mı ihtiyacın var?", "Still need help?")).textCase(nil)
+        } footer: {
+            Text(model.uiText("Sorununu ve iPhone modelini yazarsan daha hızlı yardımcı olabiliriz.",
+                "Include what happened and your iPhone model so we can help faster."))
         }
     }
 
