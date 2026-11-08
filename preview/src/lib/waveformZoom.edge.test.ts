@@ -25,4 +25,11 @@ describe('waveform geometry edge cases', () => {
   it('keeps a 29 second maximum selection', () => {
     expect(trimBoundary('end', 60, 2, 8, 90)).toEqual([2, 31])
   })
+
+  it('caps pinch zoom at three times', () => {
+    expect(pinchZoom(2, 100, 900)).toBe(3)
+  })
+  it('does not pinch below the original scale', () => {
+    expect(pinchZoom(1, 100, 10)).toBe(1)
+  })
 })
