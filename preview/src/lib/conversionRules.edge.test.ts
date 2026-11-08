@@ -16,4 +16,9 @@ describe('conversion source validation', () => {
   it('accepts an upper-case MP4 extension', () => {
     expect(validateConversionSource('CLIP.MP4', 100, mp4)).toBe('mp4')
   })
+
+  it('rejects an extension that does not match the header', () => {
+    expect(code(() => validateConversionSource('song.mp3', 100, mp4))).toBe('type')
+    expect(code(() => validateConversionSource('clip.mp4', 100, id3))).toBe('type')
+  })
 })
