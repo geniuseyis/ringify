@@ -22,4 +22,9 @@ describe('pro access edge cases', () => {
     expect(canChangeNormalization(true, false, false)).toBe(true)
     expect(canChangeNormalization(false, true, false)).toBe(false)
   })
+
+  it('rejects invalid prices', () => {
+    expect(() => price(-1, 'en')).toThrow(RangeError)
+    expect(() => price(NaN, 'tr')).toThrow(RangeError)
+  })
 })
