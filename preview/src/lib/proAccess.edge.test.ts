@@ -11,4 +11,9 @@ describe('pro access edge cases', () => {
     expect(canCreateProject(proProjectLimit - 1, true)).toBe(true)
     expect(canCreateProject(proProjectLimit, true)).toBe(false)
   })
+
+  it('rejects invalid project counts', () => {
+    expect(canCreateProject(-1, true)).toBe(false)
+    expect(canCreateProject(0.5, true)).toBe(false)
+  })
 })
