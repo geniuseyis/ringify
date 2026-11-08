@@ -6,4 +6,9 @@ describe('loop crossfade limits', () => {
     expect(() => validateLoopCrossfade(0)).not.toThrow()
     expect(loopOverlapFrames(0, 44100, 1000)).toBe(0)
   })
+
+  it('rejects overlaps outside 5-250 ms', () => {
+    expect(() => validateLoopCrossfade(0.004)).toThrow()
+    expect(() => validateLoopCrossfade(0.251)).toThrow()
+  })
 })
