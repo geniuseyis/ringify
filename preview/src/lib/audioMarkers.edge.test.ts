@@ -10,4 +10,8 @@ describe('audio marker edge cases', () => {
   it('sorts markers by time', () => {
     expect(validateAudioMarkers([marker('b', 5), marker('a', 1)], 10).map(m => m.id)).toEqual(['a', 'b'])
   })
+
+  it('rejects duplicate marker ids', () => {
+    expect(() => validateAudioMarkers([marker('a', 1), marker('a', 2)], 10)).toThrow()
+  })
 })
