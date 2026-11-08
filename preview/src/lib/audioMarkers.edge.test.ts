@@ -21,4 +21,9 @@ describe('audio marker edge cases', () => {
   it('rejects labels with surrounding spaces', () => {
     expect(() => validateAudioMarkers([marker('a', 1, ' Giriş ')], 10)).toThrow()
   })
+
+  it('enforces the marker limit', () => {
+    const many = Array.from({ length: maximumAudioMarkers + 1 }, (_, i) => marker(`m${i}`, 1))
+    expect(() => validateAudioMarkers(many, 10)).toThrow()
+  })
 })
