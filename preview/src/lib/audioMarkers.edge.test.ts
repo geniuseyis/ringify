@@ -26,4 +26,8 @@ describe('audio marker edge cases', () => {
     const many = Array.from({ length: maximumAudioMarkers + 1 }, (_, i) => marker(`m${i}`, 1))
     expect(() => validateAudioMarkers(many, 10)).toThrow()
   })
+
+  it('shifts a marker selection to fit the source end', () => {
+    expect(markerSelection(marker('a', 9), 10, 5)).toEqual([5, 10])
+  })
 })
