@@ -21,4 +21,9 @@ describe('format edge cases', () => {
   it('uses the Turkish decimal comma', () => {
     expect(formatFileSize(1500, 'tr')).toBe('1,5 kB')
   })
+
+  it('rejects invalid file sizes', () => {
+    expect(formatFileSize(-1, 'en')).toBe('—')
+    expect(formatFileSize(1.5, 'en')).toBe('—')
+  })
 })
