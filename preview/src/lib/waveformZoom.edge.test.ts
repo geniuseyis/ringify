@@ -14,4 +14,8 @@ describe('waveform geometry edge cases', () => {
   it('ignores a non-finite trim position', () => {
     expect(trimBoundary('start', NaN, 2, 8, 20)).toEqual([2, 8])
   })
+
+  it('snaps a trim start near the source edge', () => {
+    expect(trimBoundary('start', 0.05, 2, 8, 20)).toEqual([0, 8])
+  })
 })
