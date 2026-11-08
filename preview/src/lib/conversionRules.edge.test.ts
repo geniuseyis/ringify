@@ -12,4 +12,8 @@ describe('conversion source validation', () => {
   it('accepts an MP3 with an ID3 header', () => {
     expect(validateConversionSource('song.mp3', 100, id3)).toBe('mp3')
   })
+
+  it('accepts an upper-case MP4 extension', () => {
+    expect(validateConversionSource('CLIP.MP4', 100, mp4)).toBe('mp4')
+  })
 })
