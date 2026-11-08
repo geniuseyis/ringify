@@ -1,0 +1,32 @@
+name: Preview CI
+
+on:
+  push:
+    branches: [main]
+    paths: [preview/**, shared/**, .github/workflows/preview-ci.yml]
+  pull_request:
+    branches: [main]
+    paths: [preview/**, shared/**, .github/workflows/preview-ci.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: preview
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: preview/package-lock.json
+      - run: npm ci
+      - run: npx tsc -b
+      - run: npm test
+      - run: npm audit --audit-level=moderate
