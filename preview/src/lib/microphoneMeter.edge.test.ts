@@ -9,4 +9,8 @@ describe('rmsLevel', () => {
   it('measures a constant signal', () => {
     expect(rmsLevel(new Float32Array([0.5, -0.5, 0.5, -0.5]))).toBeCloseTo(0.5)
   })
+
+  it('never exceeds full scale', () => {
+    expect(rmsLevel(new Float32Array([4, -4]))).toBe(1)
+  })
 })
