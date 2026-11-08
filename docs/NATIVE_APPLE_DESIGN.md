@@ -1,6 +1,6 @@
 # Ringify — native Apple tasarım sözleşmesi
 
-**05.11.2026.** Kullanıcı gerçek Simulator ekranlarını gördü ve uygulama içi tasarımı yetersiz buldu; "tamamen Apple'ın tasarım ilkelerine uygun" olmasını istedi. Bu belge native SwiftUI ekranları için tek geçerli görsel sözleşmedir ve önceki `RingifyTheme.Studio` (Apple/Vercel) ile `AppleV2` / classic stillerinin yerini alır. Durum: **IMPLEMENTED_NOT_TESTED** — gerçek derleme ve görsel kabul yalnız macOS CI ile yapılır.
+Native SwiftUI ekranlarının görsel kuralları. Apple Human Interface Guidelines temel alınır.
 
 Ürün: İnsanların video, ses veya mikrofon kaydından bölüm seçip efekt ekleyerek iPhone için en fazla 29 saniyelik kendi zil seslerini cihaz üzerinde oluşturduğu kişisel ses stüdyosu. Sıra: İçe Aktar → Stüdyoda Kes → Efektler → Ön İzleme → Dışa Aktar → Zil Sesi Olarak Ayarla.
 
