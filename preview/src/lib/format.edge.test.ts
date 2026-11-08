@@ -9,4 +9,8 @@ describe('format edge cases', () => {
   it('keeps minutes past an hour', () => {
     expect(formatTime(3725)).toBe('62:05.0')
   })
+
+  it('shows plain bytes under a kilobyte', () => {
+    expect(formatFileSize(999, 'en')).toBe('999 B')
+  })
 })
