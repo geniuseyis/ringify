@@ -18,4 +18,11 @@ describe('waveform geometry edge cases', () => {
   it('snaps a trim start near the source edge', () => {
     expect(trimBoundary('start', 0.05, 2, 8, 20)).toEqual([0, 8])
   })
+
+  it('keeps a one second minimum selection', () => {
+    expect(trimBoundary('end', 2.2, 2, 8, 20)).toEqual([2, 3])
+  })
+  it('keeps a 29 second maximum selection', () => {
+    expect(trimBoundary('end', 60, 2, 8, 90)).toEqual([2, 31])
+  })
 })
