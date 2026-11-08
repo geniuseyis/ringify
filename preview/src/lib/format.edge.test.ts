@@ -33,4 +33,8 @@ describe('format edge cases', () => {
   it('replaces control characters in file names', () => {
     expect(sanitizeFileName('a\u0000b\u001fc')).toBe('a-b-c')
   })
+
+  it('limits file names to 64 characters', () => {
+    expect(sanitizeFileName('x'.repeat(100))).toHaveLength(64)
+  })
 })
