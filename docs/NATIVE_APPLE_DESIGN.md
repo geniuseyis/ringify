@@ -4,22 +4,6 @@ Native SwiftUI ekranlarının görsel kuralları. Apple Human Interface Guidelin
 
 Ürün: İnsanların video, ses veya mikrofon kaydından bölüm seçip efekt ekleyerek iPhone için en fazla 29 saniyelik kendi zil seslerini cihaz üzerinde oluşturduğu kişisel ses stüdyosu. Sıra: İçe Aktar → Stüdyoda Kes → Efektler → Ön İzleme → Dışa Aktar → Zil Sesi Olarak Ayarla.
 
-## Düzeltilen gerçek sorunlar
-
-Kanıt: `design/screenshots/native-ui/390x844` (çalışma `42032489487`).
-
-| Sorun | Karar |
-| --- | --- |
-| Açık temada siyah kartlar (Home, Stüdyo, Pro) | Sistem yüzeyleri; koyu tuval yok |
-| Dalga formu dolu mor blok: 240 örnek, örnek başına ~1,4 pt ama çubuk en az 1,5 pt, yani üst üste biniyor | `WaveformBars` ile örnek azaltma; birbirine değmeyen yuvarlak çubuklar |
-| Home'da iki başlık, slogan, hero; projeler sekme çubuğunun altında | Büyük başlık, tek oluşturma kartı, liste |
-| Her ikonun arkasında lila kutu | Kutusuz, tint'li SF Symbol |
-| Kütüphane: "Koleksiyonl-ar" kelime kırılması, segment kontrolün ekran kenarına taşması, satırda hem ok hem "…" | Tek satırlık kaydırılabilir kontroller, doğru kenar boşluğu, satırda tek gösterge |
-| Birbirini tekrar eden proje başlığı ve dekoratif zil/telefon kutuları | Kaldırıldı; içerik öne çıkar |
-| Ana eylemin ekran dışında kalması (Pro, Önizleme, Efektler) | Eylem alt çubukta sabit |
-| Eşit olmayan yükseklikte ızgara kartları (İçe Aktar, Yardım) | Standart gruplu liste |
-| Sahte stiller: büyük harf kaşlık, `tracking`, özel kenarlıklar, gölgeler | Yalnız sistem metin stilleri ve yüzeyleri |
-
 ## İlkeler
 
 Apple'ın üç ilkesi: **hiyerarşi** (kontroller içeriğin önüne geçmez, en önemli şey ilk bakışta belli olur), **uyum** (donanım ve yazılımla aynı biçim dili), **tutarlılık** (sistem kuralları, her boyutta aynı davranış).
