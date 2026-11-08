@@ -21,4 +21,12 @@ describe('conversion source validation', () => {
     expect(code(() => validateConversionSource('song.mp3', 100, mp4))).toBe('type')
     expect(code(() => validateConversionSource('clip.mp4', 100, id3))).toBe('type')
   })
+
+  it('rejects empty and oversized sources', () => {
+    expect(code(() => validateConversionSource('a.mp3', 0, id3))).toBe('size')
+    expect(code(() => validateConversionSource('a.mp3', conversionLimits.inputBytes + 1, id3))).toBe('size')
+  })
+  it('accepts a source at the size limit', () => {
+    expect(validateConversionSource('a.mp3', conversionLimits.inputBytes, id3)).toBe('mp3')
+  })
 })
