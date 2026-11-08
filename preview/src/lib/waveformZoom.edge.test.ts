@@ -10,4 +10,8 @@ describe('waveform geometry edge cases', () => {
   it('does not divide by a zero width', () => {
     expect(Number.isFinite(timeAtPosition(5, 0, 0, 10))).toBe(true)
   })
+
+  it('ignores a non-finite trim position', () => {
+    expect(trimBoundary('start', NaN, 2, 8, 20)).toEqual([2, 8])
+  })
 })
