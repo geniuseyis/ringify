@@ -16,10 +16,6 @@ Apple'ın üç ilkesi: **hiyerarşi** (kontroller içeriğin önüne geçmez, en
 6. **Navigasyon.** Sekme kökleri büyük başlık, alt ekranlar `.inline`. Ok işareti yalnız gerçekten gezinen satırda.
 7. **Dürüstlük.** Sahte dalga, sahte seviye, uydurma yüzde yok. Gerçek veri yoksa düz çizgi veya sembol.
 
-## Yasaklar
-
-Yeni kodda bulunmayacak: `RingifyTheme.Studio`, `RingifyTheme.AppleV2`, `ringifyStudioAppearance`, `ringifyVisualStyle`, `NativeContentCard`, `NativePrimaryAction`, `NativePrimaryActionLabel`, `NativePressButtonStyle`, `NativeProjectIdentity`, `.scrollContentBackground(.hidden)`, `.tracking(...)`, `.textCase(.uppercase)`, büyük harfle yazılmış metin, hex renk, `Color.black`/`Color.white` yüzey, kart çevresinde `strokeBorder`, `.shadow`, ikon arkasında kutu veya daire, `.tint(RingifyTheme.accent)` (genel vurgu zaten asset'ten gelir ve açık tint nötr düğmeleri lila yapar), `.font(.system(size:))` (yalnız `@ScaledMetric` ile). `RingifyTheme.brandGradient` yalnız `LaunchView`'da.
-
 ## Temel API
 
 Dosyalar: `DesignSystem/RingifyTheme.swift`, `RingifyComponents.swift`, `NativePresentationComponents.swift`.
