@@ -16,4 +16,10 @@ describe('pro access edge cases', () => {
     expect(canCreateProject(-1, true)).toBe(false)
     expect(canCreateProject(0.5, true)).toBe(false)
   })
+
+  it('lets free users keep or turn off normalization', () => {
+    expect(canChangeNormalization(true, true, false)).toBe(true)
+    expect(canChangeNormalization(true, false, false)).toBe(true)
+    expect(canChangeNormalization(false, true, false)).toBe(false)
+  })
 })
