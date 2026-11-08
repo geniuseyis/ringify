@@ -68,19 +68,3 @@ Dosyalar: `DesignSystem/RingifyTheme.swift`, `RingifyComponents.swift`, `NativeP
 **Pro (`PremiumView`) — kök `ScrollView` kalmalı (UI testi `scrollViews` bekliyor), `.inline`.** Siyah hero kalkar. Üstte taç sembolü (`.tint`, kutusuz), "Ringify Pro", tek cümle. Özellikler sembol + metin satırları. Planlar dikey, tam genişlik seçilebilir satırlar: ad + yenileme solda, fiyat sağda, seçili olanda `checkmark.circle.fill` ve `accent` kenar (renk tek kanal değil). Alt çubuk: seçili plan özeti ve "Satın Al" / "Yönet". Altta Geri Yükle, Karşılaştırma, SSS, Koşullar, Gizlilik. Fiyatlar StoreKit'ten; metinler ve mantık aynı. `var showsProjectLimitNotice = false` eklenir; `true` ise üstte `premium.limit.title` bildirimi görünür. Araç çubuğu `RootView`'da.
 
 **Ayarlar (`SettingsView`) — `List`, `.insetGrouped`, `.large`.** Yapı aynı. `SettingsNavigationRow` kutusuz sembole döner. **Yardım (`HelpAndErrorStatesView`):** Sistem listesi; kısa bağlantılar ızgara değil satır; konu satırlarında kutu yok.
-
-## Kısıtlar
-
-- Yalnız sunum. `AppModel`, servisler, view model'ler, `RingifyCore`, DSP, depolama, satın alma, fiyat ve Pro kuralları değişmez. Kaldırılan özellik yok.
-- Tüm erişilebilirlik kimlikleri ve VoiceOver etiketleri korunur (yalnız `home.settings` ve `home.quick.library` kalkar).
-- Yeni metin `model.uiText("TR", "EN")` ile; `.strings` dosyaları yalnız yukarıda adı geçen `recorder.idle` için değişir.
-
-## Doğrulama
-
-Windows'ta yalnız Swift parser çalışır; bu derleme değildir. Gerçek derleme, 131+ XCTest ve Simulator ekran görüntüleri manuel `native-validation` koşusu ister. Başarılı koşu ve görsel kabul olmadan **IMPLEMENTED_AND_TESTED** yazılmaz. Web önizlemesi bu pakette değişmedi; aynı dile taşınması ayrı karardır.
-
-## Entegrasyon notları (06.11.2026)
-
-- Tüm gruplar uygulandı: Home, Stüdyo, Efektler, Teslim (Önizleme/Dışa Aktarma/Rehber), İçe Aktarma/Kayıt/Dönüştürücü, Kütüphane, Pro, Ayarlar/Yardım.
-- Mac derlemesinde doğrulanacak riskler: DisclosureGroup kökündeki `.task` modifier'larının List içinde tek kez çalışması; Kütüphane küçük kapsül düğmelerinin 44 pt dokunma alanı; dönüştürme sürerken boş alt çubuk şeridi; Stüdyo kırpma tutamaçlarının dokunma alanı.
-- Erişilebilirlik: Kütüphane'de düzenle/çoğalt/koleksiyon/paylaş artık bağlam menüsünde; kaydırma eylemleri VoiceOver özel eylemi olarak kalır.
