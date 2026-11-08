@@ -13,4 +13,12 @@ describe('format edge cases', () => {
   it('shows plain bytes under a kilobyte', () => {
     expect(formatFileSize(999, 'en')).toBe('999 B')
   })
+
+  it('uses decimal kilobytes and megabytes', () => {
+    expect(formatFileSize(1500, 'en')).toBe('1.5 kB')
+    expect(formatFileSize(2_500_000, 'en')).toBe('2.5 MB')
+  })
+  it('uses the Turkish decimal comma', () => {
+    expect(formatFileSize(1500, 'tr')).toBe('1,5 kB')
+  })
 })
