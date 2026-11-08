@@ -155,6 +155,7 @@ Tüm hedeflerde Swift 6 dil modu ve **tam katı eşzamanlılık** (strict concur
 | `RingifyCoreTests` | Zil sesi kuralları, düzenleyici geçmişi, DSP hesapları, bölüm önerileri, analiz eşlik fixture'ları |
 | `RingifyTests` | Gerçek sesle servisler (MP3, AAC, MP4 → WAV / M4A), SwiftData disk ve göç, StoreKit test oturumları, sunum ve kontrast kontrolleri |
 | `RingifyUITests` | Tanıtımdan dışa aktarmaya tam kullanıcı yolculuğu; her ekranı açık ve koyu temada yakalar |
+| `preview` | Vitest ile önizleme arayüzü, ses işleme, dışa aktarma planı ve Pro kuralları |
 
 Son macOS doğrulamasında Release derlemesi, **136 / 136** birim testi ve uçtan uca arayüz akışı başarıyla geçti.
 
