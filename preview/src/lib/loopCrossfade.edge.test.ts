@@ -11,4 +11,8 @@ describe('loop crossfade limits', () => {
     expect(() => validateLoopCrossfade(0.004)).toThrow()
     expect(() => validateLoopCrossfade(0.251)).toThrow()
   })
+
+  it('limits the overlap to a quarter of the selection', () => {
+    expect(loopOverlapFrames(0.25, 44100, 4000)).toBe(1000)
+  })
 })
