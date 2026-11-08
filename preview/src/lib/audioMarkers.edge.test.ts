@@ -14,4 +14,11 @@ describe('audio marker edge cases', () => {
   it('rejects duplicate marker ids', () => {
     expect(() => validateAudioMarkers([marker('a', 1), marker('a', 2)], 10)).toThrow()
   })
+
+  it('rejects markers past the source duration', () => {
+    expect(() => validateAudioMarkers([marker('a', 11)], 10)).toThrow()
+  })
+  it('rejects labels with surrounding spaces', () => {
+    expect(() => validateAudioMarkers([marker('a', 1, ' Giriş ')], 10)).toThrow()
+  })
 })
