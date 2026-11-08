@@ -26,4 +26,11 @@ describe('format edge cases', () => {
     expect(formatFileSize(-1, 'en')).toBe('—')
     expect(formatFileSize(1.5, 'en')).toBe('—')
   })
+
+  it('strips trailing dots from file names', () => {
+    expect(sanitizeFileName('Zil sesi...')).toBe('Zil sesi')
+  })
+  it('replaces control characters in file names', () => {
+    expect(sanitizeFileName('a\u0000b\u001fc')).toBe('a-b-c')
+  })
 })
