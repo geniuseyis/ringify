@@ -18,12 +18,6 @@ tamamen cihaz üzerinde çalışan, çevrimdışı öncelikli bir ses stüdyosu.
 
 <br>
 
-![iOS 17+](https://img.shields.io/badge/iOS-17%2B-000000?style=flat-square&logo=apple&logoColor=white)
-![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square&logo=swift&logoColor=white)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-native-0A84FF?style=flat-square)
-![Strict concurrency](https://img.shields.io/badge/strict%20concurrency-complete-7C5CFF?style=flat-square)
-![Testler](https://img.shields.io/badge/testler-136%20başarılı-22C55E?style=flat-square)
-![Diller](https://img.shields.io/badge/diller-TR%20·%20EN-71717A?style=flat-square)
 
 **[Ekranlar](#ekranlar)** &nbsp;·&nbsp; **[Mimari](#mimari)** &nbsp;·&nbsp; **[Testler](#testler)** &nbsp;·&nbsp; **[Gizlilik](#gizlilik)** &nbsp;·&nbsp; **[Yol haritası](#yol-haritası)**
 
