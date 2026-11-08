@@ -27,4 +27,16 @@ describe('pro access edge cases', () => {
     expect(() => price(-1, 'en')).toThrow(RangeError)
     expect(() => price(NaN, 'tr')).toThrow(RangeError)
   })
+
+  it('states that lifetime never renews', () => {
+    expect(billingDisclosure('lifetime', 'en')).toContain('No automatic renewal')
+    expect(billingDisclosure('lifetime', 'tr')).toContain('Otomatik yenileme yok')
+  })
+  it('states that subscriptions renew', () => {
+    expect(billingDisclosure('monthly', 'en')).toContain('every month')
+    expect(billingDisclosure('yearly', 'tr')).toContain('otomatik yenilenir')
+  })
+  it('reports a positive yearly saving', () => {
+    expect(annualSavings()).toBeGreaterThan(0)
+  })
 })
